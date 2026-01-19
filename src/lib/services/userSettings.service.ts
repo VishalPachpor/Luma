@@ -16,7 +16,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
     try {
         const { data, error } = await supabase
             .from('profiles')
-            .select('preferences, updated_at')
+            .select('preferences, updated_at, created_at')
             .eq('id', userId)
             .single();
 
@@ -28,13 +28,14 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
             };
         }
 
-        const prefs = data.preferences as Partial<UserSettings> || {};
+        const typedData = data as any;
+        const prefs = typedData.preferences as Partial<UserSettings> || {};
 
         return {
             ...DEFAULT_USER_SETTINGS,
             ...prefs,
-            updatedAt: new Date(data.updated_at),
-            createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+            updatedAt: new Date(typedData.updated_at),
+            createdAt: typedData.created_at ? new Date(typedData.created_at) : new Date(),
         };
     } catch (error) {
         console.error('[UserSettings] Error fetching settings:', error);
