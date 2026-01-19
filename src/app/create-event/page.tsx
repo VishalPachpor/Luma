@@ -3,8 +3,6 @@
 import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage, isFirebaseConfigured } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/components/ui';
 import TimezoneSelect from '@/components/components/ui/TimezoneSelect';
@@ -13,6 +11,7 @@ import { CalendarSelector } from '@/components/features/events/CalendarSelector'
 import { VisibilityToggle, EventVisibility } from '@/components/features/events/VisibilityToggle';
 import { RegistrationQuestion } from '@/types/event';
 import { create as createEvent } from '@/lib/repositories/event.repository';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import {
     LayoutGrid,
     ChevronDown,
@@ -101,8 +100,6 @@ function CreateEventForm() {
     // UI State
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [isEditingDescription, setIsEditingDescription] = useState(false);
-    const [isEditingPrice, setIsEditingPrice] = useState(false);
-    const [isEditingCapacity, setIsEditingCapacity] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -155,11 +152,24 @@ function CreateEventForm() {
         try {
             let coverImageUrl = formData.imageUrl || 'https://picsum.photos/seed/event/800/600';
 
-            // Upload image to Firebase Storage if file provided
-            if (formData.imageFile && storage && isFirebaseConfigured) {
-                const fileRef = ref(storage, `events/${Date.now()}_${formData.imageFile.name}`);
-                const snapshot = await uploadBytes(fileRef, formData.imageFile);
-                coverImageUrl = await getDownloadURL(snapshot.ref);
+            // Upload image to Supabase Storage if file provided
+            if (formData.imageFile) {
+                const supabase = createSupabaseBrowserClient();
+                const fileExt = formData.imageFile.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `covers/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('events') // Bucket 'events'
+                    .upload(filePath, formData.imageFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('events')
+                    .getPublicUrl(filePath);
+
+                coverImageUrl = publicUrl;
             }
 
             // Format date string
@@ -183,8 +193,8 @@ function CreateEventForm() {
                 description: formData.description || 'No description provided',
                 date: dateStr,
                 location: formData.location || 'TBD',
-                city: 'Unknown', // TODO: Extract from location
-                coords: { lat: 0, lng: 0 }, // TODO: Geocode location
+                city: 'Unknown',
+                coords: { lat: 0, lng: 0 },
                 coverImage: coverImageUrl,
                 attendees: 0,
                 tags: [],
@@ -196,11 +206,10 @@ function CreateEventForm() {
                 registrationQuestions: formData.registrationQuestions.length > 0
                     ? formData.registrationQuestions
                     : [{ id: crypto.randomUUID(), type: 'short_text', label: 'Full Name', required: true }],
-                // New Fields
                 socialLinks: formData.socialLinks,
-                about: formData.about ? [formData.about] : [], // Convert string to array for now
+                about: formData.about ? [formData.about] : [],
                 agenda: formData.agenda,
-                hosts: formData.hosts.map(h => ({ ...h, description: h.role })), // Map role to description
+                hosts: formData.hosts.map(h => ({ ...h, description: h.role })),
                 status: 'published',
                 visibility: formData.visibility,
                 calendarId: formData.calendarId ?? undefined,
@@ -208,7 +217,7 @@ function CreateEventForm() {
 
             console.log('Event created:', event);
 
-            // Redirect to the new event or home
+            // Redirect to the new event
             router.push(`/events/${event.id}`);
         } catch (err) {
             console.error('Error creating event:', err);
@@ -217,8 +226,6 @@ function CreateEventForm() {
             setIsSubmitting(false);
         }
     };
-
-
 
     return (
         <div className="min-h-screen bg-[var(--bg-page)] text-text-primary transition-colors duration-500 ease-in-out">
@@ -285,7 +292,7 @@ function CreateEventForm() {
                         </button>
                     </div>
 
-                    {/* Registration Questions (Moved to Sidebar to match Luma vibe of 'Configuration' on left) */}
+                    {/* Registration Questions */}
                     <div className="pt-6 border-t border-white/5">
                         <h3 className="text-lg font-serif mb-4 text-white/90">Registration</h3>
                         <QuestionBuilder
@@ -333,7 +340,6 @@ function CreateEventForm() {
                                 placeholder="Event Name"
                                 className="w-full bg-transparent border-none text-6xl font-serif text-white outline-none placeholder:text-white/10 tracking-tight leading-tight"
                             />
-                            {/* Animated underline effect */}
                             <div className="absolute bottom-0 left-0 w-0 h-1 bg-[image:var(--accent-main)] transition-all group-hover:w-full opacity-50" />
                         </div>
 

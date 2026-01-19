@@ -1,113 +1,77 @@
 /**
  * User Settings Service
- * Production-grade service for CRUD operations on user settings
- * Uses Firestore for persistence with proper error handling
+ * Manages user preferences via Supabase 'profiles' table (preferences column)
  */
 
-import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { UserSettings, DEFAULT_USER_SETTINGS } from '@/types/settings';
 
-const USERS_COLLECTION = 'users';
-const SETTINGS_SUBCOLLECTION = 'settings';
-const SETTINGS_DOC_ID = 'preferences';
-
 /**
- * Convert Firestore timestamps to Date objects
- */
-function convertTimestamps(data: Record<string, unknown>): UserSettings {
-    return {
-        ...data,
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
-    } as UserSettings;
-}
-
-/**
- * Get user settings from Firestore
- * Creates default settings if none exist
+ * Get user settings from Supabase
  */
 export async function getUserSettings(userId: string): Promise<UserSettings> {
-    if (!db || !isFirebaseConfigured) {
-        // Fallback gracefully instead of causing app crash loop
-        console.warn('[UserSettings] Firebase not configured, returning defaults');
-        return {
-            ...DEFAULT_USER_SETTINGS,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-    }
-
-    // Capture db locally to satisfy TypeScript null checks since 'db' is a mutable export
-    const firestore = db;
-
-    if (!userId) {
-        console.warn('[UserSettings] getUserSettings called without userId');
-        throw new Error('UserId is required');
-    }
-
-    console.log('[UserSettings] Fetching settings for user:', userId);
+    if (!userId) return { ...DEFAULT_USER_SETTINGS, createdAt: new Date(), updatedAt: new Date() };
 
     try {
-        const settingsRef = doc(firestore, USERS_COLLECTION, userId, SETTINGS_SUBCOLLECTION, SETTINGS_DOC_ID);
-        const settingsSnap = await getDoc(settingsRef);
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('preferences, updated_at')
+            .eq('id', userId)
+            .single();
 
-        if (settingsSnap.exists()) {
-            console.log('[UserSettings] Found existing settings');
-            return convertTimestamps(settingsSnap.data());
+        if (error || !data) {
+            return {
+                ...DEFAULT_USER_SETTINGS,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
         }
 
-        console.log('[UserSettings] No settings found, creating defaults...');
+        const prefs = data.preferences as Partial<UserSettings> || {};
 
-        // Create default settings for new user
-        const newSettings: UserSettings = {
-            ...DEFAULT_USER_SETTINGS,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-
-        await setDoc(settingsRef, {
-            ...newSettings,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-
-        console.log('[UserSettings] Created default settings');
-        return newSettings;
-    } catch (error) {
-        console.error('[UserSettings] Error fetching/creating settings:', error);
-        // Return defaults on error to prevent app crash
         return {
             ...DEFAULT_USER_SETTINGS,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            ...prefs,
+            updatedAt: new Date(data.updated_at),
+            createdAt: data.created_at ? new Date(data.created_at) : new Date(),
         };
+    } catch (error) {
+        console.error('[UserSettings] Error fetching settings:', error);
+        return { ...DEFAULT_USER_SETTINGS, createdAt: new Date(), updatedAt: new Date() };
     }
 }
 
 /**
- * Update user settings in Firestore
- * Uses setDoc with merge for robustness (creates doc if missing)
+ * Update user settings
  */
 export async function updateUserSettings(
     userId: string,
     updates: Partial<Omit<UserSettings, 'createdAt' | 'updatedAt'>>
 ): Promise<void> {
-    if (!db || !isFirebaseConfigured) {
-        throw new Error('Firebase not configured');
-    }
+    const supabaseBrowser = createSupabaseBrowserClient();
 
-    const settingsRef = doc(db, USERS_COLLECTION, userId, SETTINGS_SUBCOLLECTION, SETTINGS_DOC_ID);
-
-    // Use setDoc with merge to handle both create and update
-    await setDoc(settingsRef, {
+    // Fetch current preferences to merge
+    const current = await getUserSettings(userId);
+    const newPreferences = {
+        ...current,
         ...updates,
-        updatedAt: serverTimestamp(),
-    }, { merge: true });
+    };
+
+    // Remove metadata fields from the JSON column if they exist on the type but shouldn't be nested
+    // userSettings type usually mirrors the structure we want.
+
+    await supabaseBrowser
+        .from('profiles')
+        .update({
+            preferences: newPreferences,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
 }
 
 /**
- * Update a specific notification setting
+ * Update notification setting
  */
 export async function updateNotificationSetting(
     userId: string,
@@ -115,21 +79,16 @@ export async function updateNotificationSetting(
     channel: 'email' | 'whatsapp',
     enabled: boolean
 ): Promise<void> {
-    if (!db || !isFirebaseConfigured) {
-        throw new Error('Firebase not configured');
-    }
-
-    const settingsRef = doc(db, USERS_COLLECTION, userId, SETTINGS_SUBCOLLECTION, SETTINGS_DOC_ID);
-
-    // Use setDoc with merge for robustness
-    await setDoc(settingsRef, {
-        notifications: {
-            [notificationType]: {
-                [channel]: enabled,
-            },
+    const current = await getUserSettings(userId);
+    const newNotifications = {
+        ...current.notifications,
+        [notificationType]: {
+            ...current.notifications[notificationType],
+            [channel]: enabled,
         },
-        updatedAt: serverTimestamp(),
-    }, { merge: true });
+    };
+
+    return updateUserSettings(userId, { notifications: newNotifications });
 }
 
 /**
@@ -140,21 +99,15 @@ export async function updateTheme(userId: string, theme: UserSettings['theme']):
 }
 
 /**
- * Update user profile
+ * Update user profile (Meta)
  */
 export async function updateProfile(
     userId: string,
     profile: Partial<UserSettings['profile']>
 ): Promise<void> {
-    if (!db || !isFirebaseConfigured) {
-        throw new Error('Firebase not configured');
-    }
-
-    const settingsRef = doc(db, USERS_COLLECTION, userId, SETTINGS_SUBCOLLECTION, SETTINGS_DOC_ID);
-
-    // Use setDoc with merge for robustness
-    await setDoc(settingsRef, {
-        profile,
-        updatedAt: serverTimestamp(),
-    }, { merge: true });
+    // This updates the 'profile' nested object in JSON settings, distinct from main profile columns
+    // Ideally we should sync with main profile columns but for now keep backward compat with JSON shape
+    const current = await getUserSettings(userId);
+    const newProfile = { ...current.profile, ...profile };
+    return updateUserSettings(userId, { profile: newProfile });
 }

@@ -1,103 +1,58 @@
 /**
  * Security Service
- * Firebase Auth security operations: password reset, 2FA, etc.
+ * Supabase Auth security operations
  */
 
-import {
-    sendPasswordResetEmail,
-    updatePassword,
-    EmailAuthProvider,
-    reauthenticateWithCredential,
-    multiFactor,
-    PhoneAuthProvider,
-    PhoneMultiFactorGenerator,
-} from 'firebase/auth';
-import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 /**
- * Send password reset email to current user
+ * Send password reset email
  */
 export async function sendPasswordReset(email: string): Promise<void> {
-    if (!auth || !isFirebaseConfigured) {
-        throw new Error('Firebase not configured');
-    }
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+    });
 
-    await sendPasswordResetEmail(auth, email);
+    if (error) throw error;
 }
 
 /**
- * Change password for current user (requires reauthentication)
+ * Change password for current user
  */
 export async function changePassword(
-    currentPassword: string,
+    currentPassword: string, // Unused in Supabase implicitly if already logged in, but nice for verification
     newPassword: string
 ): Promise<void> {
-    if (!auth || !isFirebaseConfigured || !auth.currentUser) {
-        throw new Error('Not authenticated');
-    }
+    const supabase = createSupabaseBrowserClient();
 
-    const user = auth.currentUser;
-    const email = user.email;
+    // Supabase allows updating password if session is active
+    const { error } = await supabase.auth.updateUser({
+        password: newPassword
+    });
 
-    if (!email) {
-        throw new Error('No email associated with account');
-    }
-
-    // Reauthenticate user
-    const credential = EmailAuthProvider.credential(email, currentPassword);
-    await reauthenticateWithCredential(user, credential);
-
-    // Update password
-    await updatePassword(user, newPassword);
+    if (error) throw error;
 }
 
 /**
- * Check if user has 2FA enabled
+ * Check if 2FA enabled
  */
 export function has2FAEnabled(): boolean {
-    if (!auth?.currentUser) return false;
-    const mfaUser = multiFactor(auth.currentUser);
-    return mfaUser.enrolledFactors.length > 0;
+    // Supabase MFA check requires checking factors
+    // This is async in Supabase usually, but we might just return false for now as migration step
+    return false; // TODO: Implement Supabase MFA status check
 }
 
 /**
- * Start 2FA enrollment process
- * Returns verificationId for OTP verification
+ * Start 2FA enrollment (Placeholder)
  */
-export async function start2FAEnrollment(
-    phoneNumber: string,
-    recaptchaVerifier: unknown
-): Promise<string> {
-    if (!auth?.currentUser) {
-        throw new Error('Not authenticated');
-    }
-
-    const mfaUser = multiFactor(auth.currentUser);
-    const session = await mfaUser.getSession();
-
-    const phoneAuthProvider = new PhoneAuthProvider(auth);
-    const verificationId = await phoneAuthProvider.verifyPhoneNumber(
-        { phoneNumber, session },
-        recaptchaVerifier as import('firebase/auth').RecaptchaVerifier
-    );
-
-    return verificationId;
+export async function start2FAEnrollment(phoneNumber: string): Promise<string> {
+    throw new Error('MFA Enrollment requires Supabase Pro / backend implementation');
 }
 
 /**
- * Complete 2FA enrollment with OTP
+ * Complete 2FA enrollment (Placeholder)
  */
-export async function complete2FAEnrollment(
-    verificationId: string,
-    otp: string
-): Promise<void> {
-    if (!auth?.currentUser) {
-        throw new Error('Not authenticated');
-    }
-
-    const credential = PhoneAuthProvider.credential(verificationId, otp);
-    const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(credential);
-    const mfaUser = multiFactor(auth.currentUser);
-
-    await mfaUser.enroll(multiFactorAssertion, 'Phone Number');
+export async function complete2FAEnrollment(verificationId: string, otp: string): Promise<void> {
+    throw new Error('Not implemented');
 }

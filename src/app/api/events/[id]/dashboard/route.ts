@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { getDashboardData } from '@/lib/services/dashboard.service';
+import { getEventPermissions } from '@/lib/services/permissions.service';
+import { getEventStats } from '@/lib/services/event-stats.service';
 
 export async function GET(
     request: NextRequest,

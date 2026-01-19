@@ -61,7 +61,7 @@ export async function POST(
                 status: status,
                 qr_token: qrToken,
                 // ticket_tier_id: ...
-            })
+            } as any)
             .select()
             .single();
 

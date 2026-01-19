@@ -158,7 +158,7 @@ export async function create(input: CreateEventInput, organizerId: string): Prom
 
     const { data, error } = await supabase
         .from('events')
-        .insert(row)
+        .insert(row as any)
         .select()
         .single();
 
@@ -178,7 +178,7 @@ export async function update(id: string, updates: Partial<Event>): Promise<Event
 
     const { data, error } = await supabase
         .from('events')
-        .update(row)
+        .update(row as any)
         .eq('id', id)
         .select()
         .single();

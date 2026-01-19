@@ -1,15 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { X, Check, type LucideIcon, LayoutGrid, Palette, Type, Clock, Calendar as CalendarIcon, MapPin, Loader2, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
+import { useState, useRef } from 'react';
+import { ChevronRight, Loader2, MapPin, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getServiceSupabase } from '@/lib/supabase';
 import { Event } from '@/types/event';
-import { format } from 'date-fns';
-import { storage } from '@/lib/firebase'; // Ensure these work on client
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 interface EditEventSidebarProps {
     event: Event;
@@ -59,12 +55,22 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
             // 1. Upload new image if exists
             let coverImageUrl = formData.coverImage;
             if (formData.imageFile) {
-                // assume storage is available or handle error
-                if (storage) {
-                    const fileRef = ref(storage, `events/${Date.now()}_${formData.imageFile.name}`);
-                    const snapshot = await uploadBytes(fileRef, formData.imageFile);
-                    coverImageUrl = await getDownloadURL(snapshot.ref);
-                }
+                const supabase = createSupabaseBrowserClient();
+                const fileExt = formData.imageFile.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `covers/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('events')
+                    .upload(filePath, formData.imageFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('events')
+                    .getPublicUrl(filePath);
+
+                coverImageUrl = publicUrl;
             }
 
             // 2. Construct Date ISOs
@@ -73,6 +79,8 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
 
             // 3. API Call
             // Use existing API route
+            // Note: Since we are in client, we might want to use repo directly if possible to avoid API overhead?
+            // But reuse of API route is fine for now.
             const token = await user?.getIdToken();
             const res = await fetch(`/api/events/${event.id}`, {
                 method: 'PUT',
@@ -277,10 +285,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                                 Updating...
                             </>
                         ) : (
-                            <>
-                                <Check className="w-4 h-4" />
-                                Update Event
-                            </>
+                            'Update Event'
                         )}
                     </button>
                 </div>

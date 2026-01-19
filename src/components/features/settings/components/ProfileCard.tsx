@@ -1,6 +1,6 @@
 /**
  * Profile Card Component
- * Displays user avatar with upload functionality
+ * displays user avatar with upload functionality
  */
 
 'use client';
@@ -9,9 +9,7 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { updateProfile as updateAuthProfile } from 'firebase/auth';
-import { storage, auth } from '@/lib/firebase';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 interface ProfileCardProps {
     avatarUrl?: string;
@@ -29,7 +27,7 @@ export default function ProfileCard({ avatarUrl, displayName, onAvatarChange }: 
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !user || !storage || !auth) return;
+        if (!file || !user) return;
 
         // Validate file
         if (!file.type.startsWith('image/')) {
@@ -46,16 +44,34 @@ export default function ProfileCard({ avatarUrl, displayName, onAvatarChange }: 
         setError(null);
 
         try {
-            // Upload to Firebase Storage
-            const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
-            const downloadUrl = await getDownloadURL(storageRef);
+            const supabase = createSupabaseBrowserClient();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.uid}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `user_avatars/${fileName}`;
 
-            // Update Firebase Auth profile
-            await updateAuthProfile(user, { photoURL: downloadUrl });
+            // Upload to Supabase Storage (avatars bucket)
+            // Bucket name is 'avatars' or maybe we use 'images' with prefix?
+            // Assuming 'avatars' bucket exists.
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // Update Auth Profile (via Supabase Auth)
+            // Note: updateUser({ data: { avatar_url: ... } }) keeps metadata sync
+            const { error: updateError } = await supabase.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            });
+
+            if (updateError) throw updateError;
 
             // Notify parent component
-            onAvatarChange?.(downloadUrl);
+            onAvatarChange?.(publicUrl);
         } catch (err) {
             console.error('Failed to upload avatar:', err);
             setError('Failed to upload image. Please try again.');

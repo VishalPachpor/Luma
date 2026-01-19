@@ -31,6 +31,10 @@ export interface Order {
     createdAt: string;
     updatedAt: string;
 
+    // Line items (Multi-ticket in future, currently single tier)
+    ticketTierId?: string;
+    quantity?: number;
+
     // Payment Details
     paymentProvider?: 'stripe' | 'crypto';
     paymentIntentId?: string; // Stripe PaymentIntent ID

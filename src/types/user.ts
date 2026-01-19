@@ -11,9 +11,13 @@ export interface User {
     email: string;
     avatar: string;
     role: UserRole;
+    phoneNumber?: string;
 
     // Profile fields
     bio?: string;
+    location?: string;
+    website?: string;
+    twitterHandle?: string;
     socialLinks?: {
         website?: string;
         twitter?: string;

@@ -3,12 +3,9 @@
 import {
     LayoutGrid,
     ChevronDown,
-    Globe,
     Dices,
     MapPin,
     Plus,
-    Ticket,
-    UserCheck,
     Users as UsersIcon,
     Image as ImageIcon,
     X,
@@ -17,8 +14,6 @@ import {
 import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage, isFirebaseConfigured } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/components/ui';
 import TimezoneSelect from '@/components/components/ui/TimezoneSelect';
@@ -26,8 +21,8 @@ import { QuestionBuilder } from '@/components/features/events/QuestionBuilder';
 import { CalendarSelector } from '@/components/features/events/CalendarSelector';
 import { VisibilityToggle, EventVisibility } from '@/components/features/events/VisibilityToggle';
 import { RegistrationQuestion } from '@/types/event';
-import { getServiceSupabase } from '@/lib/supabase'; // Import if needed for direct fetch, or use repository
 import { findById } from '@/lib/repositories/event.repository';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 // Note: EventFormData mirrors create-page
 interface EventFormData {
@@ -65,7 +60,7 @@ export default function EditEventPage() {
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
-    const { user, loading } = useAuth(); // Wait for user to be loaded
+    const { user } = useAuth(); // Wait for user to be loaded
 
     // Form State
     const [formData, setFormData] = useState<EventFormData>({
@@ -95,8 +90,6 @@ export default function EditEventPage() {
     // UI State
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [isEditingDescription, setIsEditingDescription] = useState(false);
-    const [isEditingPrice, setIsEditingPrice] = useState(false);
-    const [isEditingCapacity, setIsEditingCapacity] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -127,22 +120,10 @@ export default function EditEventPage() {
         async function loadEvent() {
             if (!id) return;
             try {
-                // We reuse findById repository. 
-                // However, findById might assume server context if imported from server repo? 
-                // findById in event.repository.ts checks for window.
-                // But it's better to fetch via API if we want to ensure permission logic, updates etc.
-                // Or just use findById since we are client side and it supports it (via supabase-browser or public URL).
-                // Wait, findById returns public data mostly.
-                // We need all data (including private fields if any).
-
                 const event = await findById(id);
                 if (!event) {
                     throw new Error('Event not found');
                 }
-
-                // Check ownership? 
-                // We can't strictly modify UI based on ownership here without user loaded.
-                // But submitting will fail.
 
                 // Parse Date
                 const d = new Date(event.date);
@@ -215,11 +196,24 @@ export default function EditEventPage() {
         try {
             let coverImageUrl = formData.imageUrl;
 
-            // Upload image to Firebase Storage if NEW file provided
-            if (formData.imageFile && storage && isFirebaseConfigured) {
-                const fileRef = ref(storage, `events/${Date.now()}_${formData.imageFile.name}`);
-                const snapshot = await uploadBytes(fileRef, formData.imageFile);
-                coverImageUrl = await getDownloadURL(snapshot.ref);
+            // Upload image to Supabase Storage if NEW file provided
+            if (formData.imageFile) {
+                const supabase = createSupabaseBrowserClient();
+                const fileExt = formData.imageFile.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `covers/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('events')
+                    .upload(filePath, formData.imageFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('events')
+                    .getPublicUrl(filePath);
+
+                coverImageUrl = publicUrl;
             }
 
             // Format date string
@@ -229,7 +223,6 @@ export default function EditEventPage() {
 
 
             // Prepare Update Payload
-            // We use the PI Route we just updated.
             const token = await user?.getIdToken();
             const res = await fetch(`/api/events/${id}`, {
                 method: 'PUT',
@@ -245,13 +238,8 @@ export default function EditEventPage() {
                     coverImage: coverImageUrl,
                     capacity: formData.capacity || 0,
                     price: formData.ticketPrice || 0,
-                    // New fields we added to PUT route?
-                    // NOTE: PUT route currently only extracts specific fields.
-                    // We added registrationQuestions in previous step.
                     registrationQuestions: formData.registrationQuestions,
-                    // TODO: Update PUT route to accept socialLinks, about, agenda, hosts, visibility, calendarId
-                    // For now, these might NOT persist if API doesn't handle them.
-                    // But User Request was specifically about QUESTIONS.
+                    // Note: Update API to handle other fields if needed
                 })
             });
 

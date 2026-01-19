@@ -43,7 +43,7 @@ export async function registerForEvent(
                 user_id: userId,
                 status: initialStatus,
                 registration_responses: (registrationResponses || {}) as unknown as Record<string, unknown>,
-            });
+            } as any);
 
         if (error) {
             console.error('[RegisterAction] Insert failed:', error);
@@ -91,7 +91,7 @@ export async function createEvent(input: CreateEventInput, organizerId: string):
             event_format: input.eventFormat as unknown as Record<string, unknown>[],
             presented_by: input.presentedBy,
             about: input.about,
-        })
+        } as any)
         .select()
         .single();
 

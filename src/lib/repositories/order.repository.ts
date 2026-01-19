@@ -1,23 +1,29 @@
-import {
-    collection,
-    doc,
-    setDoc,
-    getDoc,
-    serverTimestamp,
-    Timestamp,
-    updateDoc
-} from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { Order, OrderStatus } from '@/types/commerce';
 import { generateId } from '@/lib/utils';
-import { User } from '@/types/user';
-
-const ORDERS_COLLECTION = 'orders';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 /**
  * Order Repository
- * Handles payment intents and order tracking
+ * Handles payment intents and order tracking in Supabase
  */
+
+function normalizeOrder(data: any): Order {
+    return {
+        id: data.id,
+        userId: data.user_id,
+        eventId: data.event_id,
+        status: data.status as OrderStatus,
+        totalAmount: data.total_amount,
+        currency: data.currency,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        ticketTierId: data.ticket_tier_id,
+        quantity: data.quantity,
+        paymentProvider: data.payment_provider,
+        paymentIntentId: data.payment_intent_id
+    };
+}
 
 export async function createOrder(
     userId: string,
@@ -25,71 +31,60 @@ export async function createOrder(
     amount: number,
     currency: string = 'USD'
 ): Promise<Order> {
-    if (!db || !isFirebaseConfigured) {
-        throw new Error('Firebase not configured');
-    }
-
     const orderId = generateId();
-    const orderRef = doc(db, ORDERS_COLLECTION, orderId);
+    const supabaseBrowser = createSupabaseBrowserClient();
 
-    const newOrder: Order = {
-        id: orderId,
-        userId,
-        eventId,
-        status: 'pending_payment',
-        totalAmount: amount,
-        currency,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
+    const { data, error } = await supabaseBrowser
+        .from('orders' as any)
+        .insert({
+            id: orderId,
+            user_id: userId,
+            event_id: eventId,
+            total_amount: amount,
+            currency,
+            status: 'pending_payment',
+        })
+        .select()
+        .single();
 
-    try {
-        await setDoc(orderRef, {
-            ...newOrder,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-        return newOrder;
-    } catch (error) {
+    if (error) {
         console.error('[OrderRepo] Create failed:', error);
-        throw error;
+        throw new Error(error.message);
     }
+
+    return normalizeOrder(data);
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus, paymentDetails?: Partial<Order>): Promise<void> {
-    if (!db || !isFirebaseConfigured) return;
+    const supabaseBrowser = createSupabaseBrowserClient();
 
-    try {
-        const orderRef = doc(db, ORDERS_COLLECTION, orderId);
-        await updateDoc(orderRef, {
-            status,
-            ...paymentDetails,
-            updatedAt: serverTimestamp()
-        });
-    } catch (error) {
+    const updates: any = { status };
+    if (paymentDetails?.paymentIntentId) updates.payment_intent_id = paymentDetails.paymentIntentId;
+    if (paymentDetails?.paymentProvider) updates.payment_provider = paymentDetails.paymentProvider;
+    if (paymentDetails?.txHash) updates.tx_hash = paymentDetails.txHash;
+
+    const { error } = await supabaseBrowser
+        .from('orders' as any)
+        .update(updates)
+        .eq('id', orderId);
+
+    if (error) {
         console.error('[OrderRepo] Update status failed:', error);
         throw error;
     }
 }
 
 export async function findOrder(orderId: string): Promise<Order | null> {
-    if (!db || !isFirebaseConfigured) return null;
+    const { data, error } = await supabase
+        .from('orders' as any)
+        .select('*')
+        .eq('id', orderId)
+        .single();
 
-    try {
-        const orderRef = doc(db, ORDERS_COLLECTION, orderId);
-        const snap = await getDoc(orderRef);
-        if (snap.exists()) {
-            const data = snap.data();
-            return {
-                ...data,
-                id: snap.id,
-                createdAt: data.createdAt?.toDate?.().toISOString() || data.createdAt,
-                updatedAt: data.updatedAt?.toDate?.().toISOString() || data.updatedAt,
-            } as Order;
-        }
-        return null;
-    } catch (error) {
+    if (error || !data) {
         console.error('[OrderRepo] Find failed:', error);
         return null;
     }
+
+    return normalizeOrder(data);
 }

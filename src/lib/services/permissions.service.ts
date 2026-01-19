@@ -5,7 +5,6 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { adminDb } from '@/lib/firebase-admin';
 
 export interface UserPermissions {
     canEdit: boolean;
@@ -21,7 +20,7 @@ export async function canManageEvent(userId: string, eventId: string): Promise<b
     if (!userId || !eventId) return false;
 
     try {
-        // 1. Check Supabase (Primary)
+        // Check Supabase (Primary)
         // Check if organizer OR in event_hosts
         const { data: event, error } = await supabase
             .from('events')
@@ -43,21 +42,6 @@ export async function canManageEvent(userId: string, eventId: string): Promise<b
             if (hostEntry) return true;
         }
 
-        // 2. Fallback to Firebase (Legacy/Dev)
-        // Only run if adminDb is successfully initialized
-        if (adminDb) {
-            try {
-                const doc = await adminDb.collection('events').doc(eventId).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data?.organizerId === userId) return true;
-                }
-            } catch (fbError) {
-                // Ignore firebase errors in fallback path
-                console.warn('[Permissions] Firebase fallback skipped:', fbError);
-            }
-        }
-
         return false;
     } catch (error) {
         console.error('[Permissions] Error checking management permission:', error);
@@ -71,7 +55,6 @@ export async function canManageEvent(userId: string, eventId: string): Promise<b
  */
 export async function canCheckInGuest(userId: string, eventId: string): Promise<boolean> {
     // For now, only organizers can check in.
-    // Future: Check 'hosts' array or 'staff' role.
     return canManageEvent(userId, eventId);
 }
 
@@ -94,7 +77,7 @@ export async function getEventPermissions(userId: string, eventId: string): Prom
     // Default: No permissions
     return {
         canEdit: false,
-        canCheckIn: false, // Future: Staff logic
+        canCheckIn: false,
         canInvite: false,
         canViewAnalytics: false
     };

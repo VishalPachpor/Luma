@@ -1,36 +1,11 @@
 /**
  * User Repository
  * Data access layer for users
- * Persists user profiles to Firestore for public access
+ * Persists user profiles to Supabase profiles table
  */
 
-import {
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc,
-    serverTimestamp,
-    collection,
-    query,
-    where,
-    getDocs
-} from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import type { User } from '@/types';
-
-const USERS_COLLECTION = 'users';
-
-// Mock user for development fallback
-const mockUser: User = {
-    id: '1',
-    name: 'Jane Doe',
-    email: 'jane@apple.com',
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('Jane Doe')}&background=random`,
-    role: 'user',
-    bio: 'Digital artist and event organizer based in SF.',
-    subscriberCount: 42,
-    joinedAt: new Date().toISOString()
-};
 
 /**
  * Get user by ID (Public Profile)
@@ -38,23 +13,28 @@ const mockUser: User = {
 export async function findById(id: string): Promise<User | null> {
     if (!id) return null;
 
-    if (!db || !isFirebaseConfigured) {
-        return id === '1' ? mockUser : null;
-    }
-
     try {
-        const docRef = doc(db, USERS_COLLECTION, id);
-        const snapshot = await getDoc(docRef);
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', id)
+            .single();
 
-        if (snapshot.exists()) {
-            const data = snapshot.data();
-            return {
-                ...data,
-                id: snapshot.id,
-                joinedAt: data.joinedAt?.toDate?.()?.toISOString() || data.joinedAt
-            } as User;
-        }
-        return null;
+        if (error || !data) return null;
+
+        return {
+            id: data.id,
+            name: data.display_name || '',
+            email: data.email || '',
+            avatar: data.avatar_url || '',
+            role: 'user', // Default role for now
+            bio: data.bio || '',
+            website: data.website || '',
+            twitterHandle: data.twitter_handle || '',
+            location: data.location || '',
+            joinedAt: data.created_at,
+            subscriberCount: 0 // Placeholder until we link to subscriptions
+        };
     } catch (error) {
         console.error('[UserRepo] Error fetching user:', error);
         return null;
@@ -62,67 +42,50 @@ export async function findById(id: string): Promise<User | null> {
 }
 
 /**
- * Sync Firebase Auth user to Firestore (Create/Update on login)
+ * Sync Auth user to Profiles (Update on login)
  */
-export async function syncUser(firebaseUser: any): Promise<User> {
-    if (!db || !isFirebaseConfigured) {
-        return mockUser;
-    }
+export async function syncUser(authUser: any): Promise<User> {
+    // Supabase handles profile creation via triggers usually.
+    // This function ensures client-side metadata is up to date if needed.
 
-    const { uid, email, displayName, photoURL } = firebaseUser;
-    const userRef = doc(db, USERS_COLLECTION, uid);
+    // For now, we assume the user exists or is handled by triggers.
+    // We just return the profile.
+    const profile = await findById(authUser.id);
+    if (profile) return profile;
 
-    try {
-        const snapshot = await getDoc(userRef);
-
-        if (!snapshot.exists()) {
-            // Create new user profile
-            const newUser: User = {
-                id: uid,
-                name: displayName || 'Anonymous',
-                email: email || '',
-                avatar: photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || email || 'User')}&background=random`,
-                role: 'user',
-                joinedAt: new Date().toISOString(),
-                subscriberCount: 0
-            };
-
-            await setDoc(userRef, {
-                ...newUser,
-                joinedAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-
-            return newUser;
-        } else {
-            // Update existing user (sync basic auth details if changed, but preserve profile)
-            // We typically only update name/avatar if they are missing or if we want to auto-sync
-            // For now, let's just return the existing profile
-            const data = snapshot.data();
-            return {
-                ...data,
-                id: snapshot.id,
-                joinedAt: data.joinedAt?.toDate?.()?.toISOString() || data.joinedAt
-            } as User;
-        }
-    } catch (error) {
-        console.error('[UserRepo] Error syncing user:', error);
-        throw error;
-    }
+    // If no profile (trigger failed/delayed), we might want to return a transient user object
+    return {
+        id: authUser.id,
+        name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+        email: authUser.email || '',
+        avatar: authUser.user_metadata?.avatar_url || '',
+        role: 'user',
+        joinedAt: new Date().toISOString()
+    };
 }
 
 /**
  * Update user profile
  */
 export async function updateProfile(id: string, updates: Partial<User>): Promise<void> {
-    if (!db || !isFirebaseConfigured) return;
+    const { createSupabaseBrowserClient } = await import('@/lib/supabase-browser');
+    const supabaseBrowser = createSupabaseBrowserClient();
+
+    const supabaseUpdates: any = {};
+    if (updates.name) supabaseUpdates.display_name = updates.name;
+    if (updates.bio) supabaseUpdates.bio = updates.bio;
+    if (updates.location) supabaseUpdates.location = updates.location;
+    if (updates.website) supabaseUpdates.website = updates.website;
+    if (updates.twitterHandle) supabaseUpdates.twitter_handle = updates.twitterHandle;
+    if (updates.avatar) supabaseUpdates.avatar_url = updates.avatar;
 
     try {
-        const userRef = doc(db, USERS_COLLECTION, id);
-        await updateDoc(userRef, {
-            ...updates,
-            updatedAt: serverTimestamp()
-        });
+        const { error } = await supabaseBrowser
+            .from('profiles')
+            .update(supabaseUpdates)
+            .eq('id', id);
+
+        if (error) throw error;
     } catch (error) {
         console.error('[UserRepo] Error updating profile:', error);
         throw error;
@@ -130,8 +93,8 @@ export async function updateProfile(id: string, updates: Partial<User>): Promise
 }
 
 /**
- * Get current user (Derived from Auth state ideally, but here for compatibility)
+ * Get current user
  */
-export async function getCurrentUser(): Promise<User> {
-    return mockUser;
+export async function getCurrentUser(): Promise<User | null> {
+    return null;
 }

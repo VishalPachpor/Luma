@@ -1,6 +1,6 @@
 /**
  * Account Section
- * Full profile editing with Firebase persistence
+ * Full profile editing with Supabase persistence
  */
 
 'use client';
@@ -19,8 +19,7 @@ import AccountSyncing from '../components/AccountSyncing';
 import ActiveDevices from '../components/ActiveDevices';
 import DeleteAccount from '../components/DeleteAccount';
 import { SocialLinks as SocialLinksType } from '@/types/settings';
-import { updateProfile as updateAuthProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 export default function AccountSection() {
     const { user } = useAuth();
@@ -60,20 +59,25 @@ export default function AccountSection() {
     }, [settings, firstName, lastName, username, bio, socialLinks]);
 
     const handleSave = async () => {
-        if (!user || !auth) return;
+        if (!user) return;
 
         setIsSaving(true);
         setSaveError(null);
         setSaveSuccess(false);
 
         try {
-            // Update Firebase Auth display name
             const displayName = `${firstName} ${lastName}`.trim();
+            const supabase = createSupabaseBrowserClient();
+
+            // Update Supabase Auth Metadata (Display Name)
             if (displayName && user.displayName !== displayName) {
-                await updateAuthProfile(user, { displayName });
+                const { error: authError } = await supabase.auth.updateUser({
+                    data: { display_name: displayName }
+                });
+                if (authError) throw authError;
             }
 
-            // Update Firestore profile
+            // Update User Profile via Context (uses Supabase now)
             await updateProfile({
                 firstName,
                 lastName,

@@ -1,32 +1,23 @@
 /**
  * Invite Service
- * Manages event invitations via email using Resend API
+ * Manages event invitations via Supabase 'invitations' table
  */
 
-import {
-    collection,
-    doc,
-    setDoc,
-    getDocs,
-    updateDoc,
-    query,
-    where,
-    serverTimestamp,
-} from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 export interface EventInvite {
     id: string;
     eventId: string;
     email: string;
     sentBy: string;
-    sentByName: string;
+    sentByName: string; // Not stored in DB but joined via invited_by
     status: 'pending' | 'accepted' | 'declined';
     sentAt: Date;
 }
 
 /**
- * Send invite email via API
+ * Send invite email via API and record in Supabase
  */
 export async function sendInviteEmail(
     eventId: string,
@@ -35,6 +26,28 @@ export async function sendInviteEmail(
     senderInfo: { uid: string; name: string; email: string }
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const supabaseBrowser = createSupabaseBrowserClient();
+
+        // 1. Insert into invitations table
+        const { error: dbError } = await supabaseBrowser
+            .from('invitations' as any)
+            .insert({
+                event_id: eventId,
+                email: recipientEmail,
+                invited_by: senderInfo.uid,
+                status: 'pending'
+            });
+
+        if (dbError) {
+            // If already invited, maybe ignore?
+            if (dbError.code === '23505') { // Unique violation
+                return { success: false, error: 'User already invited' };
+            }
+            throw dbError;
+        }
+
+        // 2. Call API to send actual email (Resend)
+        // We keep the API route for sending email as it needs secret keys
         const response = await fetch('/api/invites', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -50,21 +63,17 @@ export async function sendInviteEmail(
         const data = await response.json();
 
         if (!response.ok) {
+            // Rollback DB insert? Or just leave as pending but failed to send?
+            // For now, return error.
             return { success: false, error: data.error };
         }
 
-        // Save invite to Firestore
-        if (db && isFirebaseConfigured) {
-            const inviteRef = doc(collection(db, 'events', eventId, 'invites'));
-            await setDoc(inviteRef, {
-                eventId,
-                email: recipientEmail,
-                sentBy: senderInfo.uid,
-                sentByName: senderInfo.name,
-                status: 'pending',
-                sentAt: serverTimestamp(),
-            });
-        }
+        // Update status to 'sent' if email success
+        await supabaseBrowser
+            .from('invitations' as any)
+            .update({ status: 'sent' })
+            .eq('event_id', eventId)
+            .eq('email', recipientEmail);
 
         return { success: true };
     } catch (error) {
@@ -80,23 +89,22 @@ export async function sendInviteEmail(
  * Get all invites for an event
  */
 export async function getEventInvites(eventId: string): Promise<EventInvite[]> {
-    if (!db || !isFirebaseConfigured) {
-        return [];
-    }
+    const { data, error } = await supabase
+        .from('invitations' as any)
+        .select('*, invited_by_profile:invited_by(display_name)')
+        .eq('event_id', eventId);
 
-    try {
-        const invitesRef = collection(db, 'events', eventId, 'invites');
-        const snapshot = await getDocs(invitesRef);
+    if (error || !data) return [];
 
-        return snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            sentAt: doc.data().sentAt?.toDate() || new Date(),
-        })) as EventInvite[];
-    } catch (error) {
-        console.error('Error getting invites:', error);
-        return [];
-    }
+    return data.map((row: any) => ({
+        id: row.id,
+        eventId: row.event_id,
+        email: row.email,
+        sentBy: row.invited_by,
+        sentByName: row.invited_by_profile?.display_name || 'Unknown',
+        status: row.status as any,
+        sentAt: new Date(row.created_at),
+    }));
 }
 
 /**
@@ -107,10 +115,9 @@ export async function updateInviteStatus(
     inviteId: string,
     status: 'accepted' | 'declined'
 ): Promise<void> {
-    if (!db || !isFirebaseConfigured) {
-        return;
-    }
-
-    const inviteRef = doc(db, 'events', eventId, 'invites', inviteId);
-    await updateDoc(inviteRef, { status });
+    const supabaseBrowser = createSupabaseBrowserClient();
+    await supabaseBrowser
+        .from('invitations' as any)
+        .update({ status })
+        .eq('id', inviteId);
 }

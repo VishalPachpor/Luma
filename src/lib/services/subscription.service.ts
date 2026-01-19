@@ -1,19 +1,9 @@
 /**
  * Calendar Subscription Service
- * Manages user subscriptions to calendars via Firestore
+ * Manages user subscriptions to calendars via Calendar Repository
  */
 
-import {
-    collection,
-    doc,
-    setDoc,
-    deleteDoc,
-    getDocs,
-    query,
-    where,
-    serverTimestamp,
-} from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import * as calendarRepo from '@/lib/repositories/calendar.repository';
 
 export interface CalendarSubscription {
     userId: string;
@@ -25,52 +15,31 @@ export interface CalendarSubscription {
  * Subscribe user to a calendar
  */
 export async function subscribeToCalendar(userId: string, calendarId: string): Promise<void> {
-    if (!db || !isFirebaseConfigured) {
-        console.warn('Firebase not configured, subscription not saved');
-        return;
-    }
-
-    const subscriptionRef = doc(db, 'subscriptions', `${userId}_${calendarId}`);
-    await setDoc(subscriptionRef, {
-        userId,
+    await calendarRepo.subscribe({
         calendarId,
-        subscribedAt: serverTimestamp(),
-    });
+        notifyNewEvents: true,
+        notifyReminders: true
+    }, userId);
 }
 
 /**
  * Unsubscribe user from a calendar
  */
 export async function unsubscribeFromCalendar(userId: string, calendarId: string): Promise<void> {
-    if (!db || !isFirebaseConfigured) {
-        console.warn('Firebase not configured');
-        return;
-    }
-
-    const subscriptionRef = doc(db, 'subscriptions', `${userId}_${calendarId}`);
-    await deleteDoc(subscriptionRef);
+    await calendarRepo.unsubscribe(calendarId, userId);
 }
 
 /**
  * Get all calendars a user is subscribed to
  */
 export async function getUserSubscriptions(userId: string): Promise<string[]> {
-    if (!db || !isFirebaseConfigured) {
-        console.warn('Firebase not configured');
-        return [];
-    }
-
-    const subscriptionsRef = collection(db, 'subscriptions');
-    const q = query(subscriptionsRef, where('userId', '==', userId));
-    const snapshot = await getDocs(q);
-
-    return snapshot.docs.map(doc => doc.data().calendarId);
+    const calendars = await calendarRepo.findSubscriptions(userId);
+    return calendars.map(c => c.id);
 }
 
 /**
  * Check if user is subscribed to a specific calendar
  */
 export async function isSubscribed(userId: string, calendarId: string): Promise<boolean> {
-    const subscriptions = await getUserSubscriptions(userId);
-    return subscriptions.includes(calendarId);
+    return calendarRepo.isSubscribed(calendarId, userId);
 }

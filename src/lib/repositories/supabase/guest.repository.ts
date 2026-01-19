@@ -36,16 +36,18 @@ export async function createGuest(
     orderId: string = 'manual',
     registrationResponses?: Record<string, unknown>
 ): Promise<Guest> {
+    const payload: any = {
+        event_id: eventId,
+        user_id: userId,
+        ticket_tier_id: ticketTierId,
+        status: initialStatus,
+        order_id: orderId !== 'manual' ? orderId : null,
+        registration_responses: registrationResponses || {},
+    };
+
     const { data, error } = await supabase
         .from('guests')
-        .insert({
-            event_id: eventId,
-            user_id: userId,
-            ticket_tier_id: ticketTierId,
-            status: initialStatus,
-            order_id: orderId !== 'manual' ? orderId : null,
-            registration_responses: registrationResponses || {},
-        })
+        .insert(payload)
         .select()
         .single();
 
