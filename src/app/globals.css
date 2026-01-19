@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+/* Base Tokens (Luma System) */
+:root {
+  /* 
+   * Layer 1: Base Background
+   * Deep, rich dark background instead of flat black.
+   */
+  --bg-base: #0E0F13;
+
+  /* 
+   * Layer 2: Surfaces (Cards, Panels)
+   * Opacity-based white layers for depth.
+   */
+  --surface-1: rgba(255, 255, 255, 0.03);
+  /* Cards, Inputs */
+  --surface-2: rgba(255, 255, 255, 0.06);
+  /* Hovers, Secondary elements */
+  --surface-3: rgba(255, 255, 255, 0.10);
+  /* Active states, Highlights */
+
+  /* 
+   * Layer 3: Accent System (Dynamic)
+   * These are overridden by ThemeContext.
+   * Default values provided here.
+   */
+  --accent-main: linear-gradient(135deg, #7B61FF, #FF5ACD);
+  /* Luma Purple/Pink default */
+  --accent-secondary: linear-gradient(135deg, #6C8CFF, #8B7CF6);
+  --accent-glow: rgba(123, 97, 255, 0.4);
+  --bg-glow: rgba(123, 97, 255, 0.05);
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+
+  /* Legacy tokens (keeping for backward compatibility) */
+  --background: #0E0F13;
+  --foreground: #ffffff;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-inter), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Subtle vertical gradient for the whole page */
+    background-image: linear-gradient(180deg, #0E0F13 0%, #12141A 100%);
+    background-attachment: fixed;
+  }
+}
+
+/* Utilities */
+@layer utilities {
+  .glass-panel {
+    background-color: var(--surface-1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+  }
+
+  .glass-panel-hover {
+    transition: background-color 0.2s ease;
+  }
+
+  .glass-panel-hover:hover {
+    background-color: var(--surface-2);
+  }
+
+  /* Text Gradient Utility */
+  .text-gradient {
+    background: var(--accent-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow Effect */
+  .glow-sm {
+    box-shadow: 0 0 20px -5px var(--accent-glow);
+  }
+}

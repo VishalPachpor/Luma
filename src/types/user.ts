@@ -1,0 +1,38 @@
+/**
+ * User Types
+ * Centralized TypeScript type definitions for users
+ */
+
+export type UserRole = 'user' | 'admin';
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    role: UserRole;
+
+    // Profile fields
+    bio?: string;
+    socialLinks?: {
+        website?: string;
+        twitter?: string;
+        instagram?: string;
+        linkedin?: string;
+    };
+    subscriberCount?: number;
+    joinedAt?: string;
+}
+
+export type CreateUserInput = Omit<User, 'id'> & { id?: string };
+
+/**
+ * Default mock user for development
+ */
+export const MOCK_USER: User = {
+    id: '1',
+    name: 'Jane Doe',
+    email: 'jane@apple.com',
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('Jane Doe')}&background=random`,
+    role: 'user',
+};

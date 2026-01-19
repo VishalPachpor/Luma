@@ -1,0 +1,8 @@
+
+{
+  "name": "Luma Glossy - Event Platform",
+  "description": "A high-end, Apple-inspired event management and discovery platform with a glossy black luxury theme, featuring advanced calendar views and event tracking.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
