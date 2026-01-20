@@ -8,6 +8,7 @@
 import { Suspense } from 'react';
 import { Settings } from 'lucide-react';
 import { Event, Category, FeaturedCalendar } from '@/types';
+import { City } from '@/types/city'; // Import City type
 import { useStore } from '@/store/useStore';
 import { Footer } from '@/components/components/layout';
 import Navbar from '@/components/components/layout/Navbar';
@@ -23,12 +24,14 @@ interface MainContentProps {
     events: Event[];
     categories: Category[];
     featuredCalendars: FeaturedCalendar[];
+    cities: City[];
 }
 
 export default function MainContent({
     events,
     categories,
     featuredCalendars,
+    cities,
 }: MainContentProps) {
     const { activeTab, searchQuery, selectedCategory } = useStore();
 
@@ -56,6 +59,7 @@ export default function MainContent({
                     <CategoryDiscovery
                         categories={categories}
                         featuredCalendars={featuredCalendars}
+                        cities={cities}
                     />
                 );
             case 'settings':

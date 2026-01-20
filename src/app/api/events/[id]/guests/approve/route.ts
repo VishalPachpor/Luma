@@ -36,11 +36,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
         const hostId = user.id;
 
-        const { data: event, error: eventError } = await supabase
+        const { data: eventData, error: eventError } = await supabase
             .from('events')
             .select('id, title, organizer_id')
             .eq('id', eventId)
             .single();
+
+        const event = eventData as { id: string; title: string; organizer_id: string } | null;
 
         if (eventError || !event) {
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
@@ -50,12 +52,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
             return NextResponse.json({ error: 'Only the host can approve guests' }, { status: 403 });
         }
 
-        const { data: guestData, error: guestError } = await supabase
+        const { data: rawGuestData, error: guestError } = await supabase
             .from('guests')
             .select('*')
             .eq('id', guestId)
             .eq('event_id', eventId)
             .single();
+
+        const guestData = rawGuestData as { id: string; user_id: string; status: string } | null;
 
         if (guestError || !guestData) {
             return NextResponse.json({ error: 'Guest not found' }, { status: 404 });
@@ -67,8 +71,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
             }, { status: 400 });
         }
 
-        const { error: updateError } = await supabase
-            .from('guests')
+        const { error: updateError } = await (supabase
+            .from('guests') as any)
             .update({
                 status: 'issued',
                 approved_by: hostId,
@@ -82,8 +86,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         // Sync with rsvps table if exists
-        await supabase
-            .from('rsvps')
+        await (supabase
+            .from('rsvps') as any)
             .update({ status: 'going' })
             .eq('event_id', eventId)
             .eq('user_id', guestData.user_id);

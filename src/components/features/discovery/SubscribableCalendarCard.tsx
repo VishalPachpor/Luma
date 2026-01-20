@@ -12,10 +12,10 @@ import { MapPin, Loader2 } from 'lucide-react';
 import { FeaturedCalendar } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-    subscribeToCalendar,
-    unsubscribeFromCalendar,
-    isSubscribed,
-} from '@/lib/services/subscription.service';
+    subscribeToCalendarAction,
+    unsubscribeFromCalendarAction,
+    checkSubscriptionStatus,
+} from '@/app/actions/subscription.actions';
 
 interface SubscribableCalendarCardProps {
     calendar: FeaturedCalendar;
@@ -30,14 +30,14 @@ export default function SubscribableCalendarCard({ calendar, index }: Subscribab
 
     useEffect(() => {
         const checkSubscription = async () => {
-            if (user) {
-                const status = await isSubscribed(user.uid, calendar.id);
+            if (user?.uid) {
+                const status = await checkSubscriptionStatus(user.uid, calendar.id);
                 setSubscribed(status);
             }
             setChecking(false);
         };
         checkSubscription();
-    }, [user, calendar.id]);
+    }, [user?.uid, calendar.id]);
 
     const handleSubscribe = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -49,14 +49,15 @@ export default function SubscribableCalendarCard({ calendar, index }: Subscribab
         setLoading(true);
         try {
             if (subscribed) {
-                await unsubscribeFromCalendar(user.uid, calendar.id);
+                await unsubscribeFromCalendarAction(user.uid, calendar.id);
                 setSubscribed(false);
             } else {
-                await subscribeToCalendar(user.uid, calendar.id);
+                await subscribeToCalendarAction(user.uid, calendar.id);
                 setSubscribed(true);
             }
         } catch (err) {
             console.error('Subscription error:', err);
+            alert('Failed to update subscription. Please try again.');
         } finally {
             setLoading(false);
         }

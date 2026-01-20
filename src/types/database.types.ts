@@ -537,10 +537,188 @@ export interface Database {
                     }
                 ]
             }
+            ticket_tiers: {
+                Row: {
+                    id: string
+                    event_id: string
+                    name: string
+                    description: string | null
+                    price: number
+                    currency: string
+                    ticket_type: string
+                    inventory: number
+                    sold_count: number
+                    max_per_order: number
+                    sales_start: string | null
+                    sales_end: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    event_id: string
+                    name: string
+                    description?: string | null
+                    price: number
+                    currency?: string
+                    ticket_type: string
+                    inventory: number
+                    sold_count?: number
+                    max_per_order?: number
+                    sales_start?: string | null
+                    sales_end?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    event_id?: string
+                    name?: string
+                    description?: string | null
+                    price?: number
+                    currency?: string
+                    ticket_type?: string
+                    inventory?: number
+                    sold_count?: number
+                    max_per_order?: number
+                    sales_start?: string | null
+                    sales_end?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "ticket_tiers_event_id_fkey"
+                        columns: ["event_id"]
+                        referencedRelation: "events"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            calendar_people: {
+                Row: {
+                    id: string
+                    calendar_id: string
+                    email: string
+                    name: string | null
+                    avatar_url: string | null
+                    source: string
+                    source_event_id: string | null
+                    joined_at: string
+                    events_attended: number
+                    last_event_at: string | null
+                    subscribed: boolean
+                    unsubscribed_at: string | null
+                    tags: string[]
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    calendar_id: string
+                    email: string
+                    name?: string | null
+                    avatar_url?: string | null
+                    source: string
+                    source_event_id?: string | null
+                    joined_at?: string
+                    events_attended?: number
+                    last_event_at?: string | null
+                    subscribed?: boolean
+                    unsubscribed_at?: string | null
+                    tags?: string[]
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    calendar_id?: string
+                    email?: string
+                    name?: string | null
+                    avatar_url?: string | null
+                    source?: string
+                    source_event_id?: string | null
+                    joined_at?: string
+                    events_attended?: number
+                    last_event_at?: string | null
+                    subscribed?: boolean
+                    unsubscribed_at?: string | null
+                    tags?: string[]
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "calendar_people_calendar_id_fkey"
+                        columns: ["calendar_id"]
+                        referencedRelation: "calendars"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "calendar_people_source_event_id_fkey"
+                        columns: ["source_event_id"]
+                        referencedRelation: "events"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            categories: {
+                Row: {
+                    id: string
+                    name: string
+                    slug: string
+                    icon_name: string
+                    color: string
+                    bg_color: string
+                    display_order: number
+                    is_active: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    slug: string
+                    icon_name: string
+                    color: string
+                    bg_color: string
+                    display_order?: number
+                    is_active?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    slug?: string
+                    icon_name?: string
+                    color?: string
+                    bg_color?: string
+                    display_order?: number
+                    is_active?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
         }
 
         Views: {
-            [_ in never]: never
+            categories_with_counts: {
+                Row: {
+                    id: string
+                    name: string
+                    slug: string
+                    icon_name: string
+                    color: string
+                    bg_color: string
+                    display_order: number
+                    is_active: boolean
+                    created_at: string
+                    updated_at: string
+                    event_count: number
+                }
+            }
         }
         Functions: {
             search_events: {
@@ -548,6 +726,16 @@ export interface Database {
                     query_text: string
                 }
                 Returns: Database['public']['Tables']['events']['Row'][]
+            },
+            upsert_calendar_person: {
+                Args: {
+                    p_calendar_id: string
+                    p_email: string
+                    p_name: string | null
+                    p_source: string
+                    p_source_event_id?: string | null
+                }
+                Returns: string
             }
         }
         Enums: {

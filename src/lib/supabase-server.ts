@@ -10,7 +10,7 @@ import { Database } from '@/types/database.types';
 export async function createSupabaseServerClient() {
     const cookieStore = await cookies();
 
-    return createServerClient<Database>(
+    return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
@@ -42,7 +42,7 @@ export async function createSupabaseServerClient() {
  * For server-side operations that bypass RLS
  */
 export function createSupabaseAdminClient() {
-    return createServerClient<Database>(
+    return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {

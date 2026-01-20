@@ -322,7 +322,7 @@ export async function findSubscriptions(userId: string): Promise<Calendar[]> {
 
         return data
             .filter(row => row.calendars)
-            .map(row => toCalendar(row.calendars as Record<string, unknown>));
+            .map(row => toCalendar(row.calendars as unknown as Record<string, unknown>));
     } catch (error) {
         console.error('[CalendarRepo] findSubscriptions failed:', error);
         return [];

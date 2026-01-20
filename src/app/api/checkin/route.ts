@@ -24,12 +24,14 @@ export async function POST(request: NextRequest) {
         const supabase = getServiceSupabase();
 
         // 2. Find guest by QR token (Bypass RLS)
-        const { data: guest, error: findError } = await supabase
+        const { data: guestData, error: findError } = await supabase
             .from('guests')
             .select('id, user_id, ticket_tier_id, status, qr_token')
             .eq('event_id', eventId)
             .eq('qr_token', qrToken)
             .maybeSingle();
+
+        const guest = guestData as { id: string; user_id: string; ticket_tier_id: string | null; status: string; qr_token: string } | null;
 
         if (findError) {
             console.error('[CheckIn API] Find error:', findError);
@@ -66,8 +68,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Update status to 'scanned'
-        const { error: updateError } = await supabase
-            .from('guests')
+        const { error: updateError } = await (supabase
+            .from('guests') as any)
             .update({
                 status: 'scanned',
                 checked_in_at: new Date().toISOString()

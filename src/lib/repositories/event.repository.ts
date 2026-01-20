@@ -8,8 +8,12 @@ import type { Event, CreateEventInput } from '@/types';
 import type { Database } from '@/types/database.types';
 import { generateId } from '@/lib/utils';
 
+type EventRow = Database['public']['Tables']['events']['Row'];
+type EventInsert = Database['public']['Tables']['events']['Insert'];
+type EventUpdate = Database['public']['Tables']['events']['Update'];
+
 // Create supabase client for read operations (works in both server and client)
-const getSupabaseClient = () => {
+const getPublicClient = () => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -18,11 +22,11 @@ const getSupabaseClient = () => {
         return null;
     }
 
-    return createClient<Database>(url, anonKey);
+    return createClient(url, anonKey);
 };
 
 // Create service role client for write operations (server-only)
-const getServiceClient = () => {
+const getAdminClient = () => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -30,41 +34,41 @@ const getServiceClient = () => {
         throw new Error('Service role key required for this operation');
     }
 
-    return createClient<Database>(url, serviceKey, {
+    return createClient(url, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false }
     });
 };
 
 // Mock data for fallback when fetch fails or no data
-const mockEvents: Event[] = [];
+const failedFetchFallback: Event[] = [];
 
 // Helper to normalize Supabase data to Event type
-function normalizeEvent(item: any): Event {
+function normalizeEvent(item: EventRow): Event {
     return {
         id: item.id,
         title: item.title,
         description: item.description || '',
-        date: item.date || item.start_time || '',
+        date: item.date || '', // date is string in DB
         location: item.location || '',
         city: item.city || '',
         coords: { lat: item.latitude || 0, lng: item.longitude || 0 },
         coverImage: item.cover_image || '',
         attendees: item.attendee_count || 0,
-        tags: (item.tags as string[]) || [],
+        tags: item.tags || [],
         organizer: item.organizer_name || '',
-        organizerId: item.organizer_id || '',
-        calendarId: item.calendar_id ?? undefined,
-        capacity: item.capacity ?? undefined,
-        price: item.price ?? undefined,
+        organizerId: item.organizer_id,
+        calendarId: item.calendar_id || undefined,
+        capacity: item.capacity || undefined,
+        price: item.price || undefined,
         status: (item.status as 'published' | 'draft' | 'archived') || 'published',
         visibility: (item.visibility as 'public' | 'private') || 'public',
-        requireApproval: item.require_approval ?? undefined,
-        socialLinks: item.social_links as any,
-        agenda: item.agenda as any,
-        hosts: item.hosts as any,
-        about: item.about as any,
-        presentedBy: item.presented_by ?? undefined,
-        registrationQuestions: (item.registration_questions as any) || [],
+        requireApproval: item.require_approval || undefined,
+        socialLinks: (item.social_links as any) || {}, // Json type
+        agenda: (item.agenda as any) || [], // Json type
+        hosts: (item.hosts as any) || [], // Json type
+        about: (item.about as any) || [], // Json type
+        presentedBy: item.presented_by || undefined,
+        registrationQuestions: (item.registration_questions as any) || [], // Json type
         createdAt: item.created_at,
         updatedAt: item.updated_at,
     };
@@ -75,8 +79,8 @@ function normalizeEvent(item: any): Event {
  */
 export async function findAll(): Promise<Event[]> {
     try {
-        const client = getSupabaseClient();
-        if (!client) return mockEvents;
+        const client = getPublicClient();
+        if (!client) return failedFetchFallback;
 
         const { data, error } = await client
             .from('events')
@@ -86,13 +90,13 @@ export async function findAll(): Promise<Event[]> {
 
         if (error || !data) {
             console.log('[EventRepo] Error fetching events from Supabase:', error);
-            return mockEvents;
+            return failedFetchFallback;
         }
 
         return data.map(normalizeEvent);
     } catch (error) {
         console.error('[EventRepo] Error fetching events from Supabase:', error);
-        return mockEvents;
+        return failedFetchFallback;
     }
 }
 
@@ -103,7 +107,7 @@ export async function findById(id: string): Promise<Event | null> {
     if (!id) return null;
 
     try {
-        const client = getSupabaseClient();
+        const client = getPublicClient();
         if (!client) return null;
 
         const { data, error } = await client
@@ -136,7 +140,7 @@ export async function findByAttendee(userId: string): Promise<Event[]> {
  */
 export async function findByCity(city: string): Promise<Event[]> {
     try {
-        const supabase = getServiceClient();
+        const supabase = getAdminClient();
         const { data, error } = await supabase
             .from('events')
             .select('*')
@@ -156,7 +160,7 @@ export async function search(queryStr: string): Promise<Event[]> {
     if (!queryStr || queryStr.length < 2) return [];
 
     try {
-        const supabase = getServiceClient();
+        const supabase = getAdminClient();
         // Simple ILIKE search on title or description
         const { data, error } = await supabase
             .from('events')
@@ -176,7 +180,7 @@ export async function search(queryStr: string): Promise<Event[]> {
  */
 export async function findByTag(tag: string): Promise<Event[]> {
     try {
-        const supabase = getServiceClient();
+        const supabase = getAdminClient();
         const { data, error } = await supabase
             .from('events')
             .select('*')
@@ -194,8 +198,8 @@ export async function findByTag(tag: string): Promise<Event[]> {
  */
 export async function getUniqueCities(): Promise<string[]> {
     try {
-        const supabase = getServiceClient();
-        const { data } = await supabase.from('events').select('city');
+        const supabase = getAdminClient();
+        const { data } = await supabase.from('events').select('*');
         if (!data) return [];
         // distinct
         const cities = new Set(data.map(d => d.city).filter(Boolean));
@@ -209,7 +213,7 @@ export async function getUniqueCities(): Promise<string[]> {
  * Create a new event
  */
 export async function create(input: CreateEventInput): Promise<Event> {
-    const supabase = getServiceClient();
+    const supabase = getAdminClient();
     const eventId = input.id || generateId();
 
     // Parse date safely
@@ -232,35 +236,37 @@ export async function create(input: CreateEventInput): Promise<Event> {
         throw new Error('Organizer ID is required to create an event');
     }
 
+    const payload: EventInsert = {
+        id: eventId,
+        title: input.title,
+        description: input.description,
+        date: isoDate,
+        location: input.location,
+        city: input.city,
+        latitude: input.coords?.lat || 0,
+        longitude: input.coords?.lng || 0,
+        cover_image: input.coverImage,
+        attendee_count: input.attendees || 0,
+        tags: input.tags || [],
+        organizer_name: input.organizer,
+        organizer_id: input.organizerId,
+        calendar_id: input.calendarId,
+        capacity: input.capacity,
+        price: input.price,
+        status: input.status || 'published',
+        visibility: input.visibility || 'public',
+        require_approval: input.requireApproval || false,
+        social_links: (input.socialLinks || {}) as any,
+        agenda: (input.agenda || []) as any,
+        hosts: (input.hosts || []) as any,
+        about: input.about,
+        presented_by: input.presentedBy,
+        registration_questions: (input.registrationQuestions || []) as any,
+    };
+
     const { data, error } = await supabase
         .from('events')
-        .insert({
-            id: eventId,
-            title: input.title,
-            description: input.description,
-            date: isoDate,
-            location: input.location,
-            city: input.city,
-            latitude: input.coords?.lat || 0,
-            longitude: input.coords?.lng || 0,
-            cover_image: input.coverImage,
-            attendee_count: input.attendees || 0,
-            tags: input.tags || [],
-            organizer_name: input.organizer,
-            organizer_id: input.organizerId,
-            calendar_id: input.calendarId,
-            capacity: input.capacity,
-            price: input.price,
-            status: input.status || 'published',
-            visibility: input.visibility || 'public',
-            require_approval: input.requireApproval || false,
-            social_links: input.socialLinks,
-            agenda: input.agenda,
-            hosts: input.hosts,
-            about: input.about,
-            presented_by: input.presentedBy,
-            registration_questions: (input.registrationQuestions || []) as any,
-        })
+        .insert(payload)
         .select()
         .single();
 
@@ -275,10 +281,10 @@ export async function create(input: CreateEventInput): Promise<Event> {
  * Update an event
  */
 export async function update(id: string, updates: Partial<CreateEventInput>): Promise<void> {
-    const supabase = getServiceClient();
+    const supabase = getAdminClient();
 
     // Convert snake_case if needed, but for now we map manually what we support in repository updates
-    const supabaseUpdates: any = {};
+    const supabaseUpdates: EventUpdate = {};
     if (updates.title) supabaseUpdates.title = updates.title;
     if (updates.description) supabaseUpdates.description = updates.description;
     if (updates.location) supabaseUpdates.location = updates.location;
@@ -297,7 +303,7 @@ export async function update(id: string, updates: Partial<CreateEventInput>): Pr
  * Delete an event
  */
 export async function remove(id: string): Promise<boolean> {
-    const supabase = getServiceClient();
+    const supabase = getAdminClient();
     const { error } = await supabase.from('events').delete().eq('id', id);
     return !error;
 }
@@ -307,7 +313,7 @@ export async function remove(id: string): Promise<boolean> {
  */
 export async function findByOrganizer(userId: string): Promise<Event[]> {
     try {
-        const client = getSupabaseClient();
+        const client = getPublicClient();
         if (!client) return [];
 
         const { data, error } = await client
@@ -330,7 +336,7 @@ export async function findByCalendarId(calendarId: string): Promise<Event[]> {
     if (!calendarId) return [];
 
     try {
-        const supabase = getServiceClient();
+        const supabase = getAdminClient();
         const { data, error } = await supabase
             .from('events')
             .select('*')

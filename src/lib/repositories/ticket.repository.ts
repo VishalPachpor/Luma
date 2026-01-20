@@ -6,23 +6,9 @@
 import { supabase } from '@/lib/supabase';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { TicketTier, TicketType } from '@/types/commerce';
+import type { Database } from '@/types/database.types';
 
-interface TicketTierRow {
-    id: string;
-    event_id: string;
-    name: string;
-    description: string | null;
-    price: number;
-    currency: string;
-    ticket_type: string;
-    inventory: number;
-    sold_count: number;
-    max_per_order: number;
-    sales_start: string | null;
-    sales_end: string | null;
-    created_at: string;
-}
-
+type TicketTierRow = Database['public']['Tables']['ticket_tiers']['Row'];
 
 function normalizeTicketTier(row: TicketTierRow): TicketTier {
     return {
@@ -45,7 +31,7 @@ function normalizeTicketTier(row: TicketTierRow): TicketTier {
  */
 export async function getTicketTiers(eventId: string): Promise<TicketTier[]> {
     const { data, error } = await supabase
-        .from('ticket_tiers' as any)
+        .from('ticket_tiers')
         .select('*')
         .eq('event_id', eventId)
         .order('price', { ascending: true });
@@ -55,7 +41,7 @@ export async function getTicketTiers(eventId: string): Promise<TicketTier[]> {
         return [];
     }
 
-    return (data || []).map((row: any) => normalizeTicketTier(row));
+    return (data || []).map(normalizeTicketTier);
 }
 
 /**
@@ -63,13 +49,13 @@ export async function getTicketTiers(eventId: string): Promise<TicketTier[]> {
  */
 export async function getTicketTierById(tierId: string): Promise<TicketTier | null> {
     const { data, error } = await supabase
-        .from('ticket_tiers' as any)
+        .from('ticket_tiers')
         .select('*')
         .eq('id', tierId)
         .single();
 
     if (error || !data) return null;
-    return normalizeTicketTier(data as any);
+    return normalizeTicketTier(data);
 }
 
 /**
@@ -92,7 +78,7 @@ export async function createTicketTier(
     const supabaseBrowser = createSupabaseBrowserClient();
 
     const { data, error } = await supabaseBrowser
-        .from('ticket_tiers' as any)
+        .from('ticket_tiers')
         .insert({
             event_id: eventId,
             name: tier.name,
@@ -113,7 +99,7 @@ export async function createTicketTier(
         throw new Error(error.message);
     }
 
-    return normalizeTicketTier(data as any);
+    return normalizeTicketTier(data);
 }
 
 /**
@@ -133,7 +119,7 @@ export async function updateTicketTier(
 ): Promise<TicketTier | null> {
     const supabaseBrowser = createSupabaseBrowserClient();
 
-    const updateRow: Record<string, any> = {};
+    const updateRow: any = {}; // Keep explicit any for update object construction dynamic keys
     if (updates.name !== undefined) updateRow.name = updates.name;
     if (updates.description !== undefined) updateRow.description = updates.description;
     if (updates.price !== undefined) updateRow.price = updates.price;
@@ -143,7 +129,7 @@ export async function updateTicketTier(
     if (updates.salesEnd !== undefined) updateRow.sales_end = updates.salesEnd;
 
     const { data, error } = await supabaseBrowser
-        .from('ticket_tiers' as any)
+        .from('ticket_tiers')
         .update(updateRow)
         .eq('id', tierId)
         .select()
@@ -154,7 +140,7 @@ export async function updateTicketTier(
         return null;
     }
 
-    return normalizeTicketTier(data as any);
+    return normalizeTicketTier(data);
 }
 
 /**
@@ -164,7 +150,7 @@ export async function deleteTicketTier(tierId: string): Promise<boolean> {
     const supabaseBrowser = createSupabaseBrowserClient();
 
     const { error } = await supabaseBrowser
-        .from('ticket_tiers' as any)
+        .from('ticket_tiers')
         .delete()
         .eq('id', tierId);
 
@@ -181,14 +167,14 @@ export async function deleteTicketTier(tierId: string): Promise<boolean> {
  */
 export async function getRemainingInventory(tierId: string): Promise<number> {
     const { data, error } = await supabase
-        .from('ticket_tiers' as any)
-        .select('inventory, sold_count')
+        .from('ticket_tiers')
+        .select('*')
         .eq('id', tierId)
         .single();
 
     if (error || !data) return 0;
-    const typedData = data as any;
-    return Math.max(0, typedData.inventory - (typedData.sold_count || 0));
+
+    return Math.max(0, data.inventory - (data.sold_count || 0));
 }
 
 /**
@@ -199,16 +185,15 @@ export async function incrementSoldCount(tierId: string, quantity: number = 1): 
 
     // Use RPC or manual increment
     const { data: tier } = await supabaseBrowser
-        .from('ticket_tiers' as any)
+        .from('ticket_tiers')
         .select('sold_count')
         .eq('id', tierId)
         .single();
 
     if (!tier) return;
 
-    const typedTier = tier as any;
     await supabaseBrowser
-        .from('ticket_tiers' as any)
-        .update({ sold_count: (typedTier.sold_count || 0) + quantity })
+        .from('ticket_tiers')
+        .update({ sold_count: (tier.sold_count || 0) + quantity })
         .eq('id', tierId);
 }

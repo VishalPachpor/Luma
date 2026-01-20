@@ -36,11 +36,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
         const hostId = user.id;
 
-        const { data: event, error: eventError } = await supabase
+        const { data: eventData, error: eventError } = await supabase
             .from('events')
             .select('id, title, organizer_id')
             .eq('id', eventId)
             .single();
+
+        const event = eventData as { id: string; title: string; organizer_id: string } | null;
 
         if (eventError || !event) {
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
@@ -50,12 +52,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
             return NextResponse.json({ error: 'Only the host can reject guests' }, { status: 403 });
         }
 
-        const { data: guestData, error: guestError } = await supabase
+        const { data: rawGuestData, error: guestError } = await supabase
             .from('guests')
             .select('*')
             .eq('id', guestId)
             .eq('event_id', eventId)
             .single();
+
+        const guestData = rawGuestData as { id: string; user_id: string; status: string } | null;
 
         if (guestError || !guestData) {
             return NextResponse.json({ error: 'Guest not found' }, { status: 404 });
@@ -67,8 +71,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
             }, { status: 400 });
         }
 
-        const { error: updateError } = await supabase
-            .from('guests')
+        const { error: updateError } = await (supabase
+            .from('guests') as any)
             .update({
                 status: 'rejected',
                 approved_by: hostId, // We use same field for who acted on it
@@ -80,8 +84,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         if (updateError) {
             // Check if rejection_reason exists in schema. If not, retry without it.
             if (updateError.message?.includes('rejection_reason')) {
-                await supabase
-                    .from('guests')
+                await (supabase
+                    .from('guests') as any)
                     .update({
                         status: 'rejected',
                         approved_by: hostId,
@@ -94,13 +98,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         // Sync with RSVPs table
-        await supabase
-            .from('rsvps')
-            .update({ status: 'not_going' }) // Or 'rejected'? RSVPStatus is going/interested/pending. 'not_going' might be valid? Check types.
-            // Using 'not_going' or delete?
-            // rsvps table doesn't track rejected usually? 
-            // If I set to 'declined' if enum allows.
-            // Let's assume 'declined' or delete.
+        await (supabase
+            .from('rsvps') as any)
+            .update({ status: 'not_going' })
             .eq('event_id', eventId)
             .eq('user_id', guestData.user_id);
 

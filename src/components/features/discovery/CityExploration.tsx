@@ -53,6 +53,9 @@ export default function CityExploration({
 }: CityExplorationProps) {
     const [activeRegion, setActiveRegion] = useState('Asia & Pacific');
 
+    // Filter cities by active region
+    const filteredCities = cities.filter(city => city.region === activeRegion);
+
     return (
         <section>
             {/* Header */}
@@ -66,13 +69,13 @@ export default function CityExploration({
             </div>
 
             {/* Region Tabs */}
-            <div className="flex items-center gap-1 mb-6">
+            <div className="flex items-center gap-1 mb-6 overflow-x-auto no-scrollbar">
                 {regions.map((region) => (
                     <button
                         key={region}
                         onClick={() => setActiveRegion(region)}
                         className={`
-                            px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors
+                            px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors whitespace-nowrap
                             ${activeRegion === region
                                 ? 'bg-white/10 text-white'
                                 : 'text-white/50 hover:text-white hover:bg-white/5'
@@ -86,35 +89,41 @@ export default function CityExploration({
 
             {/* City Grid - Just icon + text, NO cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-4">
-                {cities.slice(0, 20).map((city, idx) => {
-                    const bgColor = cityColors[city.name] || 'bg-blue-500';
-                    return (
-                        <motion.button
-                            key={city.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: idx * 0.02 }}
-                            onClick={() => onCityClick?.(city)}
-                            className="flex items-center gap-3 text-left group"
-                        >
-                            {/* Colored Circle Icon */}
-                            <div className={`w-8 h-8 rounded-full ${bgColor} flex items-center justify-center shrink-0`}>
-                                <span className="text-[10px] font-bold text-white">
-                                    {city.name.charAt(0)}
-                                </span>
-                            </div>
-                            {/* City Name + Count */}
-                            <div className="min-w-0">
-                                <span className="text-[13px] font-medium text-white group-hover:text-white/80 transition-colors block truncate">
-                                    {city.name}
-                                </span>
-                                <span className="text-[11px] text-white/40">
-                                    {city.eventCount} Events
-                                </span>
-                            </div>
-                        </motion.button>
-                    );
-                })}
+                {filteredCities.length > 0 ? (
+                    filteredCities.map((city, idx) => {
+                        const bgColor = cityColors[city.name] || 'bg-blue-500';
+                        return (
+                            <motion.button
+                                key={city.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: idx * 0.02 }}
+                                onClick={() => onCityClick?.(city)}
+                                className="flex items-center gap-3 text-left group"
+                            >
+                                {/* Colored Circle Icon */}
+                                <div className={`w-8 h-8 rounded-full ${bgColor} flex items-center justify-center shrink-0`}>
+                                    <span className="text-[10px] font-bold text-white">
+                                        {city.name.charAt(0)}
+                                    </span>
+                                </div>
+                                {/* City Name + Count */}
+                                <div className="min-w-0">
+                                    <span className="text-[13px] font-medium text-white group-hover:text-white/80 transition-colors block truncate">
+                                        {city.name}
+                                    </span>
+                                    <span className="text-[11px] text-white/40">
+                                        {city.eventCount === 1 ? '1 Event' : `${city.eventCount} Events`}
+                                    </span>
+                                </div>
+                            </motion.button>
+                        );
+                    })
+                ) : (
+                    <div className="col-span-full py-8 text-center text-white/30 text-sm">
+                        No popular cities in this region
+                    </div>
+                )}
             </div>
         </section>
     );

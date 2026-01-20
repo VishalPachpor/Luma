@@ -38,22 +38,26 @@ export async function POST(request: NextRequest) {
 
         // 2. Check if user is a valid guest (ticket holder)
         // We use Service Role to bypass RLS and query correctly
-        const { data: guestRecord, error: guestError } = await supabase
+        const { data: guestData, error: guestError } = await supabase
             .from('guests')
             .select('status')
             .eq('event_id', eventId)
             .eq('user_id', user.id)
             .single();
 
+        const guestRecord = guestData as { status: string } | null;
+
         // Also check if user is the HOST (owner of event)
         // A host might not be in the guests table
         let isHost = false;
         if (!guestRecord) {
-            const { data: event } = await supabase
+            const { data: eventData } = await supabase
                 .from('events')
                 .select('organizer_id')
                 .eq('id', eventId)
                 .single();
+
+            const event = eventData as { organizer_id: string } | null;
 
             if (event && event.organizer_id === user.id) {
                 isHost = true;
@@ -78,18 +82,13 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Check chat settings
-        // Assuming chatRepo.getChatSettings handles its own logic or we can migrate it here too
-        // For now, let's assume it works or we can just skip if it's too tied to other things.
-        // It reads from `event_chat_settings` table via `supabase` (client) in the repo file?
-        // Let's rely on the previous logic but maybe we need to be careful.
-        // Actually, chatRepo uses `supabase` (client) or `getServiceSupabase`?
-        // Let's just implement the check here directly using Service Role for speed/safety.
-
-        const { data: settings } = await supabase
+        const { data: settingsData } = await supabase
             .from('event_chat_settings')
             .select('*')
             .eq('event_id', eventId)
             .single();
+
+        const settings = settingsData as { is_enabled: boolean; is_locked: boolean } | null;
 
         if (settings) {
             if (settings.is_enabled === false) {
@@ -102,8 +101,8 @@ export async function POST(request: NextRequest) {
 
         // 4. Send message
         // Insert directly using verified user.id
-        const { data: message, error: sendError } = await supabase
-            .from('chat_messages')
+        const { data: message, error: sendError } = await (supabase
+            .from('chat_messages') as any)
             .insert({
                 event_id: eventId,
                 user_id: user.id, // Verified User ID from Token

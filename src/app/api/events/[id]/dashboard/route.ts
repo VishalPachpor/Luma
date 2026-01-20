@@ -44,7 +44,18 @@ export async function GET(
             getEventPermissions(user.id, id)
         ]);
 
-        const { data: event, error: eventError } = eventResult;
+        const { data: eventData, error: eventError } = eventResult;
+        const event = eventData as {
+            id: string;
+            title: string;
+            cover_image: string | null;
+            date: string;
+            end_date: string | null;
+            location: string | null;
+            organizer_id: string;
+            status: string;
+            visibility: string;
+        } | null;
 
         if (eventError || !event) {
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });

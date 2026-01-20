@@ -7,11 +7,13 @@
 
 import { motion } from 'framer-motion';
 import { Category, FeaturedCalendar } from '@/types';
+import { City } from '@/types/city';
 import { GlossyCard, Button } from '@/components/components/ui';
 import CategoryChip from '@/components/components/ui/CategoryChip';
 import CityExploration from './CityExploration';
 import SubscribableCalendarCard from './SubscribableCalendarCard';
 import { useStore } from '@/store/useStore';
+import { getFormattedEventCount } from '@/lib/repositories/category.repository';
 import {
     Cpu,
     Utensils,
@@ -40,11 +42,13 @@ const iconMap: Record<string, LucideIcon> = {
 interface CategoryDiscoveryProps {
     categories: Category[];
     featuredCalendars: FeaturedCalendar[];
+    cities: City[];
 }
 
 export default function CategoryDiscovery({
     categories,
     featuredCalendars,
+    cities,
 }: CategoryDiscoveryProps) {
     const { setSelectedCategory, selectedCategory } = useStore();
 
@@ -87,7 +91,7 @@ export default function CategoryDiscovery({
                                         {cat.name}
                                     </span>
                                     <span className="text-[12px] text-white/40">
-                                        {cat.count}
+                                        {getFormattedEventCount(cat)}
                                     </span>
                                 </div>
                             </motion.button>
@@ -115,7 +119,7 @@ export default function CategoryDiscovery({
             </section>
 
             {/* City Exploration Section */}
-            <CityExploration />
+            <CityExploration cities={cities} />
         </div>
     );
 }

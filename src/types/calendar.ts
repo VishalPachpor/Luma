@@ -118,7 +118,7 @@ export interface SubscriptionWithCalendar extends CalendarSubscription {
 // ============================================
 
 /** Source of how a person was added to the calendar */
-export type PersonSource = 'event' | 'newsletter' | 'import' | 'follow';
+export type PersonSource = 'event' | 'newsletter' | 'import' | 'follow' | 'manual';
 
 /** A person in the calendar's audience */
 export interface CalendarPerson {

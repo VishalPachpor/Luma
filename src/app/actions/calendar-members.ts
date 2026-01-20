@@ -73,11 +73,12 @@ export async function inviteCalendarMember(calendarId: string, email: string, ro
     }
 
     // 2. Check if already a member
+    const userId = (user as { id: string }).id;
     const { data: existing } = await supabase
         .from('calendar_members')
         .select('id')
         .eq('calendar_id', calendarId)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
     if (existing) {
@@ -88,11 +89,11 @@ export async function inviteCalendarMember(calendarId: string, email: string, ro
     }
 
     // 3. Add member
-    const { error: insertError } = await supabase
-        .from('calendar_members')
+    const { error: insertError } = await (supabase
+        .from('calendar_members') as any)
         .insert({
             calendar_id: calendarId,
-            user_id: user.id,
+            user_id: userId,
             role: role,
         });
 
