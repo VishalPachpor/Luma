@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        const adminSupabase = getServiceSupabase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adminSupabase = getServiceSupabase() as any;
 
         // Verify user attended this event (has RSVP or guest entry)
         const { data: attendance } = await adminSupabase
@@ -61,12 +62,12 @@ export async function POST(request: NextRequest) {
         // Check if event has ended (optional but recommended)
         const { data: event } = await adminSupabase
             .from('events')
-            .select('end_time, start_time')
+            .select('end_date, start_date')
             .eq('id', eventId)
             .single();
 
         if (event) {
-            const eventEndTime = new Date(event.end_time || event.start_time);
+            const eventEndTime = new Date(event.end_date || event.start_date);
             if (eventEndTime > new Date()) {
                 return NextResponse.json(
                     { error: 'Cannot submit feedback before event ends' },
@@ -131,7 +132,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        const adminSupabase = getServiceSupabase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adminSupabase = getServiceSupabase() as any;
 
         // Build query
         let query = adminSupabase
@@ -170,14 +172,16 @@ export async function GET(request: NextRequest) {
         }
 
         // Filter to only show feedback for calendars the user owns
-        const userFeedback = feedbacks?.filter(
-            f => f.event?.calendar?.owner_id === user.id
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const userFeedback = feedbacks?.filter((f: any) =>
+            f.event?.calendar?.owner_id === user.id
         ) || [];
 
         // Calculate aggregates
         const totalRatings = userFeedback.length;
         const avgRating = totalRatings > 0
-            ? userFeedback.reduce((sum, f) => sum + f.rating, 0) / totalRatings
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ? userFeedback.reduce((sum: number, f: any) => sum + f.rating, 0) / totalRatings
             : null;
 
         return NextResponse.json({
@@ -188,11 +192,16 @@ export async function GET(request: NextRequest) {
                     totalCount: totalRatings,
                     averageRating: avgRating ? parseFloat(avgRating.toFixed(1)) : null,
                     distribution: {
-                        5: userFeedback.filter(f => f.rating === 5).length,
-                        4: userFeedback.filter(f => f.rating === 4).length,
-                        3: userFeedback.filter(f => f.rating === 3).length,
-                        2: userFeedback.filter(f => f.rating === 2).length,
-                        1: userFeedback.filter(f => f.rating === 1).length,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        5: userFeedback.filter((f: any) => f.rating === 5).length,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        4: userFeedback.filter((f: any) => f.rating === 4).length,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        3: userFeedback.filter((f: any) => f.rating === 3).length,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        2: userFeedback.filter((f: any) => f.rating === 2).length,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        1: userFeedback.filter((f: any) => f.rating === 1).length,
                     }
                 }
             }

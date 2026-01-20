@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
         let expectedRecipient: string | null = null;
 
         if (event.calendar_id) {
-            const { data: config } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: config } = await (supabase as any)
                 .from('calendar_payment_config')
                 .select('wallet_address, network')
                 .eq('calendar_id', event.calendar_id)

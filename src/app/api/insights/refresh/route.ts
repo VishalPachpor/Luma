@@ -30,8 +30,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adminSupabase = getServiceSupabase() as any;
+
         // Verify user owns this calendar
-        const adminSupabase = getServiceSupabase();
         const { data: calendar, error: calendarError } = await adminSupabase
             .from('calendars')
             .select('id, owner_id')

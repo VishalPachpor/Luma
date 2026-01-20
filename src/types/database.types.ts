@@ -9,6 +9,33 @@ export type Json =
 export interface Database {
     public: {
         Tables: {
+            users: {
+                Row: {
+                    id: string
+                    email: string
+                    display_name: string | null
+                    avatar_url: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id: string
+                    email: string
+                    display_name?: string | null
+                    avatar_url?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    email?: string
+                    display_name?: string | null
+                    avatar_url?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            },
             profiles: {
                 Row: {
                     id: string
@@ -467,7 +494,51 @@ export interface Database {
                 }
                 Relationships: []
             }
+            calendar_members: {
+                Row: {
+                    id: string
+                    calendar_id: string
+                    user_id: string
+                    role: 'admin' | 'member' | 'viewer'
+                    added_by: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    calendar_id: string
+                    user_id: string
+                    role?: 'admin' | 'member' | 'viewer'
+                    added_by?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    calendar_id?: string
+                    user_id?: string
+                    role?: 'admin' | 'member' | 'viewer'
+                    added_by?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "calendar_members_calendar_id_fkey"
+                        columns: ["calendar_id"]
+                        referencedRelation: "calendars"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "calendar_members_user_id_fkey"
+                        columns: ["user_id"]
+                        referencedRelation: "users" // referencing public.users (mirrored from auth)
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
         }
+
         Views: {
             [_ in never]: never
         }
