@@ -1,4 +1,4 @@
-import { eventRepository } from '@/lib/repositories';
+import { eventRepository, calendarRepository } from '@/lib/repositories';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -17,6 +17,27 @@ export default async function ManageLayout({ children, params }: ManageLayoutPro
         notFound();
     }
 
+    // Fetch Calendar Details for Breadcrumb
+    let calendarName = 'Personal';
+    let calendarLink = '/calendar/personal/manage';
+
+    if (event.calendarId) {
+        const calendar = await calendarRepository.findById(event.calendarId);
+        if (calendar) {
+            calendarName = calendar.name;
+            calendarLink = `/calendar/${calendar.id}/manage`;
+        }
+    } else if (event.organizerId) {
+        // Fallback: Try to find a personal calendar for the organizer
+        const calendars = await calendarRepository.findByOwner(event.organizerId);
+        if (calendars.length > 0) {
+            // Prefer one named 'Personal' or just the first one
+            const personal = calendars.find(c => c.name === 'Personal') || calendars[0];
+            calendarName = personal.name;
+            calendarLink = `/calendar/${personal.id}/manage`;
+        }
+    }
+
     return (
         <div className="min-h-screen pt-12 bg-[#13151A]">
             {/* Header */}
@@ -25,7 +46,7 @@ export default async function ManageLayout({ children, params }: ManageLayoutPro
                     <div className="flex items-center justify-between pb-6">
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-[#888888] text-[13px] font-medium animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <Link href="/calendars" className="hover:text-white transition-colors">Personal</Link>
+                                <Link href={calendarLink} className="hover:text-white transition-colors">{calendarName}</Link>
                                 <span className="text-[#444444]">›</span>
                             </div>
                             <h1 className="text-3xl font-semibold text-white tracking-tight leading-tight animate-in fade-in slide-in-from-bottom-3 duration-500 delay-75">{event.title}</h1>
@@ -51,7 +72,7 @@ export default async function ManageLayout({ children, params }: ManageLayoutPro
 
 
             {/* Main Content */}
-            <main className="max-w-[800px] mx-auto px-6 py-12">
+            <main className="max-w-[800px] mx-auto px-8 py-12">
                 {children}
             </main>
         </div>

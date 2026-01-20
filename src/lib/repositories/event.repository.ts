@@ -3,9 +3,37 @@
  * Storing events in existing Supabase 'events' table
  */
 
-import { getServiceSupabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import type { Event, CreateEventInput } from '@/types';
+import type { Database } from '@/types/database.types';
 import { generateId } from '@/lib/utils';
+
+// Create supabase client for read operations (works in both server and client)
+const getSupabaseClient = () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !anonKey) {
+        console.warn('[EventRepo] Missing Supabase env vars');
+        return null;
+    }
+
+    return createClient<Database>(url, anonKey);
+};
+
+// Create service role client for write operations (server-only)
+const getServiceClient = () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !serviceKey) {
+        throw new Error('Service role key required for this operation');
+    }
+
+    return createClient<Database>(url, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+    });
+};
 
 // Mock data for fallback when fetch fails or no data
 const mockEvents: Event[] = [];
@@ -43,16 +71,18 @@ function normalizeEvent(item: any): Event {
 }
 
 /**
- * Get all events
+ * Get all events (uses public client - safe for client-side)
  */
 export async function findAll(): Promise<Event[]> {
     try {
-        const supabase = getServiceSupabase();
+        const client = getSupabaseClient();
+        if (!client) return mockEvents;
 
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('events')
             .select('*')
-            .order('created_at', { ascending: false });
+            .eq('status', 'published')
+            .order('date', { ascending: false });
 
         if (error || !data) {
             console.log('[EventRepo] Error fetching events from Supabase:', error);
@@ -67,22 +97,22 @@ export async function findAll(): Promise<Event[]> {
 }
 
 /**
- * Get event by ID
+ * Get event by ID (uses public client - works in both server and client)
  */
 export async function findById(id: string): Promise<Event | null> {
     if (!id) return null;
 
     try {
-        const supabase = getServiceSupabase();
+        const client = getSupabaseClient();
+        if (!client) return null;
 
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('events')
             .select('*')
             .eq('id', id)
             .single();
 
         if (error || !data) {
-            // console.log(`[EventRepo] Event ${id} not found.`);
             return null;
         }
 
@@ -106,7 +136,7 @@ export async function findByAttendee(userId: string): Promise<Event[]> {
  */
 export async function findByCity(city: string): Promise<Event[]> {
     try {
-        const supabase = getServiceSupabase();
+        const supabase = getServiceClient();
         const { data, error } = await supabase
             .from('events')
             .select('*')
@@ -126,7 +156,7 @@ export async function search(queryStr: string): Promise<Event[]> {
     if (!queryStr || queryStr.length < 2) return [];
 
     try {
-        const supabase = getServiceSupabase();
+        const supabase = getServiceClient();
         // Simple ILIKE search on title or description
         const { data, error } = await supabase
             .from('events')
@@ -146,7 +176,7 @@ export async function search(queryStr: string): Promise<Event[]> {
  */
 export async function findByTag(tag: string): Promise<Event[]> {
     try {
-        const supabase = getServiceSupabase();
+        const supabase = getServiceClient();
         const { data, error } = await supabase
             .from('events')
             .select('*')
@@ -164,7 +194,7 @@ export async function findByTag(tag: string): Promise<Event[]> {
  */
 export async function getUniqueCities(): Promise<string[]> {
     try {
-        const supabase = getServiceSupabase();
+        const supabase = getServiceClient();
         const { data } = await supabase.from('events').select('city');
         if (!data) return [];
         // distinct
@@ -179,7 +209,7 @@ export async function getUniqueCities(): Promise<string[]> {
  * Create a new event
  */
 export async function create(input: CreateEventInput): Promise<Event> {
-    const supabase = getServiceSupabase();
+    const supabase = getServiceClient();
     const eventId = input.id || generateId();
 
     // Parse date safely
@@ -245,7 +275,7 @@ export async function create(input: CreateEventInput): Promise<Event> {
  * Update an event
  */
 export async function update(id: string, updates: Partial<CreateEventInput>): Promise<void> {
-    const supabase = getServiceSupabase();
+    const supabase = getServiceClient();
 
     // Convert snake_case if needed, but for now we map manually what we support in repository updates
     const supabaseUpdates: any = {};
@@ -267,22 +297,24 @@ export async function update(id: string, updates: Partial<CreateEventInput>): Pr
  * Delete an event
  */
 export async function remove(id: string): Promise<boolean> {
-    const supabase = getServiceSupabase();
+    const supabase = getServiceClient();
     const { error } = await supabase.from('events').delete().eq('id', id);
     return !error;
 }
 
 /**
- * Find events by organizer
+ * Find events by organizer (uses public client - safe for client-side)
  */
 export async function findByOrganizer(userId: string): Promise<Event[]> {
     try {
-        const supabase = getServiceSupabase();
-        const { data, error } = await supabase
+        const client = getSupabaseClient();
+        if (!client) return [];
+
+        const { data, error } = await client
             .from('events')
             .select('*')
             .eq('organizer_id', userId)
-            .order('created_at', { ascending: false });
+            .order('date', { ascending: false });
 
         if (error || !data) return [];
         return data.map(normalizeEvent);
@@ -298,7 +330,7 @@ export async function findByCalendarId(calendarId: string): Promise<Event[]> {
     if (!calendarId) return [];
 
     try {
-        const supabase = getServiceSupabase();
+        const supabase = getServiceClient();
         const { data, error } = await supabase
             .from('events')
             .select('*')

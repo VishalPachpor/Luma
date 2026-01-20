@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS calendars CASCADE;
 CREATE TABLE IF NOT EXISTS calendars (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
+    
     -- Owner relationship (Firebase UID)
     owner_id TEXT NOT NULL,
     

@@ -1,6 +1,7 @@
 /**
  * Navbar Component (Luma-style)
  * Exact replica of Luma's navigation bar layout
+ * Hides on scroll down, shows on scroll up
  */
 
 'use client';
@@ -8,10 +9,10 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Calendar, Compass, Search, Bell, Sparkles } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import Image from 'next/image';
 import { ProfileDropdown } from './ProfileDropdown';
+import { cn } from '@/lib/utils';
 
 const navLinks = [
     { href: '/events', label: 'Events', icon: Calendar },
@@ -24,6 +25,8 @@ export default function Navbar() {
     const pathname = usePathname();
     const { user } = useAuth();
     const [currentTime, setCurrentTime] = useState('');
+    const [isVisible, setIsVisible] = useState(true);
+    const lastScrollY = useRef(0);
 
     // Update time every minute
     useEffect(() => {
@@ -48,9 +51,36 @@ export default function Navbar() {
         return () => clearInterval(interval);
     }, []);
 
+    // Scroll hide behavior
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            const scrollingDown = currentScrollY > lastScrollY.current;
+            const scrolledPastThreshold = currentScrollY > 80;
+
+            if (currentScrollY <= 10) {
+                setIsVisible(true);
+            } else if (scrollingDown && scrolledPastThreshold) {
+                setIsVisible(false);
+            } else if (!scrollingDown) {
+                setIsVisible(true);
+            }
+
+            lastScrollY.current = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
-        <header className="fixed top-0 left-0 right-0 z-50">
-            <nav className="bg-[#13151A]/95 border-b border-white/5">
+        <header
+            className={cn(
+                "fixed top-0 left-0 right-0 z-50 transition-transform duration-300",
+                !isVisible && "-translate-y-full"
+            )}
+        >
+            <nav className="bg-[#13151A]/95 backdrop-blur-md border-b border-white/5">
                 <div className="w-full max-w-[1920px] mx-auto px-6 h-12 flex items-center justify-between relative">
                     {/* Left: Logo */}
                     <div className="flex items-center shrink-0">

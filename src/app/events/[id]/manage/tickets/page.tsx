@@ -5,7 +5,7 @@
 
 import { eventRepository } from '@/lib/repositories';
 import { notFound } from 'next/navigation';
-import { TicketTiersManager } from '@/components/features/tickets';
+import TicketTiersManager from '@/components/features/tickets/TicketTiersManager';
 
 interface ManageTicketsPageProps {
     params: Promise<{ id: string }>;

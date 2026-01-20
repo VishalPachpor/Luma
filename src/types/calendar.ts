@@ -112,3 +112,133 @@ export interface CalendarWithOwner extends Calendar {
 export interface SubscriptionWithCalendar extends CalendarSubscription {
     calendar: Calendar;
 }
+
+// ============================================
+// Calendar People (Audience CRM)
+// ============================================
+
+/** Source of how a person was added to the calendar */
+export type PersonSource = 'event' | 'newsletter' | 'import' | 'follow';
+
+/** A person in the calendar's audience */
+export interface CalendarPerson {
+    id: string;
+    calendarId: string;
+
+    // Identity
+    email: string;
+    name?: string;
+    avatarUrl?: string;
+
+    // Acquisition
+    source: PersonSource;
+    sourceEventId?: string;
+    joinedAt: string;
+
+    // Engagement
+    eventsAttended: number;
+    lastEventAt?: string;
+
+    // Newsletter status
+    subscribed: boolean;
+    unsubscribedAt?: string;
+
+    // Segmentation
+    tags?: string[];
+
+    // Timestamps
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** Input for adding a person to a calendar */
+export interface AddCalendarPersonInput {
+    email: string;
+    name?: string;
+    source?: PersonSource;
+    sourceEventId?: string;
+    tags?: string[];
+}
+
+// ============================================
+// Calendar Insights (Analytics)
+// ============================================
+
+/** Pre-computed analytics for a calendar */
+export interface CalendarInsights {
+    calendarId: string;
+
+    // Lifetime totals
+    totalEvents: number;
+    totalTicketsSold: number;
+    totalSubscribers: number;
+    totalRevenue: number;
+
+    // Weekly trends (for "X this week" display)
+    eventsThisWeek: number;
+    ticketsThisWeek: number;
+    subscribersThisWeek: number;
+    revenueThisWeek: number;
+
+    // Feedback
+    avgRating?: number;
+    totalFeedbackCount: number;
+
+    updatedAt: string;
+}
+
+// ============================================
+// Coupons (Discounts)
+// ============================================
+
+/** Discount type */
+export type CouponType = 'percent' | 'fixed';
+
+/** Calendar-level coupon for tickets */
+export interface Coupon {
+    id: string;
+    calendarId: string;
+
+    code: string;
+    type: CouponType;
+    value: number;
+
+    // Limits
+    maxUses?: number;
+    usedCount: number;
+
+    // Validity
+    startsAt?: string;
+    expiresAt?: string;
+
+    // Scope
+    applicableEventIds?: string[];
+    minOrderAmount?: number;
+
+    // Status
+    active: boolean;
+
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** Input for creating a coupon */
+export interface CreateCouponInput {
+    code: string;
+    type: CouponType;
+    value: number;
+    maxUses?: number;
+    startsAt?: string;
+    expiresAt?: string;
+    applicableEventIds?: string[];
+    minOrderAmount?: number;
+}
+
+/** Coupon validation result */
+export interface CouponValidation {
+    isValid: boolean;
+    couponId?: string;
+    discountType?: CouponType;
+    discountValue?: number;
+    errorMessage?: string;
+}

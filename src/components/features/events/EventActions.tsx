@@ -110,60 +110,23 @@ export default function EventActions({
                     </div>
                 )}
 
-                {/* Scan Tickets Button - Host Only */}
+                {/* Organizer Management Access - Clean Luma Style */}
                 {isOrganizer && (
-                    <div className="pt-4 border-t border-white/5 space-y-2">
-                        {/* Manage Event Button */}
-                        <a href={`/events/${eventId}/manage`}>
-                            <Button
-                                variant="secondary"
-                                className="w-full bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border-indigo-500/20 gap-2"
-                            >
-                                <Users className="w-4 h-4" />
-                                Manage Guests
-                            </Button>
-                        </a>
+                    <div className="pt-4 border-t border-white/5">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            <span className="text-sm font-medium text-emerald-400">
+                                You have manage access for this event.
+                            </span>
 
-                        {/* Scan Tickets */}
-                        <a href={`/events/${eventId}/scan`}>
-                            <Button
-                                variant="secondary"
-                                className="w-full bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20 gap-2"
-                            >
-                                <QrCode className="w-4 h-4" />
-                                Scan Tickets
-                            </Button>
-                        </a>
-                    </div>
-                )}
-
-                {/* Edit Event Button - Organizer Only */}
-                {isOrganizer && (
-                    <div className="pt-4 border-t border-white/5 space-y-2">
-                        <a href={`/events/${eventId}/edit`}>
-                            <Button
-                                variant="secondary"
-                                className="w-full bg-white/5 text-white hover:bg-white/10 border-white/10 gap-2"
-                            >
-                                <Users className="w-4 h-4" />
-                                Edit Event
-                            </Button>
-                        </a>
-                    </div>
-                )}
-
-                {/* Delete Event Button - Organizer Only */}
-                {isOrganizer && (
-                    <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
-                        <p className="text-xs text-center text-text-muted">You are the organizer of this event</p>
-                        <Button
-                            variant="secondary"
-                            className="w-full bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20"
-                            onClick={() => setShowDeleteModal(true)}
-                            disabled={isDeleting}
-                        >
-                            Delete Event
-                        </Button>
+                            <a href={`/events/${eventId}/manage`}>
+                                <Button
+                                    size="sm"
+                                    className="bg-emerald-500 hover:bg-emerald-600 text-white border-none rounded-full px-4 h-8 text-xs font-semibold shadow-lg shadow-emerald-500/20"
+                                >
+                                    Manage ↗
+                                </Button>
+                            </a>
+                        </div>
                     </div>
                 )}
             </div>

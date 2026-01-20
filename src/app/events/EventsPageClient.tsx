@@ -14,6 +14,7 @@ import Navbar from '@/components/components/layout/Navbar';
 import { Footer } from '@/components/components/layout';
 import { Event } from '@/types';
 import { getEvents } from '@/lib/services/event.service';
+import { EventDrawer } from '@/components/features/events/EventDrawer';
 
 interface EventsPageClientProps {
     cookie: string;
@@ -23,6 +24,8 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -37,6 +40,16 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
         };
         fetchEvents();
     }, []);
+
+    const handleEventClick = (event: Event) => {
+        setSelectedEvent(event);
+        setIsDrawerOpen(true);
+    };
+
+    const handleCloseDrawer = () => {
+        setIsDrawerOpen(false);
+        setTimeout(() => setSelectedEvent(null), 300);
+    };
 
     // Group events by date
     const groupEventsByDate = (events: Event[]) => {
@@ -70,7 +83,25 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
         return Object.values(groups);
     };
 
-    const groupedEvents = groupEventsByDate(events);
+    // Filter events based on active tab
+    const now = new Date();
+    const filteredEvents = events.filter(event => {
+        const eventDate = new Date(event.date);
+        if (activeTab === 'upcoming') {
+            return eventDate >= now;
+        } else {
+            return eventDate < now;
+        }
+    });
+
+    // Sort: upcoming = ascending by date, past = descending by date
+    const sortedEvents = [...filteredEvents].sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return activeTab === 'upcoming' ? dateA - dateB : dateB - dateA;
+    });
+
+    const groupedEvents = groupEventsByDate(sortedEvents);
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0E0F13]">
@@ -116,7 +147,7 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
                                 </div>
                             ))}
                         </div>
-                    ) : events.length === 0 ? (
+                    ) : filteredEvents.length === 0 ? (
                         <div className="text-center py-20">
                             <p className="text-white/50">No {activeTab} events</p>
                         </div>
@@ -131,6 +162,7 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
                                             dayName={idx === 0 ? group.dayName : undefined}
                                             dateLabel={idx === 0 ? group.dateLabel : undefined}
                                             index={groupIdx * 10 + idx}
+                                            onEventClick={handleEventClick}
                                         />
                                     ))}
                                 </div>
@@ -139,6 +171,14 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
                     )}
                 </div>
             </main>
+
+            {/* Event Quick View Drawer */}
+            <EventDrawer
+                event={selectedEvent}
+                isOpen={isDrawerOpen}
+                onClose={handleCloseDrawer}
+            />
+
             <Footer />
         </div>
     );
@@ -149,11 +189,13 @@ function TimelineEventCard({
     dayName,
     dateLabel,
     index,
+    onEventClick,
 }: {
     event: Event;
     dayName?: string;
     dateLabel?: string;
     index: number;
+    onEventClick: (event: Event) => void;
 }) {
     const eventDate = new Date(event.date);
     const timeStr = eventDate.toLocaleTimeString('en-US', {
@@ -166,6 +208,7 @@ function TimelineEventCard({
     const offset = -eventDate.getTimezoneOffset();
     const hours = Math.floor(Math.abs(offset) / 60);
     const sign = offset >= 0 ? '+' : '-';
+    // Simplified timezone display
     const tz = `GMT${sign}${hours}`;
 
     return (
@@ -196,9 +239,9 @@ function TimelineEventCard({
             </div>
 
             {/* Right: Event Card */}
-            <Link
-                href={`/events/${event.id}`}
-                className="flex-1 max-w-[500px] p-4 rounded-xl bg-white/2 border border-white/5 hover:bg-white/4 hover:border-white/10 transition-colors group"
+            <div
+                onClick={() => onEventClick(event)}
+                className="flex-1 max-w-[500px] p-4 rounded-xl bg-white/2 border border-white/5 hover:bg-white/4 hover:border-white/10 transition-colors group cursor-pointer"
             >
                 <div className="flex gap-4">
                     {/* Event Info */}
@@ -217,7 +260,7 @@ function TimelineEventCard({
                         {event.organizer && (
                             <div className="flex items-center gap-2 text-[12px] text-white/50 mb-2">
                                 <Users size={12} />
-                                <span>By {event.organizer}</span>
+                                <span className="truncate">By {event.organizer}</span>
                             </div>
                         )}
 
@@ -249,7 +292,7 @@ function TimelineEventCard({
                         )}
                     </div>
                 </div>
-            </Link>
+            </div>
         </motion.div>
     );
 }

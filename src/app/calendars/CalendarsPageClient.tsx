@@ -68,6 +68,7 @@ export default function CalendarsPageClient({
                                     myCalendars.map((cal) => (
                                         <MyCalendarCard
                                             key={cal.id}
+                                            id={cal.id}
                                             name={cal.name}
                                             avatar={cal.avatarUrl || ''}
                                             subscribers={`${cal.subscriberCount} Subscribers`}
@@ -136,47 +137,55 @@ export default function CalendarsPageClient({
 }
 
 function MyCalendarCard({
+    id,
     name,
     avatar,
     subscribers
 }: {
+    id: string;
     name: string;
     avatar: string;
     subscribers: string;
 }) {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-[260px] p-5 rounded-xl bg-white/2 border border-white/5 hover:bg-white/4 transition-colors cursor-pointer"
-        >
-            <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 shrink-0 relative">
-                    {avatar ? (
-                        <Image
-                            src={avatar}
-                            alt={name}
-                            fill
-                            className="object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <CalendarIcon size={16} className="text-white/40" />
-                        </div>
-                    )}
+        <Link href={`/calendar/${id}/manage`}>
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-[260px] p-5 rounded-xl bg-white/2 border border-white/5 hover:bg-white/4 hover:border-white/10 transition-colors cursor-pointer group"
+            >
+                <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 shrink-0 relative">
+                        {avatar ? (
+                            <Image
+                                src={avatar}
+                                alt={name}
+                                fill
+                                className="object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <CalendarIcon size={16} className="text-white/40" />
+                            </div>
+                        )}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-[14px] font-semibold text-white truncate">
+                            {name}
+                        </h3>
+                        <p className="text-[12px] text-white/40">
+                            {subscribers}
+                        </p>
+                    </div>
+                    {/* Manage indicator */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[11px] text-white/50 font-medium">Manage →</span>
+                    </div>
                 </div>
-                {/* Info */}
-                <div>
-                    <h3 className="text-[14px] font-semibold text-white">
-                        {name}
-                    </h3>
-                    <p className="text-[12px] text-white/40">
-                        {subscribers}
-                    </p>
-                </div>
-            </div>
-        </motion.div>
+            </motion.div>
+        </Link>
     );
 }
 
