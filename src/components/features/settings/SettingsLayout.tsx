@@ -1,3 +1,8 @@
+/**
+ * Settings Layout - Luma-exact styling
+ * Tabbed settings interface with Account, Preferences, Payment tabs
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -17,26 +22,26 @@ export default function SettingsLayout() {
     ];
 
     return (
-        <div className="w-full max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold text-text-primary mb-2">Settings</h1>
+        <div className="w-full max-w-3xl mx-auto">
+            {/* Header - Luma Style */}
+            <div className="mb-6">
+                <h1 className="text-[32px] font-semibold text-white tracking-tight">Settings</h1>
             </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-1 border-b border-white/10 mb-8">
+            {/* Tabs - Luma Style with underline indicator */}
+            <div className="flex items-center gap-0 border-b border-[var(--luma-border)] mb-8">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-6 py-3 text-sm font-medium transition-all relative ${activeTab === tab.id
-                                ? 'text-text-primary'
-                                : 'text-text-muted hover:text-text-secondary'
+                        className={`px-4 py-3 text-[15px] font-medium transition-all relative ${activeTab === tab.id
+                                ? 'text-white'
+                                : 'text-[var(--luma-text-muted)] hover:text-white/80'
                             }`}
                     >
                         {tab.label}
                         {activeTab === tab.id && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-primary rounded-t-full" />
+                            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white" />
                         )}
                     </button>
                 ))}

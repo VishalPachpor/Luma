@@ -112,3 +112,11 @@ export async function updateProfile(
     const newProfile = { ...current.profile, ...profile };
     return updateUserSettings(userId, { profile: newProfile });
 }
+
+/**
+ * Update phone number
+ */
+export async function updatePhone(userId: string, phone: string): Promise<void> {
+    return updateUserSettings(userId, { phone });
+}
+

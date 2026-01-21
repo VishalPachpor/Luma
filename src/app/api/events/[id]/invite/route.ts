@@ -83,10 +83,29 @@ export async function POST(
                 }) as any);
 
             if (inviteError) {
-                // If unique constraint violation, they are already invited.
-                console.warn(`Failed to invite ${email}:`, inviteError.message);
-                results.push({ email, status: 'failed', reason: inviteError.message });
-                continue;
+                // If unique constraint violation, check if we should resend
+                if (inviteError.code === '23505') {
+                    // Fetch the existing invite to check status
+                    const { data: existingInvite } = await (supabase
+                        .from('invitations' as any)
+                        .select('status')
+                        .eq('event_id', eventId)
+                        .eq('email', email)
+                        .single() as any);
+
+                    if (existingInvite && (existingInvite.status === 'sent' || existingInvite.status === 'draft' || existingInvite.status === 'failed')) {
+                        // Resend scenario: We treat this as a success to trigger the email again
+                        results.push({ email, status: 'sent', resend: true });
+                    } else {
+                        // Already accepted/declined, or some other state we shouldn't disturb
+                        results.push({ email, status: 'failed', reason: 'Already invited (responded)' });
+                        continue; // Skip contact book update
+                    }
+                } else {
+                    console.warn(`Failed to invite ${email}:`, inviteError.message);
+                    results.push({ email, status: 'failed', reason: inviteError.message });
+                    continue;
+                }
             }
 
             // 2b. Add to Contact Book (Upsert)
@@ -136,8 +155,15 @@ export async function POST(
             // Update events with real title
             events.forEach(e => e.data.eventTitle = realEventTitle);
 
-            await inngest.send(events);
-            console.log(`[Invite API] Triggered ${events.length} Inngest events`);
+            // Try to send via Inngest - but handle gracefully if not configured
+            try {
+                await inngest.send(events);
+                console.log(`[Invite API] Triggered ${events.length} Inngest events`);
+            } catch (inngestError: any) {
+                // Inngest not configured - log warning but don't fail the request
+                // Emails won't be sent, but invitations are still created
+                console.warn(`[Invite API] Inngest not configured, emails will not be sent:`, inngestError.message);
+            }
         }
 
         return NextResponse.json({ success: true, results });

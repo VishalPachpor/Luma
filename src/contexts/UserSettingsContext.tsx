@@ -31,6 +31,7 @@ interface UserSettingsContextType {
         enabled: boolean
     ) => Promise<void>;
     updateProfile: (profile: Partial<UserSettings['profile']>) => Promise<void>;
+    updatePhone: (phone: string) => Promise<void>;
     refreshSettings: () => Promise<void>;
 }
 
@@ -162,6 +163,24 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
         }
     }, [user, settings]);
 
+    /**
+     * Update phone number
+     */
+    const updatePhone = useCallback(async (phone: string) => {
+        if (!user || !settings) return;
+
+        const previousSettings = settings;
+        setSettings(prev => prev ? { ...prev, phone } : null);
+
+        try {
+            await userSettingsService.updatePhone(user.id, phone);
+        } catch (err) {
+            console.error('Failed to update phone:', err);
+            setSettings(previousSettings);
+            setError('Failed to update phone number');
+        }
+    }, [user, settings]);
+
     const value: UserSettingsContextType = {
         settings,
         isLoading,
@@ -170,6 +189,7 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
         updateTheme,
         updateNotification,
         updateProfile,
+        updatePhone,
         refreshSettings: fetchSettings,
     };
 

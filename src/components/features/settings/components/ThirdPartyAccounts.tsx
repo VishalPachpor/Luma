@@ -1,18 +1,17 @@
 /**
- * Third Party Accounts Component
- * Shows linked OAuth providers and wallet integrations with REAL functionality
+ * Third Party Accounts Component - Luma-exact styling
+ * Shows linked OAuth providers and wallet integrations with 3+2 grid layout
  */
 
 'use client';
 
 import { useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { GlossyCard } from '@/components/components/ui';
-import { Plus, Check, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSolanaWallet } from '@/contexts/WalletContext';
 
-// Provider icons
+// Provider icons - Luma exact styling
 const GoogleIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -37,12 +36,12 @@ const ZoomIcon = () => (
 const SolanaIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5">
         <defs>
-            <linearGradient id="solana-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="solana-gradient-tpa" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#00FFA3" />
                 <stop offset="100%" stopColor="#DC1FFF" />
             </linearGradient>
         </defs>
-        <path fill="url(#solana-gradient)" d="M4.5 18.75l1.5-1.5h13.5l-1.5 1.5H4.5zm0-5.25l1.5-1.5h13.5l-1.5 1.5H4.5zm15-3.75l-1.5 1.5H4.5l1.5-1.5H19.5z" />
+        <path fill="url(#solana-gradient-tpa)" d="M4.5 18.75l1.5-1.5h13.5l-1.5 1.5H4.5zm0-5.25l1.5-1.5h13.5l-1.5 1.5H4.5zm15-3.75l-1.5 1.5H4.5l1.5-1.5H19.5z" />
     </svg>
 );
 
@@ -52,37 +51,40 @@ const EthereumIcon = () => (
     </svg>
 );
 
-// Truncate address for display
 function truncateAddress(address: string): string {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+interface Provider {
+    id: string;
+    name: string;
+    icon: React.ReactNode;
+    isLinked: boolean;
+    address?: string;
+    isLoading: boolean;
+    onClick: () => void;
+}
+
 export default function ThirdPartyAccounts() {
     const { user, signInWithGoogle } = useAuth();
-
-    // Ethereum via wagmi
     const { address: ethAddress, isConnected: ethConnected } = useAccount();
     const { connect, connectors, isPending: ethConnecting } = useConnect();
     const { disconnect } = useDisconnect();
-
-    // Solana via custom context
     const {
         solAddress,
         solConnected,
         solConnecting,
         connectSolana,
         disconnectSolana,
-        error: walletError,
     } = useSolanaWallet();
 
     const [connecting, setConnecting] = useState<string | null>(null);
 
-    // Check which Firebase providers are linked
     const googleProvider = user?.providerData?.find(p => p.providerId === 'google.com');
     const appleProvider = user?.providerData?.find(p => p.providerId === 'apple.com');
 
     const handleGoogleConnect = async () => {
-        if (googleProvider) return; // Already linked
+        if (googleProvider) return;
         setConnecting('google');
         try {
             await signInWithGoogle();
@@ -94,20 +96,17 @@ export default function ThirdPartyAccounts() {
     };
 
     const handleAppleConnect = async () => {
-        // Apple sign-in requires additional Firebase setup
-        alert('Apple Sign-In requires additional Firebase configuration. Please set up Apple provider in Firebase Console.');
+        alert('Apple Sign-In requires additional Firebase configuration.');
     };
 
     const handleZoomConnect = async () => {
-        // Zoom OAuth requires backend setup
-        alert('Zoom integration requires OAuth setup. This will be available soon.');
+        alert('Zoom integration requires OAuth setup. Coming soon.');
     };
 
     const handleEthereumConnect = async () => {
         if (ethConnected) {
             disconnect();
         } else {
-            // Connect with first available connector (MetaMask, Rainbow, etc.)
             const connector = connectors[0];
             if (connector) {
                 connect({ connector });
@@ -123,13 +122,14 @@ export default function ThirdPartyAccounts() {
         }
     };
 
-    const providers = [
+    // First row: Google, Apple, Zoom (3 columns)
+    const firstRow: Provider[] = [
         {
             id: 'google',
             name: 'Google',
             icon: <GoogleIcon />,
             isLinked: !!googleProvider,
-            address: googleProvider?.email || undefined,
+            address: googleProvider?.email ? `${googleProvider.email.slice(0, 18)}...` : undefined,
             isLoading: connecting === 'google',
             onClick: handleGoogleConnect,
         },
@@ -151,6 +151,10 @@ export default function ThirdPartyAccounts() {
             isLoading: connecting === 'zoom',
             onClick: handleZoomConnect,
         },
+    ];
+
+    // Second row: Solana, Ethereum (2 columns)
+    const secondRow: Provider[] = [
         {
             id: 'solana',
             name: 'Solana',
@@ -171,56 +175,57 @@ export default function ThirdPartyAccounts() {
         },
     ];
 
+    const ProviderCard = ({ provider }: { provider: Provider }) => (
+        <button
+            onClick={provider.onClick}
+            className="flex items-center justify-between p-3 bg-[var(--luma-bg-card)] border border-[var(--luma-border)] rounded-lg hover:bg-[var(--luma-bg-input)] transition-colors"
+        >
+            <div className="flex items-center gap-3">
+                {provider.icon}
+                <div className="text-left">
+                    <div className="text-sm font-medium text-white">{provider.name}</div>
+                    <div className="text-xs text-[var(--luma-text-muted)]">
+                        {provider.isLinked
+                            ? (provider.address || 'Linked')
+                            : 'Not Linked'
+                        }
+                    </div>
+                </div>
+            </div>
+            {provider.isLoading ? (
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+            ) : provider.isLinked ? (
+                <Check className="w-5 h-5 text-[var(--luma-success-badge)]" />
+            ) : (
+                <div className="w-6 h-6 flex items-center justify-center border border-[var(--luma-border)] rounded">
+                    <Plus className="w-3.5 h-3.5 text-[var(--luma-text-muted)]" />
+                </div>
+            )}
+        </button>
+    );
+
     return (
         <section className="space-y-4">
             <div>
-                <h3 className="text-xl font-bold text-text-primary">Third Party Accounts</h3>
-                <p className="text-sm text-text-secondary mt-1">
+                <h3 className="text-lg font-semibold text-white">Third Party Accounts</h3>
+                <p className="text-sm text-[var(--luma-text-muted)] mt-1">
                     Link your accounts to sign in to Pulse and automate your workflows.
                 </p>
             </div>
 
-            {walletError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
-                    {walletError}
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {providers.map((provider) => (
-                    <GlossyCard
-                        key={provider.id}
-                        onClick={provider.onClick}
-                        className={`p-4 flex items-center justify-between cursor-pointer transition-all hover:bg-white/10 ${provider.isLinked ? 'border-green-500/20' : ''
-                            }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {provider.icon}
-                            <div>
-                                <div className="font-medium text-text-primary">{provider.name}</div>
-                                <div className="text-xs text-text-muted">
-                                    {provider.isLinked
-                                        ? (provider.address || 'Linked')
-                                        : 'Not Linked'
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                        {provider.isLoading ? (
-                            <Loader2 className="w-5 h-5 text-accent animate-spin" />
-                        ) : provider.isLinked ? (
-                            <Check className="w-5 h-5 text-green-500" />
-                        ) : (
-                            <Plus className="w-5 h-5 text-text-muted" />
-                        )}
-                    </GlossyCard>
+            {/* First row: 3 columns */}
+            <div className="grid grid-cols-3 gap-3">
+                {firstRow.map((provider) => (
+                    <ProviderCard key={provider.id} provider={provider} />
                 ))}
             </div>
 
-            <p className="text-xs text-text-muted">
-                <ExternalLink className="w-3 h-3 inline mr-1" />
-                Click on a wallet to connect. Make sure you have MetaMask or Phantom extension installed.
-            </p>
+            {/* Second row: 2 columns */}
+            <div className="grid grid-cols-2 gap-3">
+                {secondRow.map((provider) => (
+                    <ProviderCard key={provider.id} provider={provider} />
+                ))}
+            </div>
         </section>
     );
 }

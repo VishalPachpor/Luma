@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
         try {
             const orderRepo = await import('@/lib/repositories/order.repository');
             const guestRepo = await import('@/lib/repositories/guest.repository');
+            const ticketRepo = await import('@/lib/repositories/ticket.repository'); // Import ticket repo
 
             const order = await orderRepo.createOrder(userId, eventId, amount, chain);
             await orderRepo.updateOrderStatus(order.id, 'confirmed', {
@@ -189,10 +190,22 @@ export async function POST(request: NextRequest) {
                 walletAddress: reference
             });
 
+            // Find ticket tier to decrement
+            // For MVP, we assume the first paid tier or just increment sold count for 'default' if no tiers.
+            // Ideally we pass ticketTierId from frontend.
+            const tiers = await ticketRepo.getTicketTiers(eventId);
+            const targetTier = tiers.find(t => t.price > 0) || tiers[0];
+
+            let ticketTierId = 'paid_tier';
+            if (targetTier) {
+                ticketTierId = targetTier.id;
+                await ticketRepo.incrementSoldCount(targetTier.id, 1);
+            }
+
             await guestRepo.createGuest(
                 eventId,
                 userId,
-                'paid_tier',
+                ticketTierId,
                 'issued',
                 order.id
             );

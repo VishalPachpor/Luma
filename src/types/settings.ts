@@ -49,6 +49,9 @@ export interface UserSettings {
     // Display preferences
     theme: Theme;
     language: string;
+    // Contact
+    phone?: string;
+    emails?: string[];
     // Notification settings
     notifications: NotificationSettings;
     // Profile data (separate from Firebase Auth profile)
@@ -64,6 +67,8 @@ export interface UserSettings {
 export const DEFAULT_USER_SETTINGS: Omit<UserSettings, 'createdAt' | 'updatedAt'> = {
     theme: 'dark',
     language: 'en',
+    phone: '',
+    emails: [],
     notifications: {
         eventInvites: { email: true, whatsapp: true },
         eventReminders: { email: true, whatsapp: true },

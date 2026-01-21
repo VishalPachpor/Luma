@@ -107,6 +107,8 @@ export interface Database {
                     presented_by: string | null
                     about: string[]
                     attendee_count: number
+                    counters: Json
+                    settings: Json
                     created_at: string
                     updated_at: string
                 }
@@ -141,6 +143,8 @@ export interface Database {
                     presented_by?: string | null
                     about?: string[]
                     attendee_count?: number
+                    counters?: Json
+                    settings?: Json
                     created_at?: string
                     updated_at?: string
                 }
@@ -175,6 +179,8 @@ export interface Database {
                     presented_by?: string | null
                     about?: string[]
                     attendee_count?: number
+                    counters?: Json
+                    settings?: Json
                     created_at?: string
                     updated_at?: string
                 }
@@ -202,6 +208,7 @@ export interface Database {
                     checked_in_at: string | null
                     checked_in_by: string | null
                     registration_responses: Json
+                    invitation_id: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -219,6 +226,7 @@ export interface Database {
                     checked_in_at?: string | null
                     checked_in_by?: string | null
                     registration_responses?: Json
+                    invitation_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -236,6 +244,7 @@ export interface Database {
                     checked_in_at?: string | null
                     checked_in_by?: string | null
                     registration_responses?: Json
+                    invitation_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -250,6 +259,137 @@ export interface Database {
                         foreignKeyName: "guests_user_id_fkey"
                         columns: ["user_id"]
                         referencedRelation: "profiles"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "guests_invitation_id_fkey"
+                        columns: ["invitation_id"]
+                        referencedRelation: "invitations"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            invitations: {
+                Row: {
+                    id: string
+                    event_id: string
+                    calendar_id: string | null
+                    email: string
+                    recipient_name: string | null
+                    user_id: string | null
+                    invited_by: string
+                    source: string
+                    status: string
+                    tracking_token: string
+                    sent_at: string | null
+                    opened_at: string | null
+                    clicked_at: string | null
+                    responded_at: string | null
+                    metadata: Json
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    event_id: string
+                    calendar_id?: string | null
+                    email: string
+                    recipient_name?: string | null
+                    user_id?: string | null
+                    invited_by: string
+                    source?: string
+                    status?: string
+                    tracking_token?: string
+                    sent_at?: string | null
+                    opened_at?: string | null
+                    clicked_at?: string | null
+                    responded_at?: string | null
+                    metadata?: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    event_id?: string
+                    calendar_id?: string | null
+                    email?: string
+                    recipient_name?: string | null
+                    user_id?: string | null
+                    invited_by?: string
+                    source?: string
+                    status?: string
+                    tracking_token?: string
+                    sent_at?: string | null
+                    opened_at?: string | null
+                    clicked_at?: string | null
+                    responded_at?: string | null
+                    metadata?: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "invitations_event_id_fkey"
+                        columns: ["event_id"]
+                        referencedRelation: "events"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "invitations_calendar_id_fkey"
+                        columns: ["calendar_id"]
+                        referencedRelation: "calendars"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "invitations_invited_by_fkey"
+                        columns: ["invited_by"]
+                        referencedRelation: "profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            event_analytics: {
+                Row: {
+                    id: string
+                    event_id: string
+                    metric: string
+                    value: number
+                    user_id: string | null
+                    session_id: string | null
+                    referrer: string | null
+                    user_agent: string | null
+                    metadata: Json
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    event_id: string
+                    metric: string
+                    value?: number
+                    user_id?: string | null
+                    session_id?: string | null
+                    referrer?: string | null
+                    user_agent?: string | null
+                    metadata?: Json
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    event_id?: string
+                    metric?: string
+                    value?: number
+                    user_id?: string | null
+                    session_id?: string | null
+                    referrer?: string | null
+                    user_agent?: string | null
+                    metadata?: Json
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "event_analytics_event_id_fkey"
+                        columns: ["event_id"]
+                        referencedRelation: "events"
                         referencedColumns: ["id"]
                     }
                 ]
@@ -736,10 +876,54 @@ export interface Database {
                     p_source_event_id?: string | null
                 }
                 Returns: string
+            },
+            increment_event_counter: {
+                Args: {
+                    p_event_id: string
+                    p_counter_name: string
+                    p_increment?: number
+                }
+                Returns: Json
+            },
+            record_invite_open: {
+                Args: {
+                    p_tracking_token: string
+                }
+                Returns: Array<{
+                    invitation_id: string
+                    event_id: string
+                    already_opened: boolean
+                }>
+            },
+            record_invite_click: {
+                Args: {
+                    p_tracking_token: string
+                }
+                Returns: Array<{
+                    invitation_id: string
+                    event_id: string
+                    already_clicked: boolean
+                }>
+            },
+            get_invitation_stats: {
+                Args: {
+                    p_event_id: string
+                }
+                Returns: Array<{
+                    total_sent: number
+                    total_opened: number
+                    total_clicked: number
+                    total_accepted: number
+                    total_declined: number
+                    total_bounced: number
+                    open_rate: number
+                    click_rate: number
+                    accept_rate: number
+                }>
             }
         }
         Enums: {
-            [_ in never]: never
+            invitation_status: 'pending' | 'sent' | 'opened' | 'clicked' | 'accepted' | 'declined' | 'bounced'
         }
     }
 }

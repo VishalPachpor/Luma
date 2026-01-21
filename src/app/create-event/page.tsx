@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/components/ui';
 import TimezoneSelect from '@/components/components/ui/TimezoneSelect';
-import { QuestionBuilder } from '@/components/features/events/QuestionBuilder';
+
 import { CalendarSelector } from '@/components/features/events/CalendarSelector';
 import { VisibilityToggle, EventVisibility } from '@/components/features/events/VisibilityToggle';
 import { RegistrationQuestion } from '@/types/event';
@@ -292,14 +292,7 @@ function CreateEventForm() {
                         </button>
                     </div>
 
-                    {/* Registration Questions */}
-                    <div className="pt-6 border-t border-white/5">
-                        <h3 className="text-lg font-serif mb-4 text-white/90">Registration</h3>
-                        <QuestionBuilder
-                            questions={formData.registrationQuestions}
-                            onChange={(qs) => updateField('registrationQuestions', qs)}
-                        />
-                    </div>
+
                 </div>
 
                 {/* Right: Scrolling Form Content */}

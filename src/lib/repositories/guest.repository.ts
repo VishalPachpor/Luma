@@ -169,3 +169,44 @@ export async function checkIn(eventId: string, guestId: string): Promise<{ succe
 
     return { success: true, alreadyScanned: false };
 }
+
+/**
+ * Update guest status (e.g. Approve, Reject)
+ */
+export async function updateStatus(guestId: string, status: GuestStatus): Promise<boolean> {
+    const supabaseBrowser = createSupabaseBrowserClient();
+
+    const { error } = await supabaseBrowser
+        .from('guests')
+        .update({
+            status,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', guestId);
+
+    if (error) {
+        console.error('[GuestRepo] updateStatus failed:', error);
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Get pending guests for an event
+ */
+export async function getPendingGuests(eventId: string): Promise<Guest[]> {
+    const { data, error } = await supabase
+        .from('guests')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('status', 'pending_approval')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('[GuestRepo] getPendingGuests failed:', error);
+        return [];
+    }
+
+    return (data || []).map(normalizeSupabaseGuest);
+}

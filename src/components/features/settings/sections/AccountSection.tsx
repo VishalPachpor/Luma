@@ -1,17 +1,17 @@
 /**
- * Account Section
+ * Account Section - Luma-exact styling
  * Full profile editing with Supabase persistence
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { GlossyCard, Button } from '@/components/components/ui';
-import { AlertCircle, Loader2, Save, CheckCircle } from 'lucide-react';
+import { AlertCircle, Loader2, Upload, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
-import ProfileCard from '../components/ProfileCard';
+import Image from 'next/image';
 import SocialLinks from '../components/SocialLinks';
+import EmailsSection from '../components/EmailsSection';
 import PhoneSection from '../components/PhoneSection';
 import SecuritySection from '../components/SecuritySection';
 import ThirdPartyAccounts from '../components/ThirdPartyAccounts';
@@ -99,14 +99,14 @@ export default function AccountSection() {
     // Not logged in state
     if (!user) {
         return (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <GlossyCard className="p-8 text-center">
+            <div className="space-y-8">
+                <div className="p-8 text-center bg-[var(--luma-bg-card)] rounded-lg border border-[var(--luma-border)]">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
-                    <h3 className="text-lg font-bold text-text-primary mb-2">Sign In Required</h3>
-                    <p className="text-text-secondary">
+                    <h3 className="text-lg font-semibold text-white mb-2">Sign In Required</h3>
+                    <p className="text-[var(--luma-text-muted)]">
                         Please sign in to manage your account.
                     </p>
-                </GlossyCard>
+                </div>
             </div>
         );
     }
@@ -114,20 +114,22 @@ export default function AccountSection() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <GlossyCard className="p-12 flex flex-col items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
-                    <p className="text-text-secondary">Loading your profile...</p>
-                </GlossyCard>
+            <div className="space-y-8">
+                <div className="p-12 flex flex-col items-center justify-center bg-[var(--luma-bg-card)] rounded-lg border border-[var(--luma-border)]">
+                    <Loader2 className="w-8 h-8 animate-spin text-white mb-4" />
+                    <p className="text-[var(--luma-text-muted)]">Loading your profile...</p>
+                </div>
             </div>
         );
     }
 
+    const avatarUrl = settings?.profile?.avatarUrl || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName || user.displayName || 'U')}&background=random&color=fff&size=96`;
+
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-10">
             {/* Error banner */}
             {(error || saveError) && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                     <p className="text-sm text-red-400">{saveError || error}</p>
                 </div>
@@ -135,111 +137,124 @@ export default function AccountSection() {
 
             {/* Success banner */}
             {saveSuccess && (
-                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
                     <p className="text-sm text-green-400">Changes saved successfully!</p>
                 </div>
             )}
 
-            {/* Your Profile Section */}
-            <section className="space-y-4">
-                <div>
-                    <h3 className="text-xl font-bold text-text-primary">Your Profile</h3>
-                    <p className="text-sm text-text-secondary mt-1">
+            {/* ============================================
+                Your Profile Section - Luma 2-Column Layout
+               ============================================ */}
+            <section>
+                <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-white">Your Profile</h3>
+                    <p className="text-sm text-[var(--luma-text-muted)] mt-1">
                         Choose how you are displayed as a host or guest.
                     </p>
                 </div>
 
-                <GlossyCard className="p-6">
-                    <div className="flex flex-col md:flex-row gap-8">
-                        {/* Profile Picture */}
-                        <div className="flex-shrink-0">
-                            <ProfileCard
-                                avatarUrl={settings?.profile?.avatarUrl}
-                                displayName={`${firstName} ${lastName}`.trim() || user.displayName || undefined}
-                            />
-                        </div>
-
-                        {/* Name Fields */}
-                        <div className="flex-1 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                                        First Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={firstName}
-                                        onChange={(e) => setFirstName(e.target.value)}
-                                        placeholder="Your first name"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent/50 outline-none transition-colors"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                                        Last Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={lastName}
-                                        onChange={(e) => setLastName(e.target.value)}
-                                        placeholder="Your last name"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent/50 outline-none transition-colors"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Username */}
+                <div className="flex gap-12">
+                    {/* Left: Form Fields */}
+                    <div className="flex-1 space-y-5">
+                        {/* First Name / Last Name Row */}
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-2">
-                                    Username
+                                <label className="block text-sm font-medium text-[var(--luma-text-label)] mb-2">
+                                    First Name
                                 </label>
-                                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden focus-within:border-accent/50 transition-colors">
-                                    <span className="pl-4 text-text-muted">@</span>
-                                    <input
-                                        type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                                        placeholder="yourhandle"
-                                        className="flex-1 bg-transparent px-2 py-3 text-text-primary placeholder:text-text-muted outline-none"
-                                    />
-                                </div>
+                                <input
+                                    type="text"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                    placeholder="Your first name"
+                                    className="w-full bg-[var(--luma-bg-input)] border border-[var(--luma-border)] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[var(--luma-text-muted)] focus:border-[var(--luma-border-hover)] outline-none transition-colors"
+                                />
                             </div>
-
-                            {/* Bio */}
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-2">
-                                    Bio
+                                <label className="block text-sm font-medium text-[var(--luma-text-label)] mb-2">
+                                    Last Name
                                 </label>
-                                <textarea
-                                    value={bio}
-                                    onChange={(e) => setBio(e.target.value)}
-                                    placeholder="Share a little about your background and interests."
-                                    rows={3}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent/50 outline-none transition-colors resize-none"
+                                <input
+                                    type="text"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                    placeholder="Your last name"
+                                    className="w-full bg-[var(--luma-bg-input)] border border-[var(--luma-border)] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[var(--luma-text-muted)] focus:border-[var(--luma-border-hover)] outline-none transition-colors"
                                 />
                             </div>
                         </div>
+
+                        {/* Username */}
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--luma-text-label)] mb-2">
+                                Username
+                            </label>
+                            <div className="flex items-center bg-[var(--luma-bg-input)] border border-[var(--luma-border)] rounded-lg overflow-hidden focus-within:border-[var(--luma-border-hover)] transition-colors">
+                                <span className="pl-4 pr-1 text-[var(--luma-text-muted)] text-sm">@</span>
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                    placeholder="yourhandle"
+                                    className="flex-1 bg-transparent px-2 py-2.5 text-white text-sm placeholder:text-[var(--luma-text-muted)] outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Bio */}
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--luma-text-label)] mb-2">
+                                Bio
+                            </label>
+                            <textarea
+                                value={bio}
+                                onChange={(e) => setBio(e.target.value)}
+                                placeholder="Share a little about your background and interests."
+                                rows={3}
+                                className="w-full bg-[var(--luma-bg-input)] border border-[var(--luma-border)] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[var(--luma-text-muted)] focus:border-[var(--luma-border-hover)] outline-none transition-colors resize-none"
+                            />
+                        </div>
                     </div>
-                </GlossyCard>
+
+                    {/* Right: Profile Picture */}
+                    <div className="shrink-0">
+                        <label className="block text-sm font-medium text-[var(--luma-text-label)] mb-2">
+                            Profile Picture
+                        </label>
+                        <div className="relative">
+                            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[var(--luma-border)]">
+                                <Image
+                                    src={avatarUrl}
+                                    alt="Profile"
+                                    width={96}
+                                    height={96}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            {/* Upload button */}
+                            <button className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--luma-bg-input)] border border-[var(--luma-border)] rounded-full flex items-center justify-center hover:bg-[var(--luma-bg-card)] transition-colors">
+                                <Upload className="w-4 h-4 text-white" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             {/* Social Links Section */}
-            <section className="space-y-4">
-                <GlossyCard className="p-6">
-                    <SocialLinks
-                        links={socialLinks}
-                        onChange={setSocialLinks}
-                    />
-                </GlossyCard>
+            <section>
+                <SocialLinks
+                    links={socialLinks}
+                    onChange={setSocialLinks}
+                />
             </section>
 
-            {/* Save Button for Profile */}
-            <div className="flex justify-end">
-                <Button
+            {/* Save Changes Button - Luma Style */}
+            <div>
+                <button
                     onClick={handleSave}
                     disabled={isSaving || !hasChanges()}
-                    className="gap-2 px-8"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--luma-bg-card)] border border-[var(--luma-btn-border)] rounded-lg text-white text-sm font-medium hover:bg-[var(--luma-bg-input)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     {isSaving ? (
                         <>
@@ -248,15 +263,18 @@ export default function AccountSection() {
                         </>
                     ) : (
                         <>
-                            <Save className="w-4 h-4" />
+                            <Upload className="w-4 h-4" />
                             Save Changes
                         </>
                     )}
-                </Button>
+                </button>
             </div>
 
             {/* Divider */}
-            <div className="border-t border-white/10 my-4" />
+            <div className="border-t border-[var(--luma-border)]" />
+
+            {/* Emails Section */}
+            <EmailsSection />
 
             {/* Phone Number */}
             <PhoneSection />

@@ -9,7 +9,9 @@ export * from './user';
 export * from './category';
 export * from './city';
 export * from './calendar';
+export * from './invitation';
 
 // UI types
 export * from './ui';
 export * from './commerce';
+

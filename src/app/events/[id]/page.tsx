@@ -6,6 +6,7 @@ import { Button, EventMap } from '@/components/components/ui';
 import Link from 'next/link';
 import { getGoogleMapsUrl } from '@/lib/utils';
 import EventActions from '@/components/features/events/EventActions';
+import { ViewTracker } from '@/components/features/analytics/ViewTracker';
 
 interface EventPageProps {
     params: Promise<{
@@ -45,6 +46,7 @@ export default async function EventPage({ params }: EventPageProps) {
 
     return (
         <div className="min-h-screen bg-[#0B1221] text-white">
+            <ViewTracker eventId={event.id} />
             {/* Navbar Placeholder */}
             <div className="sticky top-0 z-50 h-16 bg-[#0B1221]/80 backdrop-blur-md border-b border-white/5 flex items-center px-6">
                 <Link href="/" className="text-white/80 hover:text-white transition-colors">
