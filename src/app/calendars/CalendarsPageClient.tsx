@@ -10,7 +10,6 @@ import { motion } from 'framer-motion';
 import { Users, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/components/layout/Navbar';
 import { Footer } from '@/components/components/layout';
 import { Calendar } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,9 +37,8 @@ export default function CalendarsPageClient({
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0E0F13]">
-            <Navbar />
-            <main className="flex-1 pt-16">
-                <div className="max-w-[800px] mx-auto px-8 py-10">
+            <main className="flex-1">
+                <div className="max-w-[800px] mx-auto px-8 pt-4 pb-10 scroll-mt-16">
                     {/* Page Title */}
                     <h1 className="text-[2rem] font-bold text-white tracking-tight mb-10">
                         Calendars

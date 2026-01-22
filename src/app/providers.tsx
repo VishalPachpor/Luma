@@ -10,6 +10,7 @@ import { ReactNode } from 'react';
 import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext';
 import { UserSettingsProvider } from '@/contexts/UserSettingsContext';
 import { SolanaWalletProvider } from '@/contexts/WalletContext';
+import { NavbarThemeProvider } from '@/contexts/NavbarThemeContext';
 import { ClientProviders } from '@/components/providers/ClientProviders';
 import { ChatFloatingButton } from '@/components/features/chat';
 
@@ -24,9 +25,11 @@ export default function Providers({ children, cookie }: ProvidersProps) {
             <SupabaseAuthProvider>
                 <UserSettingsProvider>
                     <SolanaWalletProvider>
-                        {children}
-                        {/* Global Chat Floating Button */}
-                        <ChatFloatingButton />
+                        <NavbarThemeProvider>
+                            {children}
+                            {/* Global Chat Floating Button */}
+                            <ChatFloatingButton />
+                        </NavbarThemeProvider>
                     </SolanaWalletProvider>
                 </UserSettingsProvider>
             </SupabaseAuthProvider>

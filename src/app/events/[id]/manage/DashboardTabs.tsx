@@ -21,7 +21,7 @@ export function DashboardTabs({ eventId }: DashboardTabsProps) {
     ];
 
     return (
-        <div className="flex items-center gap-6 mt-6 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => {
                 const isActive = pathname === tab.href || pathname?.startsWith(`${tab.href}/`);
 

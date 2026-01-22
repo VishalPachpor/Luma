@@ -27,6 +27,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { useImmersiveNavbar } from '@/contexts/NavbarThemeContext';
 import { THEMES } from '@/lib/themes';
 
 
@@ -64,13 +65,16 @@ interface EventFormData {
 function CreateEventForm() {
     const router = useRouter();
     const { user } = useAuth();
-    const { currentTheme, setThemeByName } = useTheme();
+    const { currentTheme, setThemeByName, randomizeTheme } = useTheme();
 
     const cycleTheme = () => {
         const currentIndex = THEMES.findIndex(t => t.name === currentTheme.name);
         const nextIndex = (currentIndex + 1) % THEMES.length;
         setThemeByName(THEMES[nextIndex].name);
     };
+
+    // Sync navbar with current theme for immersive experience
+    useImmersiveNavbar(currentTheme.colors.bgPage);
 
     // Form State
     const [formData, setFormData] = useState<EventFormData>({
@@ -229,84 +233,65 @@ function CreateEventForm() {
 
     return (
         <div className="min-h-screen bg-[var(--bg-page)] text-text-primary transition-colors duration-500 ease-in-out">
-            <div className="flex flex-col lg:flex-row min-h-screen">
+            {/* Centered Container - Like Luma */}
+            <div className="max-w-[1000px] mx-auto px-6 pt-20 pb-16 min-h-screen">
 
-                {/* Left: Sticky Sidebar (Visuals) */}
-                <div className="lg:w-[45%] lg:h-screen lg:sticky lg:top-0 p-6 lg:p-10 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative z-10">
+                {/* Two Column Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
 
-                    {/* Close Button (Mobile) */}
-                    <button
-                        onClick={() => router.back()}
-                        className="lg:hidden absolute top-6 right-6 p-2 bg-black/20 backdrop-blur-md rounded-full text-white/70 hover:text-white transition-all z-20"
-                    >
-                        <X size={20} />
-                    </button>
+                    {/* Left Column: Image + Theme */}
+                    <div className="lg:sticky lg:top-8 space-y-4">
 
-                    {/* Image Upload */}
-                    <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="aspect-square w-full rounded-[32px] overflow-hidden relative group cursor-pointer border-2 border-dashed border-white/5 hover:border-[color:var(--accent-glow)] transition-all flex flex-col items-center justify-center gap-4 bg-[var(--surface-1)] shadow-2xl"
-                    >
-                        <Image
-                            src={formData.imageUrl || "https://picsum.photos/seed/abstract/800/800"}
-                            fill
-                            className="object-cover opacity-90 transition-opacity group-hover:opacity-100"
-                            alt="Cover"
-                        />
-                        <div className="absolute bottom-6 right-6 bg-black/60 backdrop-blur-xl p-3 rounded-2xl text-white group-hover:scale-110 transition-transform shadow-lg border border-white/10">
-                            <ImageIcon size={20} />
-                        </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                        />
-                    </div>
-
-                    {/* Theme Selector */}
-                    <div className="flex items-center gap-3 shrink-0">
+                        {/* Image Upload - Square */}
                         <div
-                            onClick={cycleTheme}
-                            className="flex-1 flex items-center justify-between p-4 bg-[var(--surface-1)] rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-colors backdrop-blur-md shadow-lg"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="aspect-square w-full rounded-xl overflow-hidden relative group cursor-pointer border border-white/10 hover:border-[color:var(--accent-glow)] transition-all bg-[var(--surface-1)]"
                         >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                                    <LayoutGrid size={20} className="text-[color:var(--accent-solid)]" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
-                                        Theme
-                                    </p>
-                                    <p className="text-sm font-semibold text-text-primary">
-                                        {currentTheme.label}
-                                    </p>
-                                </div>
+                            <Image
+                                src={formData.imageUrl || "https://picsum.photos/seed/abstract/600/600"}
+                                fill
+                                className="object-cover opacity-90 transition-opacity group-hover:opacity-100"
+                                alt="Cover"
+                            />
+                            <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-xl p-2 rounded-lg text-white group-hover:scale-110 transition-transform border border-white/10">
+                                <ImageIcon size={14} />
                             </div>
-                            <ChevronDown size={18} className="text-text-muted" />
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageUpload}
+                            />
                         </div>
 
-                        <button className="h-full aspect-square flex items-center justify-center p-4 bg-[var(--surface-1)] rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-colors backdrop-blur-md shadow-lg">
-                            <Dices size={20} className="text-text-muted" />
-                        </button>
+                        {/* Theme Selector - Compact */}
+                        <div className="flex items-center gap-2">
+                            <div
+                                onClick={cycleTheme}
+                                className="flex-1 flex items-center gap-3 p-3 bg-[var(--surface-1)] rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                                    <LayoutGrid size={16} className="text-[color:var(--accent-solid)]" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Theme</p>
+                                    <p className="text-sm font-medium text-text-primary">{currentTheme.label}</p>
+                                </div>
+                                <ChevronDown size={14} className="text-text-muted" />
+                            </div>
+
+                            <button
+                                onClick={randomizeTheme}
+                                className="w-12 h-12 flex items-center justify-center bg-[var(--surface-1)] rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors hover:scale-105 active:scale-95"
+                            >
+                                <Dices size={16} className="text-text-muted" />
+                            </button>
+                        </div>
                     </div>
 
-
-                </div>
-
-                {/* Right: Scrolling Form Content */}
-                <div className="lg:w-[55%] p-6 lg:p-14 lg:pt-20 flex flex-col min-h-screen relative">
-
-                    {/* Close Button (Desktop) */}
-                    <button
-                        onClick={() => router.back()}
-                        className="hidden lg:flex absolute top-10 right-10 p-2 text-white/40 hover:text-white transition-colors z-20 hover:rotate-90 duration-300"
-                    >
-                        <X size={28} />
-                    </button>
-
-                    <div className="max-w-2xl w-full mx-auto space-y-10 pb-20">
+                    {/* Right Column: Form */}
+                    <div className="space-y-3">
 
                         {/* Header Controls */}
                         <div className="flex items-center justify-between">
@@ -324,245 +309,233 @@ function CreateEventForm() {
                             />
                         </div>
 
-                        {/* Title Input */}
-                        <div className="relative group">
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => updateField('name', e.target.value)}
-                                placeholder="Event Name"
-                                className="w-full bg-transparent border-none text-6xl font-serif text-white outline-none placeholder:text-white/10 tracking-tight leading-tight"
-                            />
-                            <div className="absolute bottom-0 left-0 w-0 h-1 bg-[image:var(--accent-main)] transition-all group-hover:w-full opacity-50" />
-                        </div>
+                        {/* Event Name - Large Title */}
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => updateField('name', e.target.value)}
+                            placeholder="Event Name"
+                            className="w-full bg-transparent border-none text-4xl font-serif text-white outline-none placeholder:text-white/20 tracking-tight"
+                        />
 
-
-                        {/* Date/Time Section */}
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-[auto_1fr] gap-6 items-start">
-                                {/* Timeline Visual */}
-                                <div className="flex flex-col items-center gap-1 pt-2">
-                                    <div className="w-3 h-3 rounded-full bg-[image:var(--accent-main)] shadow-[0_0_10px_var(--accent-glow)]" />
-                                    <div className="w-0.5 h-12 bg-gradient-to-b from-[var(--accent-solid)] to-transparent opacity-30" />
-                                    <div className="w-3 h-3 rounded-full border-2 border-[var(--accent-solid)] bg-transparent" />
-                                </div>
-
-                                <div className="space-y-6">
-                                    {/* Start */}
-                                    <div className="flex flex-wrap items-center gap-4 bg-[var(--surface-1)] p-4 rounded-xl border border-white/5 hover:border-[color:var(--accent-glow)] transition-colors backdrop-blur-md">
-                                        <span className="text-sm font-semibold text-white/60 w-12">Start</span>
-                                        <input
-                                            ref={startDateRef}
-                                            type="date"
-                                            value={formData.startDate}
-                                            onChange={(e) => updateField('startDate', e.target.value)}
-                                            className="bg-transparent text-white text-sm font-medium outline-none cursor-pointer"
-                                        />
-                                        <input
-                                            ref={startTimeRef}
-                                            type="time"
-                                            value={formData.startTime}
-                                            onChange={(e) => updateField('startTime', e.target.value)}
-                                            className="bg-transparent text-white text-sm font-medium outline-none cursor-pointer ml-auto"
-                                        />
+                        {/* Date/Time Card - Exact Luma Layout */}
+                        <div className="bg-[var(--surface-1)] rounded-xl border border-white/5 overflow-hidden">
+                            <div className="flex">
+                                {/* Left side: Start/End rows */}
+                                <div className="flex-1 border-r border-white/5">
+                                    {/* Start Row */}
+                                    <div className="flex items-center py-3 px-4 border-b border-white/5">
+                                        <div className="flex items-center gap-2 w-16">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                            <span className="text-[13px] text-white/70">Start</span>
+                                        </div>
+                                        <div className="flex-1 flex items-center gap-3">
+                                            <div
+                                                onClick={() => startDateRef.current?.showPicker()}
+                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                            >
+                                                <span className="text-[13px] text-white font-medium">
+                                                    {new Date(formData.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                </span>
+                                                <input
+                                                    ref={startDateRef}
+                                                    type="date"
+                                                    value={formData.startDate}
+                                                    onChange={(e) => updateField('startDate', e.target.value)}
+                                                    className="sr-only"
+                                                />
+                                            </div>
+                                            <div
+                                                onClick={() => startTimeRef.current?.showPicker()}
+                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                            >
+                                                <span className="text-[13px] text-white font-medium">
+                                                    {new Date('2000-01-01T' + formData.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                </span>
+                                                <input
+                                                    ref={startTimeRef}
+                                                    type="time"
+                                                    value={formData.startTime}
+                                                    onChange={(e) => updateField('startTime', e.target.value)}
+                                                    className="sr-only"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* End */}
-                                    <div className="flex flex-wrap items-center gap-4 bg-[var(--surface-1)] p-4 rounded-xl border border-white/5 hover:border-[color:var(--accent-glow)] transition-colors backdrop-blur-md">
-                                        <span className="text-sm font-semibold text-white/60 w-12">End</span>
-                                        <input
-                                            ref={endDateRef}
-                                            type="date"
-                                            value={formData.endDate}
-                                            onChange={(e) => updateField('endDate', e.target.value)}
-                                            className="bg-transparent text-white text-sm font-medium outline-none cursor-pointer"
-                                        />
-                                        <input
-                                            ref={endTimeRef}
-                                            type="time"
-                                            value={formData.endTime}
-                                            onChange={(e) => updateField('endTime', e.target.value)}
-                                            className="bg-transparent text-white text-sm font-medium outline-none cursor-pointer ml-auto"
-                                        />
+                                    {/* End Row */}
+                                    <div className="flex items-center py-3 px-4">
+                                        <div className="flex items-center gap-2 w-16">
+                                            <div className="w-2 h-2 rounded-full border border-white/40" />
+                                            <span className="text-[13px] text-white/70">End</span>
+                                        </div>
+                                        <div className="flex-1 flex items-center gap-3">
+                                            <div
+                                                onClick={() => endDateRef.current?.showPicker()}
+                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                            >
+                                                <span className="text-[13px] text-white font-medium">
+                                                    {new Date(formData.endDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                </span>
+                                                <input
+                                                    ref={endDateRef}
+                                                    type="date"
+                                                    value={formData.endDate}
+                                                    onChange={(e) => updateField('endDate', e.target.value)}
+                                                    className="sr-only"
+                                                />
+                                            </div>
+                                            <div
+                                                onClick={() => endTimeRef.current?.showPicker()}
+                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                            >
+                                                <span className="text-[13px] text-white font-medium">
+                                                    {new Date('2000-01-01T' + formData.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                </span>
+                                                <input
+                                                    ref={endTimeRef}
+                                                    type="time"
+                                                    value={formData.endTime}
+                                                    onChange={(e) => updateField('endTime', e.target.value)}
+                                                    className="sr-only"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right side: Timezone - spanning both rows */}
+                                <div className="flex items-center justify-center px-4 min-w-[100px]">
+                                    <div className="text-center text-white/60">
+                                        <Globe size={16} className="mx-auto mb-1" />
+                                        <div className="text-[11px] font-medium">{formData.timezone.split('/')[1] || formData.timezone}</div>
+                                        <div className="text-[10px] text-white/40">{formData.timezone.split('/')[0]}</div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="pl-10">
-                                <TimezoneSelect
-                                    value={formData.timezone}
-                                    onChange={(tz) => updateField('timezone', tz)}
+                        {/* Location - Compact like Luma */}
+                        {isEditingLocation ? (
+                            <div className="bg-[var(--surface-1)] rounded-xl p-3 border border-white/10">
+                                <input
+                                    type="text"
+                                    value={formData.location}
+                                    onChange={(e) => updateField('location', e.target.value)}
+                                    placeholder="Enter address or virtual meeting link..."
+                                    className="w-full bg-transparent text-[13px] text-white placeholder:text-white/30 outline-none"
+                                    autoFocus
+                                    onBlur={() => setIsEditingLocation(false)}
+                                    onKeyDown={(e) => e.key === 'Enter' && setIsEditingLocation(false)}
                                 />
                             </div>
-                        </div>
-
-                        {/* Location */}
-                        <div className="space-y-4">
-                            {isEditingLocation ? (
-                                <div className="p-1 bg-gradient-to-r from-[var(--accent-solid)] to-[var(--accent-glow)] rounded-2xl p-[1px]">
-                                    <div className="bg-[var(--bg-page)] rounded-2xl p-4">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <MapPin size={18} className="text-[color:var(--accent-solid)]" />
-                                            <span className="text-sm font-semibold text-white">Event Location</span>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={formData.location}
-                                            onChange={(e) => updateField('location', e.target.value)}
-                                            placeholder="Enter address or virtual meeting link..."
-                                            className="w-full bg-[var(--surface-1)] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 outline-none focus:bg-white/5 transition-colors"
-                                            autoFocus
-                                        />
-                                        <div className="flex justify-end gap-2 mt-3">
-                                            <button onClick={() => setIsEditingLocation(false)} className="px-4 py-2 text-xs font-bold text-black bg-white rounded-lg hover:bg-white/90">
-                                                Done
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => setIsEditingLocation(true)}
-                                    className="p-5 bg-[var(--surface-1)] rounded-2xl border border-white/5 flex items-center gap-4 cursor-pointer group hover:bg-[var(--surface-2)] transition-all backdrop-blur-md"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <MapPin size={20} className="text-white/60 group-hover:text-[color:var(--accent-solid)]" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-base font-medium text-white group-hover:translate-x-1 transition-transform">
-                                            {formData.location || 'Add Event Location'}
-                                        </p>
-                                        {!formData.location && <p className="text-sm text-white/40">Offline location or virtual link</p>}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Description */}
-                        <div className="space-y-4">
-                            {isEditingDescription ? (
-                                <div className="bg-[var(--surface-1)] rounded-2xl p-4 border border-[color:var(--accent-glow)] backdrop-blur-md">
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => updateField('description', e.target.value)}
-                                        placeholder="Add a short description..."
-                                        rows={3}
-                                        className="w-full bg-transparent text-white placeholder:text-white/20 outline-none resize-none text-lg"
-                                        autoFocus
-                                    />
-                                    <button onClick={() => setIsEditingDescription(false)} className="mt-2 text-xs font-bold text-[color:var(--accent-solid)] uppercase tracking-wider">
-                                        Save Description
-                                    </button>
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => setIsEditingDescription(true)}
-                                    className="p-5 bg-[var(--surface-1)] rounded-2xl border border-white/5 flex items-center gap-4 cursor-pointer group hover:bg-[var(--surface-2)] transition-all backdrop-blur-md"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <Plus size={20} className="text-white/60 group-hover:text-[color:var(--accent-solid)]" />
-                                    </div>
-                                    <p className="text-base font-medium text-white group-hover:translate-x-1 transition-transform">
-                                        {formData.description || 'Add Description'}
+                        ) : (
+                            <div
+                                onClick={() => setIsEditingLocation(true)}
+                                className="py-3 px-4 bg-[var(--surface-1)] rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/[0.04] transition-colors"
+                            >
+                                <MapPin size={16} className="text-white/50 shrink-0" />
+                                <div className="flex-1">
+                                    <p className="text-[13px] font-medium text-white">
+                                        {formData.location || 'Add Event Location'}
                                     </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Rich Details */}
-                        <div className="p-6 bg-[var(--surface-1)] rounded-3xl border border-white/5 space-y-4 backdrop-blur-md">
-                            <div className="flex items-center gap-3">
-                                <Plus size={18} className="text-[color:var(--accent-solid)]" />
-                                <span className="text-sm font-semibold text-white">About Event</span>
-                            </div>
-                            <textarea
-                                value={formData.about}
-                                onChange={(e) => updateField('about', e.target.value)}
-                                placeholder="Markdown supported. Tell your story..."
-                                rows={8}
-                                className="w-full bg-black/10 border-none rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 outline-none focus:ring-1 focus:ring-[color:var(--accent-glow)]"
-                            />
-                        </div>
-
-                        {/* Options Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Socials */}
-                            <div className="p-6 bg-[var(--surface-1)] rounded-3xl border border-white/5 space-y-4 backdrop-blur-md">
-                                <div className="flex items-center gap-3">
-                                    <Globe size={18} className="text-[color:var(--accent-solid)]" />
-                                    <span className="text-sm font-semibold text-white">Social Links</span>
-                                </div>
-                                <div className="space-y-3">
-                                    {Object.entries(formData.socialLinks).slice(0, 3).map(([key, val]) => (
-                                        <input
-                                            key={key}
-                                            type="text"
-                                            placeholder={`${key.charAt(0).toUpperCase() + key.slice(1)} URL`}
-                                            value={val}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, [key]: e.target.value } }))}
-                                            className="w-full bg-black/10 border-none rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/20 outline-none focus:ring-1 focus:ring-[color:var(--accent-glow)]"
-                                        />
-                                    ))}
+                                    {!formData.location && <p className="text-[11px] text-white/40">Offline location or virtual link</p>}
                                 </div>
                             </div>
+                        )}
 
-                            {/* Settings (Capacity, Approval) */}
-                            <div className="p-6 bg-[var(--surface-1)] rounded-3xl border border-white/5 space-y-6 backdrop-blur-md">
+                        {/* Description - Compact like Luma */}
+                        {isEditingDescription ? (
+                            <div className="bg-[var(--surface-1)] rounded-xl p-3 border border-white/10">
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => updateField('description', e.target.value)}
+                                    placeholder="Add a short description..."
+                                    rows={2}
+                                    className="w-full bg-transparent text-[13px] text-white placeholder:text-white/30 outline-none resize-none"
+                                    autoFocus
+                                    onBlur={() => setIsEditingDescription(false)}
+                                />
+                            </div>
+                        ) : (
+                            <div
+                                onClick={() => setIsEditingDescription(true)}
+                                className="py-3 px-4 bg-[var(--surface-1)] rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/[0.04] transition-colors"
+                            >
+                                <Plus size={16} className="text-white/50 shrink-0" />
+                                <p className="text-[13px] font-medium text-white">
+                                    {formData.description || 'Add Description'}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Event Options Section */}
+                        <div className="space-y-1">
+                            <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">Event Options</p>
+                            <div className="bg-[var(--surface-1)] rounded-xl border border-white/5 divide-y divide-white/5">
                                 {/* Ticket Price */}
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between p-4">
                                     <div className="flex items-center gap-3">
-                                        <Ticket size={18} className="text-white/60" />
-                                        <span className="text-sm font-medium text-white">Price</span>
+                                        <Ticket size={16} className="text-white/50" />
+                                        <span className="text-sm font-medium text-white">Ticket Price</span>
                                     </div>
-                                    <div className="flex items-center bg-black/20 rounded-lg px-2">
-                                        <span className="text-white/40 text-xs mr-1">$</span>
-                                        <input
-                                            type="number"
-                                            value={formData.ticketPrice || ''}
-                                            onChange={(e) => updateField('ticketPrice', parseFloat(e.target.value))}
-                                            placeholder="Free"
-                                            className="w-16 bg-transparent text-right text-sm text-white outline-none py-1"
-                                        />
+                                    <div className="flex items-center gap-1 text-white/70 text-sm">
+                                        {formData.ticketPrice ? `$${formData.ticketPrice}` : 'Free'}
+                                        <button
+                                            onClick={() => {
+                                                const price = prompt('Enter ticket price (leave empty for free):', formData.ticketPrice?.toString() || '');
+                                                updateField('ticketPrice', price ? parseFloat(price) : null);
+                                            }}
+                                            className="text-white/30 hover:text-white ml-1"
+                                        >
+                                            ✎
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Approval */}
-                                <div className="flex items-center justify-between">
+                                {/* Require Approval */}
+                                <div className="flex items-center justify-between p-4">
                                     <div className="flex items-center gap-3">
-                                        <UserCheck size={18} className="text-white/60" />
-                                        <span className="text-sm font-medium text-white">Approval</span>
+                                        <UserCheck size={16} className="text-white/50" />
+                                        <span className="text-sm font-medium text-white">Require Approval</span>
                                     </div>
                                     <button
                                         onClick={() => updateField('requireApproval', !formData.requireApproval)}
-                                        className={`w-10 h-5 rounded-full relative transition-colors ${formData.requireApproval ? 'bg-[color:var(--accent-solid)]' : 'bg-white/10'}`}
+                                        className={`w-11 h-6 rounded-full relative transition-colors ${formData.requireApproval ? 'bg-white' : 'bg-white/20'}`}
                                     >
-                                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${formData.requireApproval ? 'left-6' : 'left-1'}`} />
+                                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all ${formData.requireApproval ? 'left-6 bg-black' : 'left-1 bg-white/60'}`} />
                                     </button>
                                 </div>
 
                                 {/* Capacity */}
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between p-4">
                                     <div className="flex items-center gap-3">
-                                        <UsersIcon size={18} className="text-white/60" />
+                                        <UsersIcon size={16} className="text-white/50" />
                                         <span className="text-sm font-medium text-white">Capacity</span>
                                     </div>
-                                    <input
-                                        type="number"
-                                        value={formData.capacity || ''}
-                                        onChange={(e) => updateField('capacity', parseInt(e.target.value))}
-                                        placeholder="Unlimited"
-                                        className="w-20 bg-black/20 rounded-lg text-right text-sm text-white outline-none px-2 py-1"
-                                    />
+                                    <div className="flex items-center gap-1 text-white/70 text-sm">
+                                        {formData.capacity ? formData.capacity : 'Unlimited'}
+                                        <button
+                                            onClick={() => {
+                                                const cap = prompt('Enter capacity (leave empty for unlimited):', formData.capacity?.toString() || '');
+                                                updateField('capacity', cap ? parseInt(cap) : null);
+                                            }}
+                                            className="text-white/30 hover:text-white ml-1"
+                                        >
+                                            ✎
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Submit */}
-                        <div className="sticky bottom-6 z-30 pt-4">
+                        <div className="pt-4">
                             <Button
                                 fullWidth
                                 size="lg"
-                                className="rounded-[20px] bg-white! text-black! font-serif text-lg h-16 hover:bg-white/90! shadow-[0_0_40px_-10px_var(--accent-glow)] transition-shadow duration-500"
+                                className="rounded-xl font-medium text-base h-12 text-white border-0 hover:opacity-90 transition-opacity"
+                                style={{ background: currentTheme.colors.accentMain }}
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
                             >

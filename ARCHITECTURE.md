@@ -1,119 +1,195 @@
-# System Architecture Analysis
+# PlanX System Architecture Definitions
 
-This document provides a detailed analysis of the **Pulse Event Platform** architecture. It outlines the structural components, data flow, technology stack, and design patterns used to build the scalable, event-management system.
+**Version:** 2.0.0
+**Status:** Live / Active Development
+**Document Owner:** Senior System Architect
+
+---
 
 ## 1. Executive Summary
 
-The application is a modern, full-stack event management platform built on **Next.js 16 (App Router)**. It leverages **Supabase** for its backend infrastructure (Authentication, Database, Realtime) and implements a robust **Repository Pattern** to decouple business logic from data access. The frontend is built with **React 19**, styled with **Tailwind CSS v4**, and features complex integrations with **Web3** (Solana/Ethereum wallet adapters) and **Inngest** for background job processing.
+PlanX is a **Serverless, Event-Driven Event Management Platform** engineered to bridge Web2 usability with Web3 capabilities. It is built on a **Modern Composable Architecture**, leveraging Next.js 16 for the application layer and Supabase for the persistence and realtime layer.
 
-**Key Strengths:**
-- **Strict Separation of Concerns**: Repository and Service layers keep the API routes and Actions clean.
-- **Type Safety**: Extensive use of TypeScript with generated Supabase definitions (`database.types.ts`).
-- **Scalability**: Usage of Server Actions and Inngest for async tasks ensures the app handles heavy loads (e.g., mass invites) gracefully.
-- **Modern Stack**: Adoption of bleeding-edge versions (Next.js 16, React 19, Tailwind v4).
+The architecture prioritizes:
+1.  **Scalability**: Leveraging serverless compute (Vercel/Supabase Functions) to handle bursty traffic typical of event ticketing.
+2.  **Type Safety**: End-to-end type safety from Database (SQL) to UI (React) via generated TypeScript definitions.
+3.  **Performance**: Aggressive caching strategies, localized edge rendering, and optimistic UI updates.
+4.  **Separation of Concerns**: Strict adherence to the Repository Pattern to decouple business logic from data access.
 
-## 2. Technology Stack
+---
 
-### Core Framework
-- **Frontend/Fullstack**: Next.js 16.0.0 (App Router), React 19.0.0
-- **Language**: TypeScript 5.8.2
-- **Styling**: Tailwind CSS v4.0.0, Framer Motion (animations), Lucide React (icons)
+## 2. C4 Architecture Model
 
-### Backend & Infrastructure
-- **Database**: PostgreSQL (via Supabase)
-- **Auth**: Supabase Auth (Social + Email)
-- **ORM/Query Builder**: Supabase JS Client (v2.90.1)
-- **Background Jobs**: Inngest (v3.49.1)
-- **Storage**: Supabase Storage
-
-### Web3 Integration
-- **EVM**: Wagmi, Viem, Ethers.js
-- **Solana**: @solana/web3.js, Wallet Adapter
-
-### Deployment
-- **Platform**: Vercel
-- **Environment Management**: `.env` / `.env.local`
-
-## 3. High-Level Architecture
-
-The application follows a standard **Next.js App Router** architecture, enhanced with a Layered Architecture pattern to manage complexity.
+### Level 1: System Context Diagram
+*High-level view of how PlanX interacts with the ecosystem.*
 
 ```mermaid
-graph TD
-    Client[Client Browser]
-    Server[Next.js Server]
-    DB[(Supabase Postgres)]
-    Inngest[Inngest Cloud]
+graph TB
+    User[Web / Mobile User]
     
-    Client -- Server Actions --> Server
-    Client -- API Routes --> Server
-    Client -- Realtime Sub --> DB
-    
-    subgraph "Server Layer"
-        Actions[Server Actions]
-        API[API Routes]
-        Services[Service Layer]
-        Repos[Repository Layer]
+    subgraph PlanX_Platform [PlanX Platform]
+        WebApp[Next.js Application]
     end
     
-    Actions --> Services
-    Actions --> Repos
-    API --> Services
-    Services --> Repos
-    Repos --> DB
-    
-    Server -- Event Trigger --> Inngest
-    Inngest -- Async Job --> Server
+    subgraph External_Systems [Infrastructure & Integrations]
+        Supabase[Supabase PaaS\n(Auth, DB, Realtime, Storage)]
+        Stripe[Stripe Payments\n(Fiat Processing)]
+        Blockchain[Blockchain Nodes\n(Solana/EVM)]
+        Inngest[Inngest\n(Durable Queues & Jobs)]
+        Resend[Resend\n(Transactional Email)]
+    end
+
+    User -->|HTTPS| WebApp
+    WebApp -->|SQL/Rest| Supabase
+    WebApp -->|API| Stripe
+    WebApp -->|RPC| Blockchain
+    WebApp -->|Events| Inngest
+    Inngest -->|SMTP| Resend
+    Inngest -->|Write| Supabase
 ```
 
-## 4. Key Components and Patterns
+### Level 2: Container Diagram
+*Detailed breakdown of the application structure and data flow.*
 
-### 4.1. Directory Structure (`src/`)
+```mermaid
+graph TB
+    subgraph Client_Layer [Frontend (Browser)]
+        NextClient[Next.js Client Components]
+        Zustand[Global Store (Zustand)]
+        ReactQuery[Server State Cache]
+    end
 
-- **`app/`**: Next.js 16 routing. Contains pages (`page.tsx`), layouts (`layout.tsx`), and API routes (`api/`).
-- **`actions/`**: Server Actions. These are the primary entry points for mutations (e.g., `subscription.actions.ts`). They validate input and call into the Service or Repository layer.
-- **`lib/repositories/`**: **The Data Access Layer**.
-    - Abstracts raw Supabase queries.
-    - Handles client instantiation: `getPublicClient()` for read-only/public data and `getAdminClient()` for service-role operations.
-    - **Example**: `event.repository.ts` has methods like `findAll()`, `create()`, which return typed objects (e.g., `Event`).
-    - **Normalization**: Repositories map raw database rows (snake_case) to application domain models (camelCase) to ensure consistent consumption in the UI.
-- **`lib/services/`**: **The Business Logic Layer**.
-    - Orchestrates complex flows involving multiple repositories or external APIs.
-    - **Example**: `invite.service.ts` handles the multi-step process of creating a database record *and* sending an email via Resend API.
-- **`components/features/`**: **The Feature-Based UI**.
-    - Components are organized by domain (e.g., `chat`, `events`, `tickets`) rather than type, improving modularity.
+    subgraph Service_Layer [Backend (Serverless)]
+        NextAPI[Next.js API Routes]
+        RepoLayer[Repository Layer\n(Data Access Object)]
+        Services[Domain Services\n(Business Logic)]
+    end
 
-### 4.2. Data Flow Pattern
+    subgraph Data_Layer [Persistence]
+        Postgres[(PostgreSQL DB)]
+        Realtime(Realtime Socket)
+        Buckets[[Object Storage]]
+    end
 
-1.  **Read Path**:
-    - **Server Components**: Directly call Repository functions (e.g., `await eventRepo.findAll()`). This bypasses the API layer for efficiency.
-    - **Client Components**: Uses wrappers or Server Actions to fetch data.
-2.  **Write Path**:
-    - **UI Interaction**: User clicks a button (e.g., "Subscribe").
-    - **Server Action**: `subscribeToCalendarAction` is invoked.
-    - **Repository Call**: Action calls `calendarRepo.subscribe(...)`.
-    - **Database**: Repository executes Supabase `insert`.
-    - **Revalidation**: Action calls `revalidatePath('/')` to refresh the UI.
+    NextClient -->|Fetch/RPC| NextAPI
+    NextClient -->|Subscribe| Realtime
+    
+    NextAPI -->|Call| Services
+    Services -->|Use| RepoLayer
+    RepoLayer -->|Query| Postgres
+    
+    Postgres -.->|CDC| Realtime
+```
 
-### 4.3. Type Safety
+---
 
-- **`database.types.ts`**: Generated from Supabase. Acts as the Single Source of Truth for the schema.
-- **Domain Types (`src/types/*.ts`)**: Hand-written interfaces (e.g., `Event`, `Calendar`) that the application consumes.
-- **Normalization**: Repositories are responsible for converting `Database['public']['Tables']['events']['Row']` -> `Event`.
+## 3. Data Architecture (ERD)
 
-## 5. Data Architecture (Supabase)
+The database (PostgreSQL) is the source of truth, normalized to 3NF. Key entities utilize `UUID` primary keys.
 
-Based on the repositories observed, the core schema encompasses:
-- **`events`**: Core entity.
-- **`calendars`**: A grouping entity for events (one-to-many).
-- **`calendar_people`**: CRM-like table tracking audience interactions.
-- **`calendar_subscriptions`**: Tracks user subscriptions to calendars.
-- **`invitations`**: Tracks event invites.
-- **`ticket_tiers`**: Commerce entity for monetization.
-- **`users/profiles`**: Extended user data linked to Supabase Auth.
+```mermaid
+erDiagram
+    USERS ||--o{ PROFILES : has
+    PROFILES ||--o{ EVENTS : organizes
+    EVENTS ||--o{ GUESTS : has
+    EVENTS ||--o{ INVITATIONS : sends
+    EVENTS ||--o{ TICKET_TIERS : defines
+    CALENDARS ||--o{ EVENTS : aggregates
+    
+    EVENTS {
+        uuid id PK
+        string title
+        jsonb counters "Atomic Increments"
+        jsonb settings "Feature Flags"
+        string status "draft|published"
+    }
 
-## 6. Infrastructure and Deployment
+    GUESTS {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        enum status "going|waitlist"
+        jsonb registration_data
+    }
 
-- **Supabase**: Central hub for state. "Service Role" keys are used judiciously in Repositories for privileged operations.
-- **Inngest**: Background jobs are located in `src/inngest` (e.g., sending email reminders).
-- **Environment Config**: Strictly managed via `next.config.ts` and `.env` files.
+    INVITATIONS {
+        uuid id PK
+        string email
+        string token "Tracking Pixel"
+        datetime opened_at
+        datetime clicked_at
+    }
+```
+
+**Key Data Decisions:**
+*   **JSONB Columns**: Used for flexible schema evolution (e.g., `events.settings`, `events.counters`) without schema migrations for minor attributes.
+*   **Atomic Counters**: `events.counters` utilizes Postgres atomic increments to handle high-concurrency RSVP scenarios without locking issues.
+*   **Row Level Security (RLS)**: Security logic is pushed to the database layer. No query can bypass tenant isolation rules defined in SQL policies.
+
+---
+
+## 4. Component Design & Patterns
+
+### 4.1. The Repository Pattern
+We enforce a strict boundary between the Application Layer and the Data Layer.
+*   **Path**: `src/lib/repositories/*`
+*   **Responsibility**:
+    *   Construct complex SQL queries.
+    *   Map DB `snake_case` types to Application `camelCase` types.
+    *   Handle `PGRST` errors and return domain-specific Results.
+*   **Why?**: Allows us to swap backing stores or mock data easily. It creates a "Corruption Layer" that protects the UI from Database Schema changes.
+
+### 4.2. Strategy Pattern for Payments
+The payment system (`/api/payments`) supports multiple processors via a unified interface.
+*   **Interfaces**: `PaymentProcessor` (Abstract)
+*   **Implementations**: `StripeProcessor`, `CryptoProcessor` (Solana/EVM)
+*   **Benefit**: Adding a new payment method (e.g., PayPal) requires zero changes to the core Checkout flow.
+
+### 4.3. Event-Sourcing (Lite)
+While not full Event Sourcing, critical actions emit domain events to **Inngest**.
+*   **Example**: `invitation.created`
+*   **Consumers**:
+    *   `send-email`: Triggers Resend.
+    *   `update-analytics`: Increments stats.
+    *   `audit-log`: Records activity.
+*   **Benefit**: Decouples side effects from the critical user path. User gets a fast response; emails send asynchronously.
+
+---
+
+## 5. Security Posture
+
+### 5.1. Authentication & Authorization
+*   **Auth**: Supabase Auth (JWT based).
+*   **Authorization**:
+    *   **Level 1 (Edge)**: Next.js Middleware validates JWT presence.
+    *   **Level 2 (Database)**: Postgres RLS Policies enforce ownership (e.g., `auth.uid() == organizer_id`).
+    *   **Level 3 (API)**: Service layer validation for business rules (e.g., "Cannot invite to past event").
+
+### 5.2. Data Protection
+*   **Inputs**: All API inputs validated via **Zod** schemas.
+*   **SQL Injection**: Impossible due to usage of Parameterized Queries (via Supabase SDK).
+*   **CSRF**: Handled natively by Next.js & SameSite cookie policies.
+
+---
+
+## 6. Scalability & Performance Strategy
+
+### 6.1. Search Optimization
+*   **Current**: Federated SQL Search (ILike).
+*   **Scaling Path**: Shift to **meilisearch** or **ElasticSearch** when >100k records. The Repository pattern facilitates this swap transparently.
+
+### 6.2. Caching Strategy
+*   **Server**: Next.js `unstable_cache` (Tag-based revalidation) for public event pages.
+*   **Client**: React Query `staleTime` (5min) for dashboard data to minimize network chatter.
+*   **Database**: Materialized Views for heavy aggregation queries (Analytics dashboards).
+
+### 6.3. Edge Computing
+*   Geolocation-based routing is handled at the Edge (Vercel) to serve the nearest database replica read-node (future optimization).
+
+---
+
+## 7. Developer Experience (DX)
+
+*   **Monorepo-style structure**: Feature collocation in `src/components/features`.
+*   **Type Generation**: `supabase gen types` command synchronizes DB schema to TypeScript interfaces automatically.
+*   **Local Development**: `pnpm run dev:all` orchestrates Next.js, Inngest Dev Server, and Supabase local stack.

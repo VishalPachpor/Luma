@@ -2,6 +2,7 @@
  * Navbar Component (Luma-style)
  * Exact replica of Luma's navigation bar layout
  * Hides on scroll down, shows on scroll up
+ * Supports immersive theming - background color syncs with page theme
  */
 
 'use client';
@@ -14,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ProfileDropdown } from './ProfileDropdown';
 import { cn } from '@/lib/utils';
 import GlobalSearch from '@/components/features/search/GlobalSearch';
+import { useNavbarTheme } from '@/contexts/NavbarThemeContext';
 
 const navLinks = [
     { href: '/', label: 'Events', icon: Calendar },
@@ -29,6 +31,9 @@ export default function Navbar() {
     const [isVisible, setIsVisible] = useState(true);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const lastScrollY = useRef(0);
+
+    // Get immersive theme color from context
+    const { navbarBgColor } = useNavbarTheme();
 
     // Update time every minute
     useEffect(() => {
@@ -75,17 +80,25 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Compute navbar background style
+    const navbarStyle = navbarBgColor
+        ? { backgroundColor: navbarBgColor }
+        : undefined;
+
     return (
 
         <>
             <header
-                className={cn(
-                    "fixed top-0 left-0 right-0 z-50 transition-transform duration-300",
-                    !isVisible && "-translate-y-full"
-                )}
+                className="sticky top-0 z-50"
             >
-                <nav className="bg-[#13151A]/95 backdrop-blur-md border-b border-white/5">
-                    <div className="w-full max-w-[1920px] mx-auto px-6 h-12 flex items-center justify-between relative">
+                <nav
+                    className={cn(
+                        "backdrop-blur-md transition-colors duration-500",
+                        !navbarBgColor && "bg-[#13151A]/95 border-b border-white/5"
+                    )}
+                    style={navbarStyle}
+                >
+                    <div className="w-full max-w-[1920px] mx-auto px-6 h-16 flex items-center justify-between relative">
                         {/* Left: Logo */}
                         <div className="flex items-center shrink-0">
                             <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">

@@ -31,9 +31,17 @@ interface EventRSVPProps {
     price?: number;
     registrationQuestions?: RegistrationQuestion[];
     requireApproval?: boolean;
+    theme?: 'default' | 'luma';
 }
 
-export default function EventRSVP({ eventId, eventTitle, price = 0, registrationQuestions, requireApproval = false }: EventRSVPProps) {
+export default function EventRSVP({
+    eventId,
+    eventTitle,
+    price = 0,
+    registrationQuestions,
+    requireApproval = false,
+    theme = 'default'
+}: EventRSVPProps) {
     const { user } = useAuth();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -205,6 +213,17 @@ export default function EventRSVP({ eventId, eventTitle, price = 0, registration
         );
     }
 
+    // Luma Button Styles
+    const registerBtnClass = theme === 'luma'
+        ? "bg-white text-black hover:bg-white/90 border-none font-medium text-[14px] h-[44px] rounded-[10px]"
+        : (!isFree
+            ? "gap-2 bg-linear-to-r from-indigo-500 to-purple-600 border-none text-white shadow-lg shadow-purple-500/20"
+            : "gap-2");
+
+    const interestedBtnClass = theme === 'luma'
+        ? "bg-white/10 text-white hover:bg-white/20 border-none font-medium text-[14px] h-[44px] rounded-[10px]"
+        : "gap-2";
+
     return (
         <div className="space-y-6">
             {/* Action Buttons */}
@@ -275,7 +294,7 @@ export default function EventRSVP({ eventId, eventTitle, price = 0, registration
                             size="lg"
                             onClick={() => handleRegisterClick('going')}
                             disabled={actionLoading || !user}
-                            className={!isFree ? "gap-2 bg-linear-to-r from-indigo-500 to-purple-600 border-none text-white shadow-lg shadow-purple-500/20" : "gap-2"}
+                            className={registerBtnClass}
                         >
                             {actionLoading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -285,23 +304,25 @@ export default function EventRSVP({ eventId, eventTitle, price = 0, registration
                                 </span>
                             ) : (
                                 <>
-                                    <UserPlus className="w-5 h-5" />
+                                    {theme !== 'luma' && <UserPlus className="w-5 h-5 mr-2" />}
                                     {requireApproval ? 'Request to Join' : 'Register'}
                                 </>
                             )}
                         </Button>
 
-                        <Button
-                            fullWidth
-                            variant="secondary"
-                            size="lg"
-                            onClick={() => handleRegisterClick('interested')}
-                            disabled={actionLoading || !user}
-                            className="gap-2"
-                        >
-                            <Bell className="w-5 h-5" />
-                            I'm Interested
-                        </Button>
+                        {theme !== 'luma' && ( // Hide Interested button in Luma mode if strict, or style it? Luma typically just has "Register" or "Request". Let's keep it but styled.
+                            <Button
+                                fullWidth
+                                variant="secondary"
+                                size="lg"
+                                onClick={() => handleRegisterClick('interested')}
+                                disabled={actionLoading || !user}
+                                className={interestedBtnClass}
+                            >
+                                <Bell className="w-4 h-4 mr-2" />
+                                I'm Interested
+                            </Button>
+                        )}
                     </>
                 )}
             </div>

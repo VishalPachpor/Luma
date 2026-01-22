@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { MapPin, Calendar, Share2, Globe, Instagram, Youtube, Mic, Monitor, Wine } from 'lucide-react';
 import { Button, EventMap } from '@/components/components/ui';
+import EventCard from '@/components/features/events/EventCard';
 import Link from 'next/link';
 import { getGoogleMapsUrl } from '@/lib/utils';
 import EventActions from '@/components/features/events/EventActions';
@@ -54,107 +55,59 @@ export default async function EventPage({ params }: EventPageProps) {
                 </Link>
             </div>
 
-            <main className="max-w-[1100px] mx-auto px-6 py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-[45%_1fr] gap-12 lg:gap-20">
-                    {/* Left Column: Sticky Image */}
+            {/* Main Content */}
+            <main className="max-w-[1120px] mx-auto pt-24 px-8 pb-16">
+                <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
+
+                    {/* Left Column: Fixed 420px Card */}
                     <div className="lg:sticky lg:top-24 self-start">
-                        <div className="relative aspect-square w-full rounded-3xl overflow-hidden shadow-2xl border border-white/5 bg-[#151A29]">
-                            {event.coverImage ? (
-                                <Image
-                                    src={event.coverImage}
-                                    alt={event.title || 'Event Cover'}
-                                    fill
-                                    className="object-cover"
-                                    priority
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-linear-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
-                                    <Calendar size={64} className="text-white/20" />
-                                </div>
-                            )}
-                        </div>
+                        <EventCard event={event} isOrganizer={isOrganizer} />
                     </div>
 
                     {/* Right Column: Content */}
-                    <div className="space-y-10">
-                        {/* Header Info */}
-                        <div className="space-y-6">
-                            <h1 className="text-4xl md:text-5xl font-bold text-white leading-[1.1] tracking-tight">
-                                {event.title}
-                            </h1>
+                    <div className="space-y-12 pl-4">
 
-                            <div className="space-y-4 pt-2">
-                                <div className="flex items-start gap-5">
-                                    <div className="w-12 h-12 rounded-xl bg-white/5 flex flex-col items-center justify-center border border-white/5 shrink-0">
-                                        <span className="text-[10px] font-bold text-text-secondary uppercase">
-                                            {startDate.toLocaleString('en-US', { month: 'short' }).toUpperCase()}
-                                        </span>
-                                        <span className="text-lg font-bold text-white">
-                                            {startDate.getDate()}
-                                        </span>
+                        {/* When & Where */}
+                        <div>
+                            <h2 className="text-[22px] font-semibold text-white mb-6">When and where</h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Date Block */}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-[44px] h-[44px] rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 border border-white/5">
+                                        <Calendar size={20} className="text-white/80" />
                                     </div>
                                     <div>
-                                        <div className="text-xl font-semibold text-white">{dateString}</div>
-                                        <div className="text-text-secondary">{timeString}</div>
-                                        {/* Add to Calendar Link could go here */}
+                                        <div className="text-[15px] font-medium text-white">Date and time</div>
+                                        <div className="text-[13px] text-white/60">
+                                            {dateString} • {timeString}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-5">
-                                    <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 shrink-0">
-                                        <MapPin size={24} className="text-text-secondary" />
+                                {/* Location Block */}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-[44px] h-[44px] rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 border border-white/5">
+                                        <MapPin size={20} className="text-white/80" />
                                     </div>
                                     <div>
-                                        <div className="text-xl font-semibold text-white">
-                                            {event.location ? event.location.split(',')[0] : 'Location TBD'}
-                                        </div>
-                                        <div className="text-text-secondary text-sm">
-                                            {event.location || 'Register to see address'}
+                                        <div className="text-[15px] font-medium text-white">Location</div>
+                                        <div className="text-[13px] text-white/60">
+                                            {event.location ? event.location.split(',')[0] : 'See map below'}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Registration Card - Dynamic RSVP */}
-                        <div className="py-2">
-                            <EventActions
-                                eventId={event.id}
-                                eventTitle={event.title}
-                                eventDescription={event.description}
-                                eventLocation={event.location}
-                                eventDate={event.date}
-                                organizer={event.organizer}
-                                organizerId={event.organizerId}
-                                price={event.price || 0}
-                                registrationQuestions={event.registrationQuestions}
-                                requireApproval={event.requireApproval || false}
-                            />
-                        </div>
-
-                        {/* Hosted By (Moved here for Luma feel) */}
-                        <div className="flex items-center justify-between border-t border-b border-white/5 py-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/5 flex items-center justify-center overflow-hidden">
-                                    <span className="text-xs font-bold">{(event.organizer || 'H').charAt(0)}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-text-muted uppercase tracking-wider">Hosted By</span>
-                                    <span className="font-medium text-white">{event.organizer || 'Host'}</span>
-                                </div>
-                            </div>
-                            <button className="text-xs text-text-muted hover:text-white transition-colors">
-                                Contact the Host
-                            </button>
-                        </div>
 
                         {/* About Event */}
                         <section className="space-y-4">
-                            <h2 className="text-xl font-bold text-white">About Event</h2>
-                            <div className="prose prose-invert prose-p:text-gray-300 prose-a:text-blue-400 max-w-none">
+                            <h2 className="text-[22px] font-semibold text-white">About Event</h2>
+                            <div className="prose prose-invert prose-p:text-[15px] prose-p:leading-relaxed prose-p:text-gray-400 prose-a:text-blue-400 max-w-none">
                                 {event.about ? (
                                     event.about.map((paragraph: string, i: number) => (
-                                        <p key={i} className="mb-4 text-base leading-relaxed text-gray-300">
+                                        <p key={i} className="mb-4">
                                             {paragraph.split(/(\*\*.*?\*\*)/).map((part: string, index: number) => {
                                                 if (part.startsWith('**') && part.endsWith('**')) {
                                                     const content = part.slice(2, -2);
@@ -165,7 +118,7 @@ export default async function EventPage({ params }: EventPageProps) {
                                         </p>
                                     ))
                                 ) : (
-                                    <p className="text-base leading-relaxed text-gray-300 whitespace-pre-line">
+                                    <p className="text-[15px] leading-relaxed text-gray-400 whitespace-pre-line">
                                         {event.description || 'No description provided.'}
                                     </p>
                                 )}
@@ -174,10 +127,10 @@ export default async function EventPage({ params }: EventPageProps) {
 
                         {/* Location Map */}
                         {event.coords && event.location && (
-                            <section className="space-y-4 pt-4">
-                                <h2 className="text-xl font-bold text-white">Location</h2>
-                                <p className="text-gray-400">{event.location}</p>
-                                <div className="relative w-full h-64 rounded-2xl overflow-hidden border border-white/10 bg-[#1C1C1E] group">
+                            <section className="space-y-4 pt-2">
+                                <h2 className="text-[22px] font-semibold text-white">Location</h2>
+                                <p className="text-[15px] text-gray-400">{event.location}</p>
+                                <div className="relative w-full h-[300px] rounded-2xl overflow-hidden border border-white/10 bg-[#1C1C1E] group shadow-inner">
                                     <EventMap lat={event.coords.lat} lng={event.coords.lng} zoom={13} interactive={false} />
                                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                                         <a
@@ -186,7 +139,7 @@ export default async function EventPage({ params }: EventPageProps) {
                                             rel="noopener noreferrer"
                                             className="pointer-events-auto"
                                         >
-                                            <Button variant="secondary" className="bg-[#0B1221] text-white hover:bg-[#151A29] border border-white/10 font-bold shadow-xl scale-95 group-hover:scale-100 transition-transform">
+                                            <Button variant="secondary" className="bg-[#0B1221] text-white hover:bg-[#151A29] border border-white/10 font-medium text-sm shadow-xl scale-95 group-hover:scale-100 transition-transform h-10 px-6 rounded-xl">
                                                 Open in Maps
                                             </Button>
                                         </a>

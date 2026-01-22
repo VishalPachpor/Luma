@@ -1,4 +1,4 @@
-export type SearchResultType = 'event' | 'calendar' | 'person' | 'shortcut' | 'newsletter';
+export type SearchResultType = 'event' | 'calendar' | 'person' | 'shortcut' | 'newsletter' | 'action';
 
 export interface SearchResult {
     id: string;

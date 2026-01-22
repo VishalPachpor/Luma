@@ -1,17 +1,10 @@
-/**
- * Main Content Client Component
- * Handles view switching based on store state - Luma-style layout
- */
-
 'use client';
-
 import { Suspense } from 'react';
 import { Settings } from 'lucide-react';
 import { Event, Category, FeaturedCalendar } from '@/types';
-import { City } from '@/types/city'; // Import City type
+import { City } from '@/types/city';
 import { useStore } from '@/store/useStore';
 import { Footer } from '@/components/components/layout';
-import Navbar from '@/components/components/layout/Navbar';
 import EventList from '@/components/features/events/EventList';
 import MyEventsList from '@/components/features/events/MyEventsList';
 import CalendarView from '@/components/features/calendar/CalendarView';
@@ -35,9 +28,7 @@ export default function MainContent({
 }: MainContentProps) {
     const { activeTab, searchQuery, selectedCategory } = useStore();
 
-    // Content switcher based on active tab
     const renderContent = () => {
-        // If searching, always show event list
         if (searchQuery.length > 0) {
             return <EventList events={events} />;
         }
@@ -50,11 +41,9 @@ export default function MainContent({
             case 'alerts':
                 return <EventList events={events} />;
             case 'discovery':
-                // If category is selected, show filtered events
                 if (selectedCategory) {
                     return <FilteredEvents events={events} categories={categories} />;
                 }
-                // Default to Category Discovery
                 return (
                     <CategoryDiscovery
                         categories={categories}
@@ -118,11 +107,10 @@ export default function MainContent({
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0E0F13]">
-            <Navbar />
 
             {/* Main Content - Centered with generous side spacing like Luma */}
-            <main className="flex-1 pt-16">
-                <div className="max-w-[800px] mx-auto px-8 py-10">
+            <main className="flex-1">
+                <div className="max-w-[800px] mx-auto px-8 pt-4 pb-10 scroll-mt-16">
                     {renderHeader()}
                     <Suspense fallback={
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

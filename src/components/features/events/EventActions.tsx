@@ -28,6 +28,8 @@ interface EventActionsProps {
     price?: number;
     registrationQuestions?: RegistrationQuestion[];
     requireApproval?: boolean;
+    theme?: 'default' | 'luma';
+    fullWidth?: boolean;
 }
 
 export default function EventActions({
@@ -40,7 +42,9 @@ export default function EventActions({
     organizerId,
     price = 0,
     registrationQuestions = [],
-    requireApproval = false
+    requireApproval = false,
+    theme = 'default',
+    fullWidth = false
 }: EventActionsProps) {
     const { user, loading: authLoading } = useAuth();
     // Use React Query hook for instant cache check and automatic background refetching
@@ -81,9 +85,15 @@ export default function EventActions({
         }
     };
 
+    // If theme is 'luma', we strip the card container and just render the contents
+    const Container = theme === 'luma' ? 'div' : 'div';
+    const containerClasses = theme === 'luma'
+        ? "space-y-4" // No padding, no border, no background, just spacing
+        : "bg-[#151A29] rounded-2xl border border-indigo-500/20 shadow-2xl shadow-indigo-500/5 hover-card relative z-10 transition-all p-6 space-y-6";
+
     return (
         <>
-            <div className="bg-[#151A29] rounded-2xl border border-indigo-500/20 shadow-2xl shadow-indigo-500/5 hover-card relative z-10 transition-all p-6 space-y-6">
+            <Container className={containerClasses}>
                 {/* RSVP / Registration Section - Only for non-organizers */}
                 {!isOrganizer && (
                     <EventRSVP
@@ -92,12 +102,13 @@ export default function EventActions({
                         price={price}
                         registrationQuestions={registrationQuestions}
                         requireApproval={requireApproval}
+                        theme={theme}
                     />
                 )}
 
                 {/* Ticket Actions: View Ticket (for registered users) and Scan (for hosts) */}
                 {rsvpStatus === 'going' && (
-                    <div className="pt-4 border-t border-white/5">
+                    <div className={theme === 'luma' ? "pt-2" : "pt-4 border-t border-white/5"}>
                         <a href={`/events/${eventId}/ticket`}>
                             <Button
                                 variant="secondary"
@@ -112,10 +123,10 @@ export default function EventActions({
 
                 {/* Organizer Management Access - Clean Luma Style */}
                 {isOrganizer && (
-                    <div className="pt-4 border-t border-white/5">
+                    <div className={theme === 'luma' ? "pt-2" : "pt-4 border-t border-white/5"}>
                         <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <span className="text-sm font-medium text-emerald-400">
-                                You have manage access for this event.
+                                You have manage access.
                             </span>
 
                             <a href={`/events/${eventId}/manage`}>
@@ -129,7 +140,7 @@ export default function EventActions({
                         </div>
                     </div>
                 )}
-            </div>
+            </Container>
 
             {/* Custom Delete Confirmation Modal */}
             <Modal

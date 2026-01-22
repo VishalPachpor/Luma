@@ -197,40 +197,43 @@ export async function GET(request: NextRequest) {
         } as SearchResponse);
     }
 
-    // Parallel Database Queries for Search (Query Present)
+    // Unified Search via Search Index (RPC)
     try {
-        const [eventsResult, guestsResult] = await Promise.all([
-            // 1. Search Events (Title or Description)
-            supabase
-                .from('events')
-                .select('id, title, description, date, location, cover_image')
-                .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-                .eq('status', 'published') // Only published events
-                .limit(5),
+        const { data: searchResults, error } = await supabase
+            .rpc('search_global', { query_text: query });
 
-            // 2. Search People stub
-            Promise.resolve({ data: [] })
-        ]);
+        if (error) {
+            console.error('[SearchAPI] RPC Error:', error);
+            throw error;
+        }
 
-        // Normalize Events
-        const events: SearchResult[] = (eventsResult.data || []).map((event: any) => ({
-            id: event.id,
-            type: 'event',
-            title: event.title,
-            subtitle: new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
-            url: `/events/${event.id}`,
-            icon: 'Calendar'
+        const formattedResults: SearchResult[] = (searchResults || []).map((item: any) => ({
+            id: item.entity_id, // Link to the actual entity ID, not the index ID
+            type: item.entity_type === 'user' ? 'person' : item.entity_type as any,
+            title: item.title,
+            subtitle: item.subtitle || undefined,
+            url: item.url,
+            icon: item.icon || undefined
         }));
 
-        // Normalize People
-        const people: SearchResult[] = [];
+        // Split results by type for the UI
+        const events = formattedResults.filter(r => r.type === 'event');
+        const people = formattedResults.filter(r => r.type === 'person');
+        const calendars = formattedResults.filter(r => r.type === 'calendar');
+        // Actions/Shortcuts from index? (We still have static shortcuts)
+
+        // Merge static shortcuts with index shortcuts if any
+        const indexShortcuts = formattedResults.filter(r => r.type === 'shortcut' || r.type === 'action');
 
         return NextResponse.json({
             results: {
                 events,
-                calendars: [],
+                calendars,
                 people,
-                shortcuts
+                shortcuts: [...shortcuts, ...indexShortcuts],
+                hosting: [], // Search mode doesn't show hosting/attending specifically unless matched
+                attending: [],
+                chats: []
             },
             query
         } as SearchResponse);
