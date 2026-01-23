@@ -9,6 +9,7 @@ import { headers } from 'next/headers';
 import './globals.css';
 import Providers from './providers';
 import Navbar from '@/components/components/layout/Navbar';
+import CommandPalette from '@/components/features/CommandPalette';
 
 const inter = Inter({
     subsets: ['latin'],
@@ -49,9 +50,12 @@ export default async function RootLayout({
                 <Providers cookie={cookie}>
                     <Navbar />
                     {children}
+                    {/* Global Command Palette (Cmd+K) */}
+                    <CommandPalette />
                 </Providers>
             </body>
         </html>
     );
 }
+
 

@@ -86,7 +86,6 @@ export default function Navbar() {
         : undefined;
 
     return (
-
         <>
             <header
                 className="sticky top-0 z-50"

@@ -1,26 +1,18 @@
 import { eventRepository } from '@/lib/repositories';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin, Calendar, Share2, Globe, Instagram, Youtube, Mic, Monitor, Wine } from 'lucide-react';
+import { MapPin, Calendar, ArrowUpRight } from 'lucide-react';
 import { Button, EventMap } from '@/components/components/ui';
-import EventCard from '@/components/features/events/EventCard';
 import Link from 'next/link';
 import { getGoogleMapsUrl } from '@/lib/utils';
-import EventActions from '@/components/features/events/EventActions';
 import { ViewTracker } from '@/components/features/analytics/ViewTracker';
+
 
 interface EventPageProps {
     params: Promise<{
         id: string;
     }>;
 }
-
-// Icons mapping for event format
-const Icons = {
-    mic: Mic,
-    handshake: Monitor, // approximating generic icon
-    wine: Wine,
-} as const;
 
 export default async function EventPage({ params }: EventPageProps) {
     const { id } = await params;
@@ -36,120 +28,216 @@ export default async function EventPage({ params }: EventPageProps) {
     const { data: { user } } = await supabase.auth.getUser();
     const isOrganizer = user?.id === event.organizerId;
 
-    // Format date similar to design
+    // Date Formatting
     const startDate = new Date(event.date);
     const dateString = startDate.toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
     });
-    const timeString = "2:00 PM - 6:00 PM PST"; // Mocked time range to match design
+    const timeString = startDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+
+    // Determine status for UI
+    const isPast = event.status === 'ended' || new Date(event.date) < new Date();
 
     return (
-        <div className="min-h-screen bg-[#0B1221] text-white">
+        <div className="min-h-screen bg-[#0E0F13] text-white">
             <ViewTracker eventId={event.id} />
-            {/* Navbar Placeholder */}
-            <div className="sticky top-0 z-50 h-16 bg-[#0B1221]/80 backdrop-blur-md border-b border-white/5 flex items-center px-6">
-                <Link href="/" className="text-white/80 hover:text-white transition-colors">
+
+            {/* Navbar */}
+            <header className="sticky top-0 z-50 h-16 bg-[#0E0F13]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6">
+                <Link href="/events" className="text-white/60 hover:text-white transition-colors text-sm font-medium flex items-center gap-2">
                     ← Back to Events
                 </Link>
-            </div>
+                <div className="flex items-center gap-4">
+                    {/* Actions like Share can go here */}
+                </div>
+            </header>
 
-            {/* Main Content */}
-            <main className="max-w-[1120px] mx-auto pt-24 px-8 pb-16">
-                <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
+            <main className="max-w-6xl mx-auto pt-12 px-6 pb-24">
+                <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-12 lg:gap-20">
 
-                    {/* Left Column: Fixed 420px Card */}
-                    <div className="lg:sticky lg:top-24 self-start">
-                        <EventCard event={event} isOrganizer={isOrganizer} />
+                    {/* LEFT COLUMN: Image & Host */}
+                    <div className="space-y-8">
+                        {/* Cover Image */}
+                        <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl">
+                            {event.coverImage ? (
+                                <Image
+                                    src={event.coverImage}
+                                    alt={event.title}
+                                    fill
+                                    className="object-cover"
+                                    priority
+                                />
+                            ) : (
+                                <div className="absolute inset-0 bg-linear-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+                                    <span className="text-white/20 text-lg">No Image</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Manage Banner */}
+                        {isOrganizer && (
+                            <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-4 flex items-center justify-between">
+                                <div>
+                                    <div className="text-sm font-medium text-white">You have manage access</div>
+                                    <div className="text-xs text-white/50">Edit details, view guests...</div>
+                                </div>
+                                <Button size="sm" variant="secondary" className="h-8 text-xs bg-white/10 hover:bg-white/20 border-0 text-white">
+                                    Manage ↗
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Host Info */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Hosted By</h3>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white">
+                                    {event.organizer.slice(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div className="text-sm font-medium text-white">{event.organizer}</div>
+                                    <div className="text-xs text-white/50">Event Organizer</div>
+                                </div>
+                            </div>
+                            <button className="text-xs text-white/40 hover:text-white transition-colors">
+                                Contact the Host
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Right Column: Content */}
-                    <div className="space-y-12 pl-4">
+                    {/* RIGHT COLUMN: Details & Registration */}
+                    <div className="space-y-10 pt-2">
 
-                        {/* When & Where */}
-                        <div>
-                            <h2 className="text-[22px] font-semibold text-white mb-6">When and where</h2>
+                        {/* Header Info */}
+                        <div className="space-y-6">
+                            <h1 className="text-5xl font-bold text-white tracking-tight leading-tight">
+                                {event.title}
+                            </h1>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Date Block */}
-                                <div className="flex items-center gap-4">
-                                    <div className="w-[44px] h-[44px] rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 border border-white/5">
-                                        <Calendar size={20} className="text-white/80" />
+                            <div className="space-y-3">
+                                {/* Date Row */}
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5 text-white/60">
+                                        <div className="flex flex-col items-center leading-none">
+                                            <span className="text-[9px] uppercase font-bold">{startDate.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                            <span className="text-[14px] font-bold">{startDate.getDate()}</span>
+                                        </div>
                                     </div>
                                     <div>
-                                        <div className="text-[15px] font-medium text-white">Date and time</div>
-                                        <div className="text-[13px] text-white/60">
-                                            {dateString} • {timeString}
+                                        <div className="text-lg font-medium text-white">
+                                            {dateString}
+                                        </div>
+                                        <div className="text-sm text-white/50">
+                                            {timeString}
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Location Block */}
-                                <div className="flex items-center gap-4">
-                                    <div className="w-[44px] h-[44px] rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 border border-white/5">
-                                        <MapPin size={20} className="text-white/80" />
+                                {/* Location Row */}
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5 text-white/60">
+                                        <MapPin size={18} />
                                     </div>
                                     <div>
-                                        <div className="text-[15px] font-medium text-white">Location</div>
-                                        <div className="text-[13px] text-white/60">
-                                            {event.location ? event.location.split(',')[0] : 'See map below'}
+                                        <Link
+                                            href={getGoogleMapsUrl(event.coords.lat, event.coords.lng, event.location)}
+                                            target="_blank"
+                                            className="text-lg font-medium text-white hover:underline flex items-center gap-1 group"
+                                        >
+                                            {event.location.split(',')[0]}
+                                            <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-white/50" />
+                                        </Link>
+                                        <div className="text-sm text-white/50">
+                                            {event.city}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Registration Card (Luma Style) */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+                            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                                <span className="text-sm font-medium text-white/60">Registration</span>
+                            </div>
 
-                        {/* About Event */}
-                        <section className="space-y-4">
-                            <h2 className="text-[22px] font-semibold text-white">About Event</h2>
-                            <div className="prose prose-invert prose-p:text-[15px] prose-p:leading-relaxed prose-p:text-gray-400 prose-a:text-blue-400 max-w-none">
+                            {isPast ? (
+                                <div className="bg-white/5 rounded-xl p-4 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                        <Calendar size={14} className="text-white/60" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-white">Past Event</div>
+                                        <div className="text-xs text-white/50">This event ended recently.</div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="text-sm text-white/80 leading-relaxed">
+                                        Welcome! To join the event, please register below.
+                                    </div>
+
+                                    {/* User Email & RSVP */}
+                                    {user && (
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-5 h-5 rounded-full bg-linear-to-r from-purple-500 to-pink-500" />
+                                            <span className="text-sm font-medium text-white">{user.email}</span>
+                                        </div>
+                                    )}
+
+                                    <Button className="w-full h-12 text-[15px] font-medium bg-white text-black hover:bg-white/90 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.01]">
+                                        One-Click RSVP
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* About Section */}
+                        <div className="space-y-4 pt-4 border-t border-white/5">
+                            <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">About Event</h3>
+                            <div className="prose prose-invert prose-p:text-base prose-p:leading-relaxed prose-p:text-white/80">
                                 {event.about ? (
-                                    event.about.map((paragraph: string, i: number) => (
-                                        <p key={i} className="mb-4">
-                                            {paragraph.split(/(\*\*.*?\*\*)/).map((part: string, index: number) => {
-                                                if (part.startsWith('**') && part.endsWith('**')) {
-                                                    const content = part.slice(2, -2);
-                                                    return <strong key={index} className="text-white font-semibold">{content}</strong>;
-                                                }
-                                                return part;
-                                            })}
-                                        </p>
-                                    ))
+                                    event.about.map((p: string, i: number) => <p key={i}>{p}</p>)
                                 ) : (
-                                    <p className="text-[15px] leading-relaxed text-gray-400 whitespace-pre-line">
-                                        {event.description || 'No description provided.'}
-                                    </p>
+                                    <p>{event.description}</p>
                                 )}
                             </div>
-                        </section>
+                        </div>
 
                         {/* Location Map */}
-                        {event.coords && event.location && (
-                            <section className="space-y-4 pt-2">
-                                <h2 className="text-[22px] font-semibold text-white">Location</h2>
-                                <p className="text-[15px] text-gray-400">{event.location}</p>
-                                <div className="relative w-full h-[300px] rounded-2xl overflow-hidden border border-white/10 bg-[#1C1C1E] group shadow-inner">
+                        {event.coords && (
+                            <div className="space-y-4 pt-4 border-t border-white/5">
+                                <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Location</h3>
+                                <div className="text-lg font-medium text-white">{event.location}</div>
+                                <div className="text-sm text-white/50 mb-4">{event.city}</div>
+
+                                <div className="relative w-full h-[320px] rounded-2xl overflow-hidden border border-white/10 bg-[#1C1C1E]">
                                     <EventMap lat={event.coords.lat} lng={event.coords.lng} zoom={13} interactive={false} />
-                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                         <a
                                             href={getGoogleMapsUrl(event.coords.lat, event.coords.lng, event.location)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="pointer-events-auto"
                                         >
-                                            <Button variant="secondary" className="bg-[#0B1221] text-white hover:bg-[#151A29] border border-white/10 font-medium text-sm shadow-xl scale-95 group-hover:scale-100 transition-transform h-10 px-6 rounded-xl">
+                                            <Button variant="secondary" className="bg-[#0E0F13]/90 backdrop-blur-md text-white border border-white/10 shadow-xl px-5 py-2 h-auto text-sm rounded-xl hover:bg-black">
                                                 Open in Maps
                                             </Button>
                                         </a>
                                     </div>
                                 </div>
-                            </section>
+                            </div>
                         )}
+
                     </div>
                 </div>
             </main>
-        </div>
+        </div >
     );
 }

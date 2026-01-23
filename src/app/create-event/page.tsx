@@ -217,6 +217,8 @@ function CreateEventForm() {
                 status: 'published',
                 visibility: formData.visibility,
                 calendarId: formData.calendarId ?? undefined,
+                theme: currentTheme.name,
+                themeColor: currentTheme.colors.accentMain,
             });
 
             console.log('Event created:', event);

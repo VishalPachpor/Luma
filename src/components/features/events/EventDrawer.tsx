@@ -1,13 +1,13 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, MapPin, ExternalLink, User, Copy, ArrowUpRight } from 'lucide-react';
+import { X, Calendar, MapPin, ExternalLink, User, Copy, ArrowUpRight, ChevronsRight, Check, ChevronUp, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import type { Event } from '@/types/event';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface EventDrawerProps {
     event: Event | null;
@@ -18,6 +18,7 @@ interface EventDrawerProps {
 export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
     const { user } = useAuth();
     const [copySuccess, setCopySuccess] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     if (!event) return null;
 
@@ -28,6 +29,18 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
         await navigator.clipboard.writeText(eventUrl);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
+    };
+
+    const handleScrollUp = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollBy({ top: -300, behavior: 'smooth' });
+        }
+    };
+
+    const handleScrollDown = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollBy({ top: 300, behavior: 'smooth' });
+        }
     };
 
     return (
@@ -46,6 +59,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
 
                     {/* Drawer */}
                     <motion.div
+                        ref={scrollRef}
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
@@ -53,42 +67,63 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                         className="fixed right-0 top-0 h-full w-full md:w-[550px] bg-[#13151A] z-50 overflow-y-auto"
                     >
                         {/* Header */}
-                        <div className="sticky top-0 bg-[#1F2128] z-10">
-                            <div className="px-6 py-4 flex items-center justify-between">
+                        <div className="sticky top-0 bg-[#0E0F13] z-10 border-b border-white/5">
+                            <div className="flex items-center justify-between px-4 h-[60px]">
                                 <div className="flex items-center gap-3">
+                                    {/* Close / Collapse Button */}
                                     <button
                                         onClick={onClose}
-                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                                        className="group w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all"
                                     >
-                                        <X size={20} className="text-white" />
+                                        <ChevronsRight size={20} />
                                     </button>
+
+                                    {/* Copy Link */}
                                     <button
                                         onClick={handleCopyLink}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#2A2D35] text-white text-sm font-medium rounded-lg hover:bg-[#33373F] transition-colors"
+                                        className="h-8 flex items-center gap-2 px-3 bg-white/5 text-white/70 text-xs font-medium rounded-lg hover:bg-white/10 hover:text-white border border-white/5 transition-all"
                                     >
-                                        <Copy size={16} />
-                                        {copySuccess ? 'Copied!' : 'Copy Link'}
+                                        {copySuccess ? <Check size={14} /> : <Copy size={14} />}
+                                        <span className="hidden sm:inline">Copy Link</span>
                                     </button>
+
+                                    {/* Event Page */}
                                     <Link
                                         href={`/events/${event.id}`}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#2A2D35] text-white text-sm font-medium rounded-lg hover:bg-[#33373F] transition-colors"
+                                        className="h-8 flex items-center gap-2 px-3 bg-white/5 text-white/70 text-xs font-medium rounded-lg hover:bg-white/10 hover:text-white border border-white/5 transition-all"
                                     >
-                                        Event Page
-                                        <ArrowUpRight size={16} />
+                                        <span>Event Page</span>
+                                        <ArrowUpRight size={14} />
                                     </Link>
+                                </div>
+
+                                {/* Right Controls: Up/Down */}
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={handleScrollUp}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
+                                    >
+                                        <ChevronUp size={20} />
+                                    </button>
+                                    <button
+                                        onClick={handleScrollDown}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
+                                    >
+                                        <ChevronDown size={20} />
+                                    </button>
                                 </div>
                             </div>
 
                             {/* Manage Access Banner */}
                             {isOrganizer && (
-                                <div className="px-6 py-4 bg-linear-to-r from-pink-900/30 to-purple-900/30 border-t border-b border-pink-500/20 flex items-center justify-between">
-                                    <p className="text-sm text-pink-200">You have manage access for this event.</p>
+                                <div className="px-6 py-3 bg-[#1C1C1E] border-b border-white/10 flex items-center justify-between">
+                                    <p className="text-xs text-white/50">You have manage access</p>
                                     <Link
                                         href={`/events/${event.id}/manage`}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-linear-to-r from-pink-500 to-pink-600 text-white text-sm font-semibold rounded-lg hover:from-pink-600 hover:to-pink-700 transition-all"
+                                        className="text-xs font-medium text-white hover:underline flex items-center gap-1"
                                     >
                                         Manage
-                                        <ArrowUpRight size={16} />
+                                        <ArrowUpRight size={12} />
                                     </Link>
                                 </div>
                             )}

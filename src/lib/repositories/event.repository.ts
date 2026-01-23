@@ -60,7 +60,7 @@ function normalizeEvent(item: EventRow): Event {
         calendarId: item.calendar_id || undefined,
         capacity: item.capacity || undefined,
         price: item.price || undefined,
-        status: (item.status as 'published' | 'draft' | 'archived') || 'published',
+        status: (item.status as 'published' | 'draft' | 'archived' | 'live' | 'ended') || 'published',
         visibility: (item.visibility as 'public' | 'private') || 'public',
         requireApproval: item.require_approval || undefined,
         socialLinks: (item.social_links as any) || {}, // Json type
@@ -71,6 +71,8 @@ function normalizeEvent(item: EventRow): Event {
         registrationQuestions: (item.registration_questions as any) || [], // Json type
         createdAt: item.created_at,
         updatedAt: item.updated_at,
+        theme: (item as any).theme,
+        themeColor: (item as any).theme_color,
     };
 }
 
@@ -85,7 +87,8 @@ export async function findAll(): Promise<Event[]> {
         const { data, error } = await client
             .from('events')
             .select('*')
-            .eq('status', 'published')
+            // Fetch all visible states: published (future), live (now), ended (past)
+            .in('status', ['published', 'live', 'ended'])
             .order('date', { ascending: false });
 
         if (error || !data) {
@@ -262,7 +265,9 @@ export async function create(input: CreateEventInput): Promise<Event> {
         about: input.about,
         presented_by: input.presentedBy,
         registration_questions: (input.registrationQuestions || []) as any,
-    };
+        theme: input.theme,
+        theme_color: input.themeColor,
+    } as any;
 
     const { data, error } = await supabase
         .from('events')
@@ -292,6 +297,8 @@ export async function update(id: string, updates: Partial<CreateEventInput>): Pr
     if (updates.date) supabaseUpdates.date = updates.date; // Should normalize date if needed
     if (updates.capacity !== undefined) supabaseUpdates.capacity = updates.capacity;
     if (updates.price !== undefined) supabaseUpdates.price = updates.price;
+    if (updates.theme) (supabaseUpdates as any).theme = updates.theme;
+    if (updates.themeColor) (supabaseUpdates as any).theme_color = updates.themeColor;
     // Add other fields as needed
 
     const { error } = await supabase.from('events').update(supabaseUpdates).eq('id', id);
