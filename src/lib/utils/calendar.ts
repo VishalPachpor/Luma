@@ -57,12 +57,12 @@ export function generateICSContent(event: CalendarEvent): string {
         return text.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
     };
 
-    const uid = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@planx.app`;
+    const uid = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@luma.app`;
 
     return [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//PlanX//Event//EN',
+        'PRODID:-//Luma//Event//EN',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         'BEGIN:VEVENT',

@@ -119,7 +119,7 @@ export default function AdminsSettingsPage() {
                                 className="bg-white/5 border-white/10 text-white focus:border-white/20"
                                 autoFocus
                             />
-                            <p className="text-xs text-white/30">User must already have a PlanX account.</p>
+                            <p className="text-xs text-white/30">User must already have a Luma account.</p>
                         </div>
                         <div className="flex justify-end gap-3">
                             <Button

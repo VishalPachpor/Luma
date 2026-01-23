@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Sign In | PlanX',
-    description: 'Sign in to PlanX to discover and create amazing events.',
+    title: 'Sign In | Luma',
+    description: 'Sign in to Luma to discover and create amazing events.',
 };
 
 export default function LoginLayout({

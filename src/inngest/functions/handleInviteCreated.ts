@@ -149,7 +149,7 @@ export const handleInviteCreated = inngest.createFunction(
                     <tr>
                         <td style="background-color: #f9fafb; padding: 24px 40px; border-top: 1px solid #e5e7eb;">
                             <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-                                Sent via PlanX • <a href="${APP_URL}" style="color: #6366f1;">planx.events</a>
+                                Sent via Luma • <a href="${APP_URL}" style="color: #6366f1;">luma.com</a>
                             </p>
                         </td>
                     </tr>

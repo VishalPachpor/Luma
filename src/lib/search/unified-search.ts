@@ -111,7 +111,7 @@ const COMMANDS: Command[] = [
     {
         id: 'help',
         title: 'Help & Support',
-        subtitle: 'Get help with PlanX',
+        subtitle: 'Get help with Luma',
         keywords: ['help', 'support', 'faq', 'question'],
         icon: 'help',
         url: '/help',

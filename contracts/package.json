@@ -1,7 +1,7 @@
 {
-    "name": "planx-contracts",
+    "name": "luma-contracts",
     "version": "1.0.0",
-    "description": "PlanX Event Escrow Smart Contracts",
+    "description": "Luma Event Escrow Smart Contracts",
     "scripts": {
         "compile": "hardhat compile",
         "test": "hardhat test",

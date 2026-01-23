@@ -2,7 +2,7 @@
 -- Migration: 025_invitation_lifecycle
 -- Description: Production-grade invitation lifecycle system with email tracking,
 --              atomic counters, and analytics foundation
--- Author: PlanX Team
+-- Author: Luma Team
 -- Date: 2026-01-21
 -- ============================================================================
 

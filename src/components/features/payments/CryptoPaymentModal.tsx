@@ -82,7 +82,7 @@ export default function CryptoPaymentModal({
     const handlePay = () => {
         console.log('[CryptoPaymentModal] handlePay called', { chain, isConnected, amount });
         if (chain === 'solana') {
-            solPayment.pay(solAmount, 'PlanX Ticket');
+            solPayment.pay(solAmount, 'Luma Ticket');
         } else {
             ethPayment.pay(ethAmount.toString());
         }

@@ -26,7 +26,7 @@ export function generateICSFeed({
     let content = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//PlanX//Calendar//EN',
+        'PRODID:-//Luma//Calendar//EN',
         `X-WR-CALNAME:${calendarName}`,
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
@@ -42,7 +42,7 @@ export function generateICSFeed({
             if (!event.date) return;
 
             // Parse event date - assumed to be ISO string or parseable
-            // PlanX stores "Sep 12, 2026, 10:00 AM" which is display format, 
+            // Luma stores "Sep 12, 2026, 10:00 AM" which is display format, 
             // but real DB should store ISO.
             // If it's the specific display format, we need to parse it carefully.
             // Let's rely on standard Date parsing for now, assuming ISO is preferred in new data
@@ -55,7 +55,7 @@ export function generateICSFeed({
             const end = formatDate(dtEnd.toISOString());
 
             content.push('BEGIN:VEVENT');
-            content.push(`UID:${event.id}@planx.com`);
+            content.push(`UID:${event.id}@luma.com`);
             content.push(`DTSTAMP:${now}`);
             content.push(`DTSTART:${start}`);
             content.push(`DTEND:${end}`);
@@ -72,7 +72,7 @@ export function generateICSFeed({
             if (event.location) {
                 content.push(`LOCATION:${event.location}`);
             }
-            content.push(`URL:https://planx.com/events/${event.id}`);
+            content.push(`URL:https://luma.com/events/${event.id}`);
             content.push('END:VEVENT');
         } catch (e) {
             console.error('Error processing event for ICS:', event.id, e);

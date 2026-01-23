@@ -218,7 +218,7 @@ export default function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) 
                             <span><kbd className="bg-white/10 px-1 py-0.5 rounded mr-1">↑</kbd><kbd className="bg-white/10 px-1 py-0.5 rounded">↓</kbd> to navigate</span>
                             <span><kbd className="bg-white/10 px-1 py-0.5 rounded mr-1">↵</kbd> to select</span>
                         </div>
-                        <span>PlanX Command v2.0</span>
+                        <span>Luma Command v2.0</span>
                     </div>
                 </Command>
             </div>

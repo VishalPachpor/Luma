@@ -1,7 +1,7 @@
 /**
  * Domain Events
  * 
- * Canonical event definitions for the PlanX event-driven architecture.
+ * Canonical event definitions for the Luma event-driven architecture.
  * These events are the contract between services.
  */
 
