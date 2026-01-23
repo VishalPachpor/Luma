@@ -91,7 +91,7 @@ export default function EventCard({ event, isOrganizer }: EventCardProps) {
                 </div>
 
                 {/* Registration Block (Soft Inset Panel) */}
-                <div className="mt-auto bg-white/[0.06] rounded-xl p-[14px]">
+                <div className="mt-auto bg-white/6 rounded-xl p-[14px]">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="flex -space-x-2">
                             {/* Mock attendees avatars or host avatar */}
@@ -124,7 +124,7 @@ export default function EventCard({ event, isOrganizer }: EventCardProps) {
             </div>
 
             {/* Bottom Link Bar */}
-            <div className="h-[44px] bg-black/[0.35] border-t border-white/[0.06] flex items-center px-4 gap-4">
+            <div className="h-[44px] bg-black/35 border-t border-white/6 flex items-center px-4 gap-4">
                 <button className="flex items-center gap-2 text-[13px] text-white/70 hover:text-white transition-colors">
                     <Share2 size={14} />
                     Share

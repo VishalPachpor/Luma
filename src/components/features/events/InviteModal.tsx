@@ -284,7 +284,7 @@ export default function InviteModal({ isOpen, onClose, eventId, eventTitle }: In
             <div className="flex flex-col h-[600px] w-full text-white">
                 {/* Stats Header */}
                 {stats && stats.totalSent > 0 && (
-                    <div className="p-4 border-b border-white/10 bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+                    <div className="p-4 border-b border-white/10 bg-linear-to-r from-indigo-500/10 to-purple-500/10">
                         <div className="flex items-center gap-4">
                             <StatCard label="Sent" value={stats.totalSent} icon={Send} color="bg-blue-500" />
                             <StatCard label="Opened" value={`${stats.openRate}%`} icon={Eye} color="bg-purple-500" />
@@ -475,8 +475,8 @@ export default function InviteModal({ isOpen, onClose, eventId, eventTitle }: In
                         {/* Result Notification */}
                         {result && (
                             <div className={`mx-4 mb-2 p-3 rounded-lg flex items-center justify-between ${result.type === 'success'
-                                    ? 'bg-green-500/20 border border-green-500/30 text-green-300'
-                                    : 'bg-red-500/20 border border-red-500/30 text-red-300'
+                                ? 'bg-green-500/20 border border-green-500/30 text-green-300'
+                                : 'bg-red-500/20 border border-red-500/30 text-red-300'
                                 }`}>
                                 <div className="flex items-center gap-2">
                                     {result.type === 'success' ? (

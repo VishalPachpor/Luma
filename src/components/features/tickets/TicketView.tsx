@@ -8,9 +8,9 @@
 import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion } from 'framer-motion';
-import { Ticket, Check, Clock, XCircle, Download } from 'lucide-react';
+import { Ticket, Check, Clock, XCircle, Download, Coins, RefreshCw, AlertTriangle } from 'lucide-react';
 import { GlossyCard } from '@/components/components/ui';
-import { Guest } from '@/types/commerce';
+import { Guest, GuestStatus } from '@/types/commerce';
 
 interface TicketViewProps {
     guest: Guest;
@@ -19,7 +19,14 @@ interface TicketViewProps {
     eventLocation?: string;
 }
 
-const statusConfig = {
+// Status configuration for all guest statuses
+const statusConfig: Record<GuestStatus, {
+    icon: any;
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+}> = {
     pending: {
         icon: Clock,
         label: 'Pending',
@@ -48,12 +55,40 @@ const statusConfig = {
         bgColor: 'bg-green-500/20',
         borderColor: 'border-green-500/30',
     },
+    staked: {
+        icon: Coins,
+        label: 'Staked - Ready',
+        color: 'text-purple-400',
+        bgColor: 'bg-purple-500/20',
+        borderColor: 'border-purple-500/30',
+    },
+    checked_in: {
+        icon: Check,
+        label: 'Checked In',
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-500/20',
+        borderColor: 'border-blue-500/30',
+    },
     scanned: {
         icon: Check,
         label: 'Checked In',
         color: 'text-blue-400',
         bgColor: 'bg-blue-500/20',
         borderColor: 'border-blue-500/30',
+    },
+    refunded: {
+        icon: RefreshCw,
+        label: 'Refunded',
+        color: 'text-gray-400',
+        bgColor: 'bg-gray-500/20',
+        borderColor: 'border-gray-500/30',
+    },
+    forfeited: {
+        icon: AlertTriangle,
+        label: 'Forfeited',
+        color: 'text-orange-400',
+        bgColor: 'bg-orange-500/20',
+        borderColor: 'border-orange-500/30',
     },
     revoked: {
         icon: XCircle,
@@ -83,6 +118,13 @@ export default function TicketView({ guest, eventTitle, eventDate, eventLocation
     // Generate QR content (the token that will be scanned)
     const qrContent = guest.qrToken;
 
+    // Determine if QR should be shown
+    const showQR = guest.status === 'issued' || guest.status === 'staked' || guest.status === 'approved';
+    const isCheckedIn = guest.status === 'checked_in' || guest.status === 'scanned';
+    const isPending = guest.status === 'pending' || guest.status === 'pending_approval';
+    const isTerminal = guest.status === 'rejected' || guest.status === 'revoked' ||
+        guest.status === 'refunded' || guest.status === 'forfeited';
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -91,7 +133,7 @@ export default function TicketView({ guest, eventTitle, eventDate, eventLocation
         >
             <GlossyCard className="overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
+                <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-center">
                     <h2 className="text-xl font-bold text-white mb-1">{eventTitle}</h2>
                     <p className="text-white/80 text-sm">{eventDate}</p>
                     {eventLocation && (
@@ -101,7 +143,7 @@ export default function TicketView({ guest, eventTitle, eventDate, eventLocation
 
                 {/* QR Code Section */}
                 <div className="p-8 flex flex-col items-center">
-                    {mounted && guest.status === 'issued' ? (
+                    {mounted && showQR ? (
                         <div className="bg-white p-4 rounded-2xl shadow-lg">
                             {qrContent ? (
                                 <QRCodeSVG
@@ -118,19 +160,28 @@ export default function TicketView({ guest, eventTitle, eventDate, eventLocation
                                 </div>
                             )}
                         </div>
-                    ) : mounted && guest.status === 'pending' ? (
+                    ) : mounted && isPending ? (
                         <div className="w-[200px] h-[200px] bg-yellow-500/10 border-2 border-dashed border-yellow-500/30 rounded-2xl flex items-center justify-center">
                             <div className="text-center p-4">
                                 <Clock className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
-                                <p className="text-yellow-400 text-sm font-medium">Payment Pending</p>
+                                <p className="text-yellow-400 text-sm font-medium">
+                                    {guest.status === 'pending_approval' ? 'Awaiting Approval' : 'Payment Pending'}
+                                </p>
                                 <p className="text-text-muted text-xs mt-1">QR will appear after confirmation</p>
                             </div>
                         </div>
-                    ) : mounted ? (
+                    ) : mounted && isCheckedIn ? (
                         <div className="w-[200px] h-[200px] bg-blue-500/10 border-2 border-blue-500/30 rounded-2xl flex items-center justify-center">
                             <div className="text-center p-4">
                                 <Check className="w-12 h-12 text-blue-400 mx-auto mb-2" />
                                 <p className="text-blue-400 text-sm font-medium">Already Checked In</p>
+                            </div>
+                        </div>
+                    ) : mounted && isTerminal ? (
+                        <div className={`w-[200px] h-[200px] ${status.bgColor} border-2 ${status.borderColor} rounded-2xl flex items-center justify-center`}>
+                            <div className="text-center p-4">
+                                <StatusIcon className={`w-12 h-12 ${status.color} mx-auto mb-2`} />
+                                <p className={`${status.color} text-sm font-medium`}>{status.label}</p>
                             </div>
                         </div>
                     ) : (
@@ -152,11 +203,17 @@ export default function TicketView({ guest, eventTitle, eventDate, eventLocation
                 {/* Footer Instructions */}
                 <div className="border-t border-white/5 p-4 bg-white/2">
                     <p className="text-center text-xs text-text-muted">
-                        {guest.status === 'issued'
+                        {showQR
                             ? 'Show this QR code at the entrance'
-                            : guest.status === 'pending'
-                                ? 'Complete payment to receive your ticket'
-                                : 'You have already checked in'}
+                            : isPending
+                                ? guest.status === 'pending_approval'
+                                    ? 'Waiting for organizer approval'
+                                    : 'Complete payment to receive your ticket'
+                                : isCheckedIn
+                                    ? 'You have already checked in'
+                                    : isTerminal
+                                        ? `Ticket ${status.label.toLowerCase()}`
+                                        : 'Contact the organizer for assistance'}
                     </p>
                 </div>
             </GlossyCard>

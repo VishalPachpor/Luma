@@ -3,6 +3,34 @@
  * Centralized TypeScript type definitions for events
  */
 
+/**
+ * Event Lifecycle States
+ * 
+ * Valid transitions:
+ *   draft → published
+ *   published → live (automatic at event time)
+ *   published → draft (revert to edit)
+ *   live → ended (automatic at end time)
+ *   ended → archived
+ */
+export type EventStatus =
+    | 'draft'      // Being created, not visible to public
+    | 'published'  // Open for registration, visible
+    | 'live'       // Event is happening now
+    | 'ended'      // Event completed, no more check-ins
+    | 'archived';  // Historical, hidden from listings
+
+/**
+ * Event Lifecycle Metadata
+ * Tracks timing and transition history
+ */
+export interface EventLifecycle {
+    scheduledStartAt?: string;  // When event goes live
+    scheduledEndAt?: string;    // When event ends
+    transitionedAt?: string;    // Last transition timestamp
+    previousStatus?: EventStatus;
+}
+
 export interface Coordinates {
     lat: number;
     lng: number;
@@ -35,12 +63,11 @@ export interface Event {
     calendarId?: string;
     capacity?: number;
     price?: number;
-    // Event State (Luma Architecture)
-    status: 'draft' | 'published' | 'archived';
+    // Event State (Lifecycle)
+    status: EventStatus;
     visibility: 'public' | 'private';
-
-    // Commerce
-    ticketTiers?: import('./commerce').TicketTier[];
+    // Lifecycle metadata
+    lifecycle?: EventLifecycle;
 
     requireApproval?: boolean;
 
@@ -71,6 +98,9 @@ export interface Event {
     themeColor?: string;
     font?: string;
     endDate?: string;
+
+    // Commerce
+    ticketTiers?: import('./commerce').TicketTier[];
 }
 
 export type CreateEventInput = Omit<Event, 'id'> & { id?: string };

@@ -33,6 +33,7 @@
     "inngest": "^3.49.1",
     "lucide-react": "^0.469.0",
     "maplibre-gl": "^5.15.0",
+    "meilisearch": "^0.55.0",
     "nanoid": "^5.1.6",
     "next": "^16.0.0",
     "qrcode.react": "^4.2.0",

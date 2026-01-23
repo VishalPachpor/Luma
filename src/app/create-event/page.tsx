@@ -232,7 +232,7 @@ function CreateEventForm() {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-page)] text-text-primary transition-colors duration-500 ease-in-out">
+        <div className="min-h-screen bg-(--bg-page) text-text-primary transition-colors duration-500 ease-in-out">
             {/* Centered Container - Like Luma */}
             <div className="max-w-[1000px] mx-auto px-6 pt-20 pb-16 min-h-screen">
 
@@ -245,7 +245,7 @@ function CreateEventForm() {
                         {/* Image Upload - Square */}
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="aspect-square w-full rounded-xl overflow-hidden relative group cursor-pointer border border-white/10 hover:border-[color:var(--accent-glow)] transition-all bg-[var(--surface-1)]"
+                            className="aspect-square w-full rounded-xl overflow-hidden relative group cursor-pointer border border-white/10 hover:border-(--accent-glow) transition-all bg-(--surface-1)"
                         >
                             <Image
                                 src={formData.imageUrl || "https://picsum.photos/seed/abstract/600/600"}
@@ -269,10 +269,10 @@ function CreateEventForm() {
                         <div className="flex items-center gap-2">
                             <div
                                 onClick={cycleTheme}
-                                className="flex-1 flex items-center gap-3 p-3 bg-[var(--surface-1)] rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors"
+                                className="flex-1 flex items-center gap-3 p-3 bg-(--surface-1) rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors"
                             >
                                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                                    <LayoutGrid size={16} className="text-[color:var(--accent-solid)]" />
+                                    <LayoutGrid size={16} className="text-(--accent-solid)" />
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Theme</p>
@@ -283,7 +283,7 @@ function CreateEventForm() {
 
                             <button
                                 onClick={randomizeTheme}
-                                className="w-12 h-12 flex items-center justify-center bg-[var(--surface-1)] rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors hover:scale-105 active:scale-95"
+                                className="w-12 h-12 flex items-center justify-center bg-(--surface-1) rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors hover:scale-105 active:scale-95"
                             >
                                 <Dices size={16} className="text-text-muted" />
                             </button>
@@ -319,7 +319,7 @@ function CreateEventForm() {
                         />
 
                         {/* Date/Time Card - Exact Luma Layout */}
-                        <div className="bg-[var(--surface-1)] rounded-xl border border-white/5 overflow-hidden">
+                        <div className="bg-(--surface-1) rounded-xl border border-white/5 overflow-hidden">
                             <div className="flex">
                                 {/* Left side: Start/End rows */}
                                 <div className="flex-1 border-r border-white/5">
@@ -417,7 +417,7 @@ function CreateEventForm() {
 
                         {/* Location - Compact like Luma */}
                         {isEditingLocation ? (
-                            <div className="bg-[var(--surface-1)] rounded-xl p-3 border border-white/10">
+                            <div className="bg-(--surface-1) rounded-xl p-3 border border-white/10">
                                 <input
                                     type="text"
                                     value={formData.location}
@@ -432,7 +432,7 @@ function CreateEventForm() {
                         ) : (
                             <div
                                 onClick={() => setIsEditingLocation(true)}
-                                className="py-3 px-4 bg-[var(--surface-1)] rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/[0.04] transition-colors"
+                                className="py-3 px-4 bg-(--surface-1) rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/4 transition-colors"
                             >
                                 <MapPin size={16} className="text-white/50 shrink-0" />
                                 <div className="flex-1">
@@ -446,7 +446,7 @@ function CreateEventForm() {
 
                         {/* Description - Compact like Luma */}
                         {isEditingDescription ? (
-                            <div className="bg-[var(--surface-1)] rounded-xl p-3 border border-white/10">
+                            <div className="bg-(--surface-1) rounded-xl p-3 border border-white/10">
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => updateField('description', e.target.value)}
@@ -460,7 +460,7 @@ function CreateEventForm() {
                         ) : (
                             <div
                                 onClick={() => setIsEditingDescription(true)}
-                                className="py-3 px-4 bg-[var(--surface-1)] rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/[0.04] transition-colors"
+                                className="py-3 px-4 bg-(--surface-1) rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/4 transition-colors"
                             >
                                 <Plus size={16} className="text-white/50 shrink-0" />
                                 <p className="text-[13px] font-medium text-white">
@@ -472,7 +472,7 @@ function CreateEventForm() {
                         {/* Event Options Section */}
                         <div className="space-y-1">
                             <p className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">Event Options</p>
-                            <div className="bg-[var(--surface-1)] rounded-xl border border-white/5 divide-y divide-white/5">
+                            <div className="bg-(--surface-1) rounded-xl border border-white/5 divide-y divide-white/5">
                                 {/* Ticket Price */}
                                 <div className="flex items-center justify-between p-4">
                                     <div className="flex items-center gap-3">

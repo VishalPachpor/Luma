@@ -77,6 +77,9 @@ importers:
       maplibre-gl:
         specifier: ^5.15.0
         version: 5.15.0
+      meilisearch:
+        specifier: ^0.55.0
+        version: 0.55.0
       nanoid:
         specifier: ^5.1.6
         version: 5.1.6
@@ -5843,6 +5846,9 @@ packages:
 
   media-query-parser@2.0.2:
     resolution: {integrity: sha512-1N4qp+jE0pL5Xv4uEcwVUhIkwdUO3S/9gML90nqKA7v7FcOS5vUtatfzok9S9U1EJU8dHWlcv95WLnKmmxZI9w==}
+
+  meilisearch@0.55.0:
+    resolution: {integrity: sha512-qSMeiezfDgIqciIeYzh5E4pXDZZD7CtHeWDCs43kN3trLgl5FtfmBAIkljL3huFaOx08feYtC8FfIFUpVwq6rg==}
 
   memoize-one@5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
@@ -16198,6 +16204,8 @@ snapshots:
   media-query-parser@2.0.2:
     dependencies:
       '@babel/runtime': 7.28.4
+
+  meilisearch@0.55.0: {}
 
   memoize-one@5.2.1: {}
 

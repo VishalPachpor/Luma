@@ -1,0 +1,17 @@
+{
+    "name": "planx-contracts",
+    "version": "1.0.0",
+    "description": "PlanX Event Escrow Smart Contracts",
+    "scripts": {
+        "compile": "hardhat compile",
+        "test": "hardhat test",
+        "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+        "verify:sepolia": "hardhat verify --network sepolia"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+        "@types/node": "^20.0.0",
+        "hardhat": "^2.19.0",
+        "typescript": "^5.0.0"
+    }
+}

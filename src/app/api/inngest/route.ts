@@ -5,6 +5,8 @@ import { sendEventReminders, send1HourReminders } from "@/inngest/functions/send
 import { handleInviteCreated, handleEmailWebhook } from "@/inngest/functions/handleInviteCreated";
 import { indexEvent, indexEventUpdate } from "@/inngest/functions/indexEntity";
 import { reindexAll } from "@/inngest/functions/reindex";
+import { eventStartJob, eventEndJob, handleManualTransition } from "@/inngest/functions/eventLifecycle";
+import { processNoShowsJob, processRefundsJob } from "@/inngest/functions/ticketLifecycle";
 
 // Create an API that serves Inngest functions
 export const { GET, POST, PUT } = serve({
@@ -23,6 +25,12 @@ export const { GET, POST, PUT } = serve({
         indexEventUpdate,
         // Maintenance
         reindexAll,
+        // Event Lifecycle State Machine
+        eventStartJob,          // published → live (every 5 min)
+        eventEndJob,            // live → ended (every 5 min)
+        handleManualTransition, // Manual status changes via event
+        // Ticket Lifecycle State Machine
+        processNoShowsJob,      // Forfeit no-shows (every 15 min)
+        processRefundsJob,      // Process refund requests
     ],
 });
-
