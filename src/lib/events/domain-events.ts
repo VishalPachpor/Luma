@@ -1,7 +1,7 @@
 /**
  * Domain Events
  * 
- * Canonical event definitions for the Luma event-driven architecture.
+ * Canonical event definitions for the Lumma event-driven architecture.
  * These events are the contract between services.
  */
 

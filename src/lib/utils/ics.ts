@@ -26,7 +26,7 @@ export function generateICSFeed({
     let content = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//Luma//Calendar//EN',
+        'PRODID:-//Lumma//Calendar//EN',
         `X-WR-CALNAME:${calendarName}`,
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
@@ -42,7 +42,7 @@ export function generateICSFeed({
             if (!event.date) return;
 
             // Parse event date - assumed to be ISO string or parseable
-            // Luma stores "Sep 12, 2026, 10:00 AM" which is display format, 
+            // Lumma stores "Sep 12, 2026, 10:00 AM" which is display format, 
             // but real DB should store ISO.
             // If it's the specific display format, we need to parse it carefully.
             // Let's rely on standard Date parsing for now, assuming ISO is preferred in new data
@@ -55,7 +55,7 @@ export function generateICSFeed({
             const end = formatDate(dtEnd.toISOString());
 
             content.push('BEGIN:VEVENT');
-            content.push(`UID:${event.id}@luma.com`);
+            content.push(`UID:${event.id}@lumma.com`);
             content.push(`DTSTAMP:${now}`);
             content.push(`DTSTART:${start}`);
             content.push(`DTEND:${end}`);
@@ -72,7 +72,8 @@ export function generateICSFeed({
             if (event.location) {
                 content.push(`LOCATION:${event.location}`);
             }
-            content.push(`URL:https://luma.com/events/${event.id}`);
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://lumma.com';
+            content.push(`URL:${appUrl}/events/${event.id}`);
             content.push('END:VEVENT');
         } catch (e) {
             console.error('Error processing event for ICS:', event.id, e);

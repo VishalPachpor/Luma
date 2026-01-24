@@ -122,7 +122,7 @@ export default function DisplaySettingsPage() {
                     <Label htmlFor="slug" className="text-white">Calendar URL</Label>
                     <div className="flex items-center">
                         <span className="bg-[#1C1C1E] border border-r-0 border-white/10 text-white/40 px-3 py-2 rounded-l-md text-sm">
-                            luma.com/
+                            lumma.com/
                         </span>
                         <Input
                             id="slug"

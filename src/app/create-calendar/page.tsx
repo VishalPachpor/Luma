@@ -241,7 +241,7 @@ export default function CreateCalendarPage() {
                     <div className="space-y-3">
                         <label className="text-sm font-medium text-text-secondary">Public URL</label>
                         <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                            <span className="text-text-muted select-none">luma.com/</span>
+                            <span className="text-text-muted select-none">lumma.com/</span>
                             <input
                                 type="text"
                                 placeholder="username"

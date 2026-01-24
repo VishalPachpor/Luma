@@ -68,7 +68,7 @@ export async function inviteCalendarMember(calendarId: string, email: string, ro
         console.log(`User query failed for email: ${normalizedEmail}`, userError);
         return {
             success: false,
-            message: `User with email '${normalizedEmail}' not found. They must sign up for Luma first to be added.`
+            message: `User with email '${normalizedEmail}' not found. They must sign up for Lumma first to be added.`
         };
     }
 

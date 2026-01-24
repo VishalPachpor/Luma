@@ -1,7 +1,7 @@
 {
-    "name": "luma-contracts",
+    "name": "lumma-contracts",
     "version": "1.0.0",
-    "description": "Luma Event Escrow Smart Contracts",
+    "description": "Lumma Event Escrow Smart Contracts",
     "scripts": {
         "compile": "hardhat compile",
         "test": "hardhat test",
