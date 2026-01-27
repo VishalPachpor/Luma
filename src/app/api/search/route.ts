@@ -17,13 +17,9 @@ export async function GET(request: NextRequest) {
     const supabase = getServiceSupabase();
     let userId: string | undefined;
 
-    console.log("[SearchAPI] Auth Header Present:", !!authHeader);
     if (token) {
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        const { data: { user } } = await supabase.auth.getUser(token);
         userId = user?.id;
-        console.log(`[SearchAPI] User ID resolved: ${userId}, Auth Error: ${authError?.message}`);
-    } else {
-        console.log("[SearchAPI] No token provided.");
     }
 
     // Static Shortcuts (Luma-style)
@@ -50,46 +46,50 @@ export async function GET(request: NextRequest) {
 
         if (userId) {
             try {
-                // 1. Calendars (Personal + Others)
-                // Assuming 'calendars' table exists and links to user. If not, we mock Personal.
-                // Checking if we have a calendars table... we should from previous context.
-                // Assuming we can select from 'calendars' where owner_id = userId
-                const { data: calendarData } = await supabase
-                    .from('calendars') // Adjust table name if strictly 'calendars' or similar
-                    .select('id, name') // Assuming 'name' column
-                    .eq('owner_id', userId)
-                    .limit(3);
+                // PERFORMANCE FIX: Fetch all data in PARALLEL instead of sequential
+                const [calendarResult, hostingResult, rsvpsResult] = await Promise.all([
+                    // 1. Calendars
+                    supabase
+                        .from('calendars')
+                        .select('id, name')
+                        .eq('owner_id', userId)
+                        .limit(3),
+                    // 2. Hosting events
+                    supabase
+                        .from('events')
+                        .select('id, title, date')
+                        .eq('organizer_id', userId)
+                        .order('date', { ascending: false })
+                        .limit(3),
+                    // 3. RSVPs (attending)
+                    supabase
+                        .from('rsvps')
+                        .select('event_id')
+                        .eq('user_id', userId)
+                        .eq('status', 'going')
+                        .limit(20)
+                ]);
 
-                if (calendarData) {
+                const calendarData = calendarResult.data;
+                const hostingData = hostingResult.data;
+                const rsvps = rsvpsResult.data;
+
+                // Process calendars
+                if (calendarData && calendarData.length > 0) {
                     calendars = calendarData.map(c => ({
                         id: c.id,
                         type: 'calendar',
                         title: c.name,
-                        url: `/calendar/${c.id}/manage`, // Fixed URL: /calendars/[id] -> /calendar/[id]/manage
-                        icon: 'User' // Using User icon for Personal like Luma
+                        url: `/calendar/${c.id}/manage`,
+                        icon: 'User'
                     }));
                 } else {
-                    // Fallback if no table/data found (for MVP/Schema safety)
                     calendars.push({
                         id: 'personal-cal', type: 'calendar', title: 'Personal', url: '/calendars', icon: 'User'
                     });
                 }
 
-                // 2. Hosting
-                // console.log(`[SearchAPI] Fetching hosting for user: ${userId}`);
-                const { data: hostingData, error: hostingError } = await supabase
-                    .from('events')
-                    .select('id, title, date')
-                    .eq('organizer_id', userId)
-                    .order('date', { ascending: false })
-                    .limit(3);
-
-                if (hostingError) {
-                    console.error("[SearchAPI] Hosting error:", hostingError);
-                } else {
-                    console.log(`[SearchAPI] Found ${hostingData?.length ?? 0} hosting events for user ${userId}`);
-                }
-
+                // Process hosting
                 if (hostingData) {
                     hosting = hostingData.map(e => ({
                         id: e.id,
@@ -101,40 +101,18 @@ export async function GET(request: NextRequest) {
                     }));
                 }
 
-                // 3. Attending (All events - Future & Past)
-                // We fetch RSVPs to get events I'm attending.
-                // Refactored to two-step fetch to avoid PGRST200 join error
-                const { data: rsvps, error: rsvpsError } = await supabase
-                    .from('rsvps')
-                    .select('event_id')
-                    .eq('user_id', userId)
-                    .eq('status', 'going')
-                    .limit(20);
-
-                if (rsvpsError) {
-                    console.error("[SearchAPI] Attending RSVP error:", rsvpsError);
-                } else {
-                    console.log(`[SearchAPI] Found ${rsvps?.length ?? 0} RSVPs for user ${userId}`);
-                }
-
+                // Process attending (need second query for event details)
                 if (rsvps && rsvps.length > 0) {
                     const eventIds = rsvps.map(r => r.event_id);
-
-                    const { data: attendingEvents, error: eventsError } = await supabase
+                    const { data: attendingEvents } = await supabase
                         .from('events')
                         .select('id, title, date')
-                        .in('id', eventIds);
+                        .in('id', eventIds)
+                        .order('date', { ascending: false })
+                        .limit(5);
 
-                    if (eventsError) {
-                        console.error("[SearchAPI] Attending Events fetch error:", eventsError);
-                    } else if (attendingEvents) {
-                        // Show all recent events (future & past) sorted by newest first
-                        const sortedEvents = attendingEvents
-                            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-                        const futureEvents = sortedEvents.slice(0, 3);
-
-                        attending = futureEvents.map((e: any) => ({
+                    if (attendingEvents) {
+                        attending = attendingEvents.slice(0, 3).map((e: any) => ({
                             id: e.id,
                             type: 'event',
                             title: e.title,
@@ -143,20 +121,10 @@ export async function GET(request: NextRequest) {
                             icon: 'Calendar'
                         }));
 
-                        // 4. Chats (All Hosting + All Attending events)
-                        // Merge hostingData and the attending events.
-                        const allChatCandidates = [
-                            ...(hostingData || []),
-                            ...attendingEvents
-                        ];
-
-                        // Deduplicate by ID
-                        const uniqueChatCandidates = Array.from(new Map(allChatCandidates.map(item => [item['id'], item])).values());
-
-                        // Sort by date 
-                        uniqueChatCandidates.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-                        chats = uniqueChatCandidates.slice(0, 5).map((e: any) => ({
+                        // Build chats from hosting + attending (already sorted from DB)
+                        const allChatCandidates = [...(hostingData || []), ...attendingEvents];
+                        const uniqueChats = Array.from(new Map(allChatCandidates.map(item => [item.id, item])).values());
+                        chats = uniqueChats.slice(0, 5).map((e: any) => ({
                             id: `chat-${e.id}`,
                             type: 'event',
                             title: e.title,
@@ -164,12 +132,8 @@ export async function GET(request: NextRequest) {
                             icon: 'MessageCircle'
                         }));
                     }
-                } else if (hostingData) {
-                    // Even if no attending, we might need chats from Hosting
-                    // 4. Chats (Hosting only)
-                    const uniqueChatCandidates = [...(hostingData || [])];
-                    uniqueChatCandidates.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                    chats = uniqueChatCandidates.slice(0, 5).map((e: any) => ({
+                } else if (hostingData && hostingData.length > 0) {
+                    chats = hostingData.slice(0, 5).map((e: any) => ({
                         id: `chat-${e.id}`,
                         type: 'event',
                         title: e.title,

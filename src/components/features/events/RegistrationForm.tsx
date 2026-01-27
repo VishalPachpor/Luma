@@ -29,6 +29,12 @@ export function RegistrationForm({
     const [answers, setAnswers] = useState<Record<string, string | string[]>>(initialAnswers);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // Safety check: if no questions, don't render the form
+    // The parent component should prevent this from being called, but this is a defensive check
+    if (!questions || questions.length === 0) {
+        return null;
+    }
+
     const handleAnswerChange = (questionId: string, value: string | string[]) => {
         setAnswers(prev => ({ ...prev, [questionId]: value }));
         // Clear error when user types

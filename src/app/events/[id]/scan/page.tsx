@@ -23,8 +23,17 @@ export default function ScanPage() {
     const { data: event, isLoading: eventLoading } = useEvent(eventId);
     const [checkedInCount, setCheckedInCount] = useState(0);
 
-    // Check if user is host
-    const isHost = event?.organizerId === user?.uid;
+    // Check if user is host - handle both possible field names
+    const organizerId = event?.organizerId || (event as any)?.organizer_id;
+    const isHost = !!organizerId && organizerId === user?.uid;
+
+    // Debug logging
+    console.log('[ScanPage] Auth check:', {
+        userUid: user?.uid,
+        organizerId,
+        eventOrganizerId: event?.organizerId,
+        isHost
+    });
 
     useEffect(() => {
         if (!authLoading && !user) {

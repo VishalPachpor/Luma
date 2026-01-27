@@ -71,6 +71,10 @@ export interface Event {
 
     requireApproval?: boolean;
 
+    // Staking
+    requireStake?: boolean;
+    stakeAmount?: number;
+
     // Custom Registration
     registrationQuestions?: RegistrationQuestion[];
 

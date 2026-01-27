@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { reference, amount, eventId, userId, chain = 'ethereum' } = body;
+        const { reference, amount, eventId, userId, answers, chain = 'ethereum' } = body;
 
         console.log('[PaymentVerify] Request:', { reference, eventId, userId, chain, amount });
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         // 1. Fetch event and its calendar's payment config
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, calendar_id')
+            .select('id, calendar_id, require_approval')
             .eq('id', eventId)
             .single();
 
@@ -130,89 +130,138 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 3. Store in Supabase (Idempotent)
+        // 3. Auto-populate registration answers from user profile if missing (like Luma)
+        let finalAnswers = answers || {};
+        if (!answers || Object.keys(answers).length === 0) {
+            // Fetch user profile to get name and email
+            const { data: userProfile } = await supabase
+                .from('profiles')
+                .select('display_name, email')
+                .eq('id', userId)
+                .single();
+
+            // Also try to get from auth metadata as fallback
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+
+            const userName = userProfile?.display_name ||
+                authUser?.user?.user_metadata?.full_name ||
+                authUser?.user?.user_metadata?.name ||
+                authUser?.user?.email?.split('@')[0] ||
+                'Guest';
+
+            const userEmail = userProfile?.email || authUser?.user?.email || '';
+
+            // Auto-populate name and email (standard fields)
+            if (userName) finalAnswers['full_name'] = userName;
+            if (userEmail) finalAnswers['email'] = userEmail;
+        }
+
+        // 4. Store in Supabase (Idempotent)
+        // Use UPSERT to handle re-verification attempts without duplicate key errors
         const now = new Date().toISOString();
-        const { answers } = body;
 
-        const { data: existing } = await supabase
+        const { error: rsvpError } = await supabase
             .from('rsvps')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('event_id', eventId)
-            .maybeSingle();
-
-        if (existing) {
-            await supabase
-                .from('rsvps')
-                .update({
-                    status: 'going',
-                    payment_reference: reference,
-                    payment_provider: chain,
-                    amount_paid: amount,
-                    ticket_type: 'paid',
-                    answers: answers || null,
-                    updated_at: now
-                })
-                .eq('user_id', userId)
-                .eq('event_id', eventId);
-        } else {
-            const { error: insertError } = await supabase.from('rsvps').insert({
+            .upsert({
                 user_id: userId,
                 event_id: eventId,
                 status: 'going',
-                created_at: now,
-                payment_reference: reference,
-                payment_provider: chain,
-                amount_paid: amount,
-                ticket_type: 'paid',
-                answers: answers || null
-            });
+                created_at: now
+            }, { onConflict: 'user_id, event_id' });
 
-            if (insertError) {
-                console.error('[PaymentVerify] RSVP insert failed:', insertError);
-                return NextResponse.json(
-                    { error: 'Failed to save ticket: ' + insertError.message },
-                    { status: 500 }
-                );
-            }
+        if (rsvpError) {
+            console.error('[PaymentVerify] RSVP upsert failed:', rsvpError);
+            return NextResponse.json(
+                { error: 'Failed to save RSVP: ' + rsvpError.message },
+                { status: 500 }
+            );
         }
 
-        // 4. Create Order & Guest (Luma Architecture)
-        try {
-            const orderRepo = await import('@/lib/repositories/order.repository');
-            const guestRepo = await import('@/lib/repositories/guest.repository');
-            const ticketRepo = await import('@/lib/repositories/ticket.repository'); // Import ticket repo
+        // 5. Create Order & Guest (CRITICAL - This is where payment info lives)
+        let finalOrderId: string | null = null;
 
-            const order = await orderRepo.createOrder(userId, eventId, amount, chain);
-            await orderRepo.updateOrderStatus(order.id, 'confirmed', {
-                txHash: reference,
-                paymentProvider: chain as 'stripe' | 'crypto',
-                walletAddress: reference
+        try {
+            // We implement this directly to avoid "browser client on server" issues in repositories
+            const orderId = crypto.randomUUID();
+
+            // Insert Order (using 'as any' because 'orders' might be missing from generated types)
+            const { error: orderError } = await (supabase.from('orders') as any).insert({
+                id: orderId,
+                user_id: userId,
+                event_id: eventId,
+                total_amount: amount,
+                currency: 'USD',
+                status: 'confirmed',
+                payment_provider: chain,
+                payment_intent_id: reference, // specific field for reference
+                tx_hash: reference, // store hash
+                created_at: now,
+                updated_at: now
             });
 
-            // Find ticket tier to decrement
-            // For MVP, we assume the first paid tier or just increment sold count for 'default' if no tiers.
-            // Ideally we pass ticketTierId from frontend.
-            const tiers = await ticketRepo.getTicketTiers(eventId);
-            const targetTier = tiers.find(t => t.price > 0) || tiers[0];
+            if (orderError) {
+                console.error('[PaymentVerify] Order insert failed (non-fatal):', orderError);
+                // We continue without an order link, as issuing the ticket is priority
+            } else {
+                finalOrderId = orderId;
+            }
+        } catch (orderEx) {
+            console.error('[PaymentVerify] Order creation crashed (non-fatal):', orderEx);
+        }
 
-            let ticketTierId = 'paid_tier';
+        try {
+            // Find ticket tier (default or paid)
+            // We try to find a paid tier, or fallback to default
+            const { data: tiers } = await supabase
+                .from('ticket_tiers')
+                .select('*')
+                .eq('event_id', eventId);
+
+            const targetTier = tiers?.find(t => t.price > 0) || tiers?.[0];
+            const ticketTierId = targetTier?.id || 'default';
+
+            // Increment sold count
             if (targetTier) {
-                ticketTierId = targetTier.id;
-                await ticketRepo.incrementSoldCount(targetTier.id, 1);
+                const { error: rpcError } = await supabase.rpc('increment_ticket_sold_count', {
+                    tier_id: targetTier.id,
+                    amount: 1
+                });
+
+                if (rpcError) {
+                    // Fallback to manual update if RPC missing
+                    const currentSold = targetTier.sold_count || 0;
+                    await supabase.from('ticket_tiers')
+                        .update({ sold_count: currentSold + 1 })
+                        .eq('id', targetTier.id);
+                }
             }
 
-            await guestRepo.createGuest(
-                eventId,
-                userId,
-                ticketTierId,
-                'issued',
-                order.id
-            );
+            // Determine guest status based on event's require_approval setting
+            const initialStatus = event.require_approval ? 'pending_approval' : 'issued';
 
-        } catch (repoError) {
-            // Non-critical: Luma architecture is secondary
-            console.error('[PaymentVerify] Luma write failed (non-critical):', repoError);
+            // Insert Guest (The actual Ticket)
+            // Use upsert to handle re-verification
+            const { error: guestError } = await supabase.from('guests').upsert({
+                event_id: eventId,
+                user_id: userId,
+                ticket_tier_id: ticketTierId === 'default' ? null : ticketTierId,
+                status: initialStatus,
+                order_id: finalOrderId, // Use the successfully created order ID, or null
+                qr_token: crypto.randomUUID(), // New token
+                created_at: now,
+                updated_at: now,
+                registration_responses: finalAnswers
+            }, { onConflict: 'event_id, user_id' }); // Assuming unique constraint on event+user
+
+            if (guestError) {
+                console.error('[PaymentVerify] Guest insert failed:', guestError);
+                throw new Error('Failed to issue ticket: ' + guestError.message);
+            }
+
+        } catch (error: any) {
+            console.error('[PaymentVerify] Ticket issuance failed:', error);
+            // This is critical now - if we can't issue a ticket, return error
+            return NextResponse.json({ error: 'Payment confirmed but ticket issuance failed: ' + error.message }, { status: 500 });
         }
 
         console.log('[PaymentVerify] Success:', { eventId, userId, chain, txHash: reference });

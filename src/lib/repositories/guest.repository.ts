@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import { Guest, GuestStatus } from '@/types/commerce';
 import { generateId } from '@/lib/utils';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
@@ -65,7 +64,9 @@ export async function createGuest(
  * Find guest by User ID and Event ID
  */
 export async function findGuestByUser(eventId: string, userId: string): Promise<Guest | null> {
-    const { data, error } = await supabase
+    const supabaseBrowser = createSupabaseBrowserClient();
+    
+    const { data, error } = await supabaseBrowser
         .from('guests')
         .select('*')
         .eq('event_id', eventId)
@@ -73,7 +74,7 @@ export async function findGuestByUser(eventId: string, userId: string): Promise<
         .maybeSingle();
 
     if (error) {
-        // console.error('[GuestRepo] Supabase find failed:', error);
+        // Silently return null for not found cases
         return null;
     }
 
@@ -84,13 +85,22 @@ export async function findGuestByUser(eventId: string, userId: string): Promise<
  * Get all guests for an event
  */
 export async function getGuests(eventId: string): Promise<Guest[]> {
-    const { data, error } = await supabase
+    const supabaseBrowser = createSupabaseBrowserClient();
+    
+    const { data, error } = await supabaseBrowser
         .from('guests')
         .select('*')
         .eq('event_id', eventId);
 
     if (error) {
-        console.error('[GuestRepo] Supabase getGuests failed:', error);
+        // Log error with more details for debugging
+        console.error('[GuestRepo] Supabase getGuests failed:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+            eventId
+        });
         return [];
     }
 
@@ -101,13 +111,21 @@ export async function getGuests(eventId: string): Promise<Guest[]> {
  * Find all guests by User ID (across all events)
  */
 export async function findGuestsByUser(userId: string): Promise<Guest[]> {
-    const { data, error } = await supabase
+    const supabaseBrowser = createSupabaseBrowserClient();
+    
+    const { data, error } = await supabaseBrowser
         .from('guests')
         .select('*')
         .eq('user_id', userId);
 
     if (error) {
-        console.error('[GuestRepo] Supabase findGuestsByUser failed:', error);
+        console.error('[GuestRepo] Supabase findGuestsByUser failed:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+            userId
+        });
         return [];
     }
 
@@ -118,7 +136,9 @@ export async function findGuestsByUser(userId: string): Promise<Guest[]> {
  * Find guest by QR Token (for check-in)
  */
 export async function findByQrToken(eventId: string, qrToken: string): Promise<Guest | null> {
-    const { data, error } = await supabase
+    const supabaseBrowser = createSupabaseBrowserClient();
+    
+    const { data, error } = await supabaseBrowser
         .from('guests')
         .select('*')
         .eq('event_id', eventId)
@@ -196,7 +216,9 @@ export async function updateStatus(guestId: string, status: GuestStatus): Promis
  * Get pending guests for an event
  */
 export async function getPendingGuests(eventId: string): Promise<Guest[]> {
-    const { data, error } = await supabase
+    const supabaseBrowser = createSupabaseBrowserClient();
+    
+    const { data, error } = await supabaseBrowser
         .from('guests')
         .select('*')
         .eq('event_id', eventId)
@@ -204,7 +226,13 @@ export async function getPendingGuests(eventId: string): Promise<Guest[]> {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('[GuestRepo] getPendingGuests failed:', error);
+        console.error('[GuestRepo] getPendingGuests failed:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+            eventId
+        });
         return [];
     }
 

@@ -40,11 +40,10 @@ export async function registerForEvent(
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const { generateId } = await import('@/lib/utils');
 
-        // 1. Check if event exists
-        // Just select 'id' to verify existence. 'attendees' column does not exist in Supabase (it's attendee_count or joined table).
+        // 1. Check if event exists and get price
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id')
+            .select('id, price, require_approval')
             .eq('id', eventId)
             .single();
 
@@ -53,10 +52,55 @@ export async function registerForEvent(
             throw new Error('Event does not exist');
         }
 
-        // 2. Check duplicate/existing guest
-        // We can upsert, but let's check first to throw "User already registered" if needed?
-        // Or just Upsert?
-        // Logic says "Check duplicate".
+        // 2. Auto-populate registration answers from user profile if empty (like Luma)
+        let finalAnswers = { ...registrationAnswers };
+        if (Object.keys(finalAnswers).length === 0) {
+            // Fetch user profile to get name and email
+            const { data: userProfile } = await supabase
+                .from('profiles')
+                .select('display_name, email')
+                .eq('id', userId)
+                .single();
+
+            // Also try to get from auth metadata as fallback
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+
+            const userName = userProfile?.display_name || 
+                           authUser?.user?.user_metadata?.full_name ||
+                           authUser?.user?.user_metadata?.name ||
+                           authUser?.user?.email?.split('@')[0] ||
+                           'Guest';
+            
+            const userEmail = userProfile?.email || authUser?.user?.email || '';
+
+            // Auto-populate name and email (standard fields)
+            if (userName) finalAnswers['full_name'] = userName;
+            if (userEmail) finalAnswers['email'] = userEmail;
+        }
+
+        // 3. For paid events, verify payment was completed
+        const isPaidEvent = event.price && Number(event.price) > 0;
+        if (isPaidEvent) {
+            // Check if user has a paid RSVP with payment reference
+            const { data: paidRSVP } = await supabase
+                .from('rsvps')
+                .select('payment_reference, payment_provider, amount_paid')
+                .eq('event_id', eventId)
+                .eq('user_id', userId)
+                .eq('status', 'going')
+                .not('payment_reference', 'is', null)
+                .single();
+
+            if (!paidRSVP || !paidRSVP.payment_reference) {
+                console.error('[registerForEvent] Payment required for paid event');
+                return { 
+                    success: false, 
+                    error: 'Payment required. Please complete payment before registering.' 
+                };
+            }
+        }
+
+        // 4. Check duplicate/existing guest
         const { data: existingGuest } = await supabase
             .from('guests')
             .select('id, status')
@@ -66,13 +110,12 @@ export async function registerForEvent(
 
         if (existingGuest) {
             // Already registered
-            // Maybe return success if already going?
             return { success: true, status: existingGuest.status };
         }
 
-        // 3. Register Guest via Repository (Dual Write: Firestore + Supabase)
+        // 5. Register Guest via Repository (Dual Write: Firestore + Supabase)
         // This ensures the Host Dashboard (reading Firestore) sees the guest immediately
-        const initialStatus = requireApproval ? 'pending_approval' : 'issued';
+        const initialStatus = event.require_approval ? 'pending_approval' : 'issued';
 
         await guestRepo.createGuest(
             eventId,
@@ -81,19 +124,41 @@ export async function registerForEvent(
             initialStatus
         );
 
-        // 4. Update Supabase 'rsvps' table for redundancy/compatibility (Dual Persist)
+        // 6. Update Supabase 'rsvps' table for redundancy/compatibility (Dual Persist)
         // rsvp.service.ts reads 'rsvps'.
-        const rsvpStatus = requireApproval ? 'interested' : 'going'; // Map to RSVP status
-        await supabase
+        // For paid events, RSVP should already exist from payment verification
+        // Only create/update if it doesn't exist (for free events)
+        const rsvpStatus = event.require_approval ? 'interested' : 'going'; // Map to RSVP status
+        
+        // Check if RSVP already exists (from payment verification for paid events)
+        const { data: existingRSVP } = await supabase
             .from('rsvps')
-            .upsert({
-                user_id: userId,
-                event_id: eventId,
-                status: rsvpStatus,
-                answers: registrationAnswers // Save answers!
-            });
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('user_id', userId)
+            .single();
+        
+        if (!existingRSVP) {
+            // Only create RSVP if it doesn't exist (free events or first-time registration)
+            await supabase
+                .from('rsvps')
+                .insert({
+                    user_id: userId,
+                    event_id: eventId,
+                    status: rsvpStatus,
+                    answers: finalAnswers, // Save answers (auto-populated if empty)
+                    ticket_type: isPaidEvent ? 'paid' : 'free'
+                });
+        } else {
+            // Update existing RSVP with answers (always update to ensure name/email are saved)
+            await supabase
+                .from('rsvps')
+                .update({ answers: finalAnswers })
+                .eq('user_id', userId)
+                .eq('event_id', eventId);
+        }
 
-        // 5. Update Attendee Count
+        // 7. Update Attendee Count
         // (Firestore updates automatically via array length, Supabase needs manual increment)
         const { data: currentEvent } = await supabase
             .from('events')

@@ -6,6 +6,7 @@ import { Button, EventMap } from '@/components/components/ui';
 import Link from 'next/link';
 import { getGoogleMapsUrl } from '@/lib/utils';
 import { ViewTracker } from '@/components/features/analytics/ViewTracker';
+import EventRSVP from '@/components/features/events/EventRSVP';
 
 
 interface EventPageProps {
@@ -50,15 +51,14 @@ export default async function EventPage({ params }: EventPageProps) {
 
             {/* Navbar */}
             <header className="sticky top-0 z-50 h-16 bg-[#0E0F13]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6">
-                <Link href="/events" className="text-white/60 hover:text-white transition-colors text-sm font-medium flex items-center gap-2">
-                    ← Back to Events
-                </Link>
-                <div className="flex items-center gap-4">
-                    {/* Actions like Share can go here */}
+                <div className="max-w-6xl mx-auto w-full">
+                    <Link href="/events" className="text-white/60 hover:text-white transition-colors text-sm font-medium flex items-center gap-2">
+                        ← Back to Events
+                    </Link>
                 </div>
             </header>
 
-            <main className="max-w-6xl mx-auto pt-12 px-6 pb-24">
+            <main className="max-w-6xl mx-auto pt-8 px-6 pb-24">
                 <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-12 lg:gap-20">
 
                     {/* LEFT COLUMN: Image & Host */}
@@ -179,21 +179,17 @@ export default async function EventPage({ params }: EventPageProps) {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="text-sm text-white/80 leading-relaxed">
+                                    <div className="text-sm text-white/80 leading-relaxed mb-4">
                                         Welcome! To join the event, please register below.
                                     </div>
-
-                                    {/* User Email & RSVP */}
-                                    {user && (
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-5 h-5 rounded-full bg-linear-to-r from-purple-500 to-pink-500" />
-                                            <span className="text-sm font-medium text-white">{user.email}</span>
-                                        </div>
-                                    )}
-
-                                    <Button className="w-full h-12 text-[15px] font-medium bg-white text-black hover:bg-white/90 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.01]">
-                                        One-Click RSVP
-                                    </Button>
+                                    <EventRSVP
+                                        eventId={event.id}
+                                        eventTitle={event.title}
+                                        price={event.price || 0}
+                                        registrationQuestions={event.registrationQuestions || []}
+                                        requireApproval={event.requireApproval || false}
+                                        theme="luma"
+                                    />
                                 </>
                             )}
                         </div>

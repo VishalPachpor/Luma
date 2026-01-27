@@ -103,15 +103,33 @@ export const onTicketCheckedIn = inngest.createFunction(
         // Check if this was a staked ticket
         const { data: guest } = await supabase
             .from('guests')
-            .select('stake_amount, stake_wallet_address')
+            .select('stake_amount, stake_wallet_address, event_id')
             .eq('id', guestId)
             .single();
 
         if (guest?.stake_amount && guest?.stake_wallet_address) {
             logger.info(`[Consumer] Releasing stake for ${guestId}: ${guest.stake_amount}`);
 
-            // Call escrow service to release (async)
-            // This would be: await escrowService.releaseStake(eventId, guestId, guest.stake_wallet_address);
+            // Call escrow service to release
+            const { releaseStakeOnCheckIn } = await import('@/lib/services/escrow.service');
+            const releaseResult = await releaseStakeOnCheckIn(
+                eventId,
+                guestId,
+                guest.stake_wallet_address
+            );
+
+            if (releaseResult.success) {
+                logger.info(`[Consumer] Stake released successfully: ${releaseResult.txHash}`);
+            } else {
+                logger.error(`[Consumer] Failed to release stake: ${releaseResult.error}`);
+            }
+
+            return { 
+                processed: true, 
+                hadStake: true,
+                releaseTxHash: releaseResult.txHash,
+                releaseSuccess: releaseResult.success,
+            };
         }
 
         return { processed: true, hadStake: !!guest?.stake_amount };
@@ -138,11 +156,29 @@ export const onTicketForfeited = inngest.createFunction(
             .eq('id', guestId)
             .single();
 
-        if (guest?.stake_amount && guest?.stake_wallet_address) {
+        if (guest?.stake_amount && guest?.stake_wallet_address && guest?.event_id) {
             logger.info(`[Consumer] Claiming forfeit for ${guestId}: ${guest.stake_amount}`);
 
-            // Call escrow service to forfeit (async)
-            // This would be: await escrowService.forfeitStake(eventId, guestId, guest.stake_wallet_address);
+            // Call escrow service to forfeit
+            const { forfeitStakeForNoShow } = await import('@/lib/services/escrow.service');
+            const forfeitResult = await forfeitStakeForNoShow(
+                guest.event_id,
+                guestId,
+                guest.stake_wallet_address
+            );
+
+            if (forfeitResult.success) {
+                logger.info(`[Consumer] Stake forfeited successfully: ${forfeitResult.txHash}`);
+            } else {
+                logger.error(`[Consumer] Failed to forfeit stake: ${forfeitResult.error}`);
+            }
+
+            return { 
+                processed: true, 
+                hadStake: true,
+                forfeitTxHash: forfeitResult.txHash,
+                forfeitSuccess: forfeitResult.success,
+            };
         }
 
         return { processed: true, hadStake: !!guest?.stake_amount };

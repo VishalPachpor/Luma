@@ -48,6 +48,7 @@ export default function TimezoneSelect({ value, onChange }: TimezoneSelectProps)
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     const selectedTz = TIMEZONES.find((tz) => tz.id === value) || TIMEZONES[13]; // Default to IST
 
@@ -58,26 +59,30 @@ export default function TimezoneSelect({ value, onChange }: TimezoneSelectProps)
             tz.offset.toLowerCase().includes(search.toLowerCase())
     );
 
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
                 setIsOpen(false);
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isOpen]);
 
     return (
-        <div ref={dropdownRef} className="relative">
+        <div ref={dropdownRef} className="relative w-full z-30">
             <button
+                ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full bg-white/5 rounded-2xl border border-white/10 p-4 flex flex-col justify-center gap-1 cursor-pointer hover:bg-white/10 transition-colors text-left"
+                className="w-full bg-white/5 rounded-lg border border-white/10 p-2.5 flex flex-col justify-center gap-0.5 cursor-pointer hover:bg-white/10 transition-colors text-center active:scale-[0.98]"
             >
-                <Globe size={16} className="text-text-muted mb-1" />
-                <p className="text-xs font-bold text-text-primary">{selectedTz.offset}</p>
-                <p className="text-[10px] text-text-muted">{selectedTz.city}</p>
+                <Globe size={14} className="text-white/50 mx-auto mb-0.5" />
+                <p className="text-[11px] font-medium text-white">{selectedTz.offset}</p>
+                <p className="text-[10px] text-white/40">{selectedTz.city}</p>
             </button>
 
             <AnimatePresence>
@@ -86,41 +91,52 @@ export default function TimezoneSelect({ value, onChange }: TimezoneSelectProps)
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#1C1C1E] border border-white/10 rounded-xl shadow-2xl z-[100] overflow-hidden w-[320px]"
+                        style={{
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+                            maxHeight: '400px'
+                        }}
                     >
                         <div className="p-3 border-b border-white/10">
                             <div className="relative">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
                                 <input
                                     type="text"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Search timezone..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/20 focus:bg-white/10 transition-colors"
                                     autoFocus
                                 />
                             </div>
                         </div>
-                        <div className="max-h-64 overflow-y-auto">
-                            {filteredTimezones.map((tz) => (
-                                <button
-                                    key={tz.id}
-                                    type="button"
-                                    onClick={() => {
-                                        onChange(tz.id);
-                                        setIsOpen(false);
-                                        setSearch('');
-                                    }}
-                                    className={`w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors text-left ${value === tz.id ? 'bg-accent/10' : ''
+                        <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                            {filteredTimezones.length > 0 ? (
+                                filteredTimezones.map((tz) => (
+                                    <button
+                                        key={tz.id}
+                                        type="button"
+                                        onClick={() => {
+                                            onChange(tz.id);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={`w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-b-0 ${
+                                            value === tz.id ? 'bg-white/10' : ''
                                         }`}
-                                >
-                                    <div>
-                                        <p className="text-sm font-medium text-text-primary">{tz.city}</p>
-                                        <p className="text-xs text-text-muted">{tz.label}</p>
-                                    </div>
-                                    <span className="text-xs text-accent font-mono">{tz.offset}</span>
-                                </button>
-                            ))}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">{tz.city}</p>
+                                            <p className="text-xs text-white/50 truncate">{tz.label}</p>
+                                        </div>
+                                        <span className="text-xs text-white/70 font-mono ml-3 shrink-0">{tz.offset}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-4 text-center">
+                                    <p className="text-sm text-white/50">No timezones found</p>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}

@@ -93,6 +93,8 @@ export interface Database {
                     status: string
                     visibility: string
                     require_approval: boolean
+                    require_stake: boolean
+                    stake_amount: number | null
                     capacity: number | null
                     price: number | null
                     currency: string
@@ -129,6 +131,8 @@ export interface Database {
                     status?: string
                     visibility?: string
                     require_approval?: boolean
+                    require_stake?: boolean
+                    stake_amount?: number | null
                     capacity?: number | null
                     price?: number | null
                     currency?: string
@@ -165,6 +169,8 @@ export interface Database {
                     status?: string
                     visibility?: string
                     require_approval?: boolean
+                    require_stake?: boolean
+                    stake_amount?: number | null
                     capacity?: number | null
                     price?: number | null
                     currency?: string

@@ -5,14 +5,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Users } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Footer } from '@/components/components/layout';
 import { Event } from '@/types';
-import { getEvents } from '@/lib/services/event.service';
 import { EventDrawer } from '@/components/features/events/EventDrawer';
 
 interface EventsPageClientProps {
@@ -29,8 +28,12 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const data = await getEvents();
-                setEvents(data);
+                const response = await fetch('/api/events');
+                const data = await response.json();
+                
+                if (data.success && data.events) {
+                    setEvents(data.events);
+                }
             } catch (error) {
                 console.error('Failed to fetch events:', error);
             } finally {
@@ -50,57 +53,65 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
         setTimeout(() => setSelectedEvent(null), 300);
     };
 
-    // Group events by date
-    const groupEventsByDate = (events: Event[]) => {
+    // Group events by date (memoized)
+    const groupEventsByDate = useCallback((events: Event[]) => {
         const groups: Record<string, { dayName: string; dateLabel: string; events: Event[] }> = {};
+        const today = new Date();
+        const todayStr = today.toDateString();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toDateString();
 
-        events.forEach(event => {
+        for (const event of events) {
             const eventDate = new Date(event.date);
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            const eventDateStr = eventDate.toDateString();
+            
+            let dayName: string;
+            let dateLabel: string;
 
-            let dayName = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
-            let dateLabel = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-            // Check if tomorrow
-            if (eventDate.toDateString() === tomorrow.toDateString()) {
-                dayName = 'Tomorrow';
-                dateLabel = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
-            } else if (eventDate.toDateString() === today.toDateString()) {
+            if (eventDateStr === todayStr) {
                 dayName = 'Today';
                 dateLabel = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
+            } else if (eventDateStr === tomorrowStr) {
+                dayName = 'Tomorrow';
+                dateLabel = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
+            } else {
+                dayName = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
+                dateLabel = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }
 
-            const key = eventDate.toDateString();
-            if (!groups[key]) {
-                groups[key] = { dayName, dateLabel, events: [] };
+            if (!groups[eventDateStr]) {
+                groups[eventDateStr] = { dayName, dateLabel, events: [] };
             }
-            groups[key].events.push(event);
-        });
+            groups[eventDateStr].events.push(event);
+        }
 
         return Object.values(groups);
-    };
+    }, []);
 
     // Filter events based on active tab
-    const now = new Date();
-    const filteredEvents = events.filter(event => {
-        const eventDate = new Date(event.date);
-        if (activeTab === 'upcoming') {
-            return eventDate >= now;
-        } else {
-            return eventDate < now;
-        }
-    });
+    const nowMs = useMemo(() => Date.now(), []);
+    const filteredEvents = useMemo(() => {
+        return events.filter(event => {
+            if (!event.date) return false;
+            const eventMs = new Date(event.date).getTime();
+            if (isNaN(eventMs)) return false;
+            
+            const isPast = eventMs < nowMs;
+            return activeTab === 'upcoming' ? !isPast : isPast;
+        });
+    }, [events, activeTab, nowMs]);
 
     // Sort: upcoming = ascending by date, past = descending by date
-    const sortedEvents = [...filteredEvents].sort((a, b) => {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        return activeTab === 'upcoming' ? dateA - dateB : dateB - dateA;
-    });
+    const sortedEvents = useMemo(() => {
+        return [...filteredEvents].sort((a, b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            return activeTab === 'upcoming' ? dateA - dateB : dateB - dateA;
+        });
+    }, [filteredEvents, activeTab]);
 
-    const groupedEvents = groupEventsByDate(sortedEvents);
+    const groupedEvents = useMemo(() => groupEventsByDate(sortedEvents), [sortedEvents]);
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0E0F13]">

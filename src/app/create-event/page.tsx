@@ -10,7 +10,7 @@ import TimezoneSelect from '@/components/components/ui/TimezoneSelect';
 import { CalendarSelector } from '@/components/features/events/CalendarSelector';
 import { VisibilityToggle, EventVisibility } from '@/components/features/events/VisibilityToggle';
 import { RegistrationQuestion } from '@/types/event';
-import { create as createEvent } from '@/lib/repositories/event.repository';
+import { createEvent } from '@/actions/event.actions';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import {
     LayoutGrid,
@@ -31,6 +31,14 @@ import { useImmersiveNavbar } from '@/contexts/NavbarThemeContext';
 import { THEMES } from '@/lib/themes';
 
 
+interface LocationResult {
+    name: string;
+    admin1?: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+}
+
 interface EventFormData {
     name: string;
     startDate: string;
@@ -39,6 +47,8 @@ interface EventFormData {
     endTime: string;
     timezone: string;
     location: string;
+    locationCoords: { lat: number; lng: number } | null;
+    city: string;
     description: string;
     ticketPrice: number | null;
     capacity: number | null;
@@ -85,6 +95,8 @@ function CreateEventForm() {
         endTime: '17:00',
         timezone: 'Asia/Kolkata',
         location: '',
+        locationCoords: null,
+        city: '',
         description: '', // Short description
         ticketPrice: null,
         capacity: null,
@@ -104,8 +116,16 @@ function CreateEventForm() {
     // UI State
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [isEditingDescription, setIsEditingDescription] = useState(false);
+    const [isEditingPrice, setIsEditingPrice] = useState(false);
+    const [isEditingCapacity, setIsEditingCapacity] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    
+    // Location Search State
+    const [locationSearchQuery, setLocationSearchQuery] = useState('');
+    const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+    const [locationResults, setLocationResults] = useState<LocationResult[]>([]);
+    const [showLocationResults, setShowLocationResults] = useState(false);
 
     // Image Upload
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,6 +158,55 @@ function CreateEventForm() {
             endDate: dateStr,
         }));
     }, []);
+
+    // Location Search Handler
+    useEffect(() => {
+        if (!locationSearchQuery || locationSearchQuery.length < 2) {
+            setLocationResults([]);
+            setShowLocationResults(false);
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            setIsSearchingLocation(true);
+            try {
+                // Using Open-Meteo Geocoding API (free, no API key needed)
+                const res = await fetch(
+                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationSearchQuery)}&count=5&language=en&format=json`
+                );
+                const data = await res.json();
+                if (data.results) {
+                    setLocationResults(data.results);
+                    setShowLocationResults(true);
+                } else {
+                    setLocationResults([]);
+                }
+            } catch (error) {
+                console.error('Failed to search locations', error);
+                setLocationResults([]);
+            } finally {
+                setIsSearchingLocation(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [locationSearchQuery]);
+
+    const selectLocation = (location: LocationResult) => {
+        const locationString = location.admin1
+            ? `${location.name}, ${location.admin1}, ${location.country}`
+            : `${location.name}, ${location.country}`;
+        
+        setFormData((prev) => ({
+            ...prev,
+            location: locationString,
+            locationCoords: { lat: location.latitude, lng: location.longitude },
+            city: location.name,
+        }));
+        setLocationSearchQuery(locationString);
+        setShowLocationResults(false);
+        setIsEditingLocation(false);
+    };
 
     const updateField = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
@@ -197,8 +266,8 @@ function CreateEventForm() {
                 description: formData.description || 'No description provided',
                 date: dateStr,
                 location: formData.location || 'TBD',
-                city: 'Unknown',
-                coords: { lat: 0, lng: 0 },
+                city: formData.city || 'Unknown',
+                coords: formData.locationCoords || { lat: 0, lng: 0 },
                 coverImage: coverImageUrl,
                 attendees: 0,
                 tags: [],
@@ -234,7 +303,7 @@ function CreateEventForm() {
     };
 
     return (
-        <div className="min-h-screen bg-(--bg-page) text-text-primary transition-colors duration-500 ease-in-out">
+        <div className="min-h-screen bg-(--bg-page) text-text-primary transition-colors duration-500 ease-in-out" style={{ colorScheme: 'dark' }}>
             {/* Centered Container - Like Luma */}
             <div className="max-w-[1000px] mx-auto px-6 pt-20 pb-16 min-h-screen">
 
@@ -321,7 +390,7 @@ function CreateEventForm() {
                         />
 
                         {/* Date/Time Card - Exact Luma Layout */}
-                        <div className="bg-(--surface-1) rounded-xl border border-white/5 overflow-hidden">
+                        <div className="bg-(--surface-1) rounded-xl border border-white/5 relative overflow-visible">
                             <div className="flex">
                                 {/* Left side: Start/End rows */}
                                 <div className="flex-1 border-r border-white/5">
@@ -332,34 +401,72 @@ function CreateEventForm() {
                                             <span className="text-[13px] text-white/70">Start</span>
                                         </div>
                                         <div className="flex-1 flex items-center gap-3">
-                                            <div
-                                                onClick={() => startDateRef.current?.showPicker()}
-                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                            >
-                                                <span className="text-[13px] text-white font-medium">
-                                                    {new Date(formData.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                </span>
+                                            <div className="relative">
+                                                <div
+                                                    onClick={() => {
+                                                        if (startDateRef.current) {
+                                                            try {
+                                                                if ('showPicker' in HTMLInputElement.prototype) {
+                                                                    startDateRef.current.showPicker();
+                                                                } else {
+                                                                    startDateRef.current.click();
+                                                                }
+                                                            } catch (e) {
+                                                                startDateRef.current.click();
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                                >
+                                                    <span className="text-[13px] text-white font-medium">
+                                                        {formData.startDate ? new Date(formData.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Select date'}
+                                                    </span>
+                                                </div>
                                                 <input
                                                     ref={startDateRef}
                                                     type="date"
                                                     value={formData.startDate}
                                                     onChange={(e) => updateField('startDate', e.target.value)}
-                                                    className="sr-only"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%',
+                                                        colorScheme: 'dark'
+                                                    }}
                                                 />
                                             </div>
-                                            <div
-                                                onClick={() => startTimeRef.current?.showPicker()}
-                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                            >
-                                                <span className="text-[13px] text-white font-medium">
-                                                    {new Date('2000-01-01T' + formData.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                                </span>
+                                            <div className="relative">
+                                                <div
+                                                    onClick={() => {
+                                                        if (startTimeRef.current) {
+                                                            try {
+                                                                if ('showPicker' in HTMLInputElement.prototype) {
+                                                                    startTimeRef.current.showPicker();
+                                                                } else {
+                                                                    startTimeRef.current.click();
+                                                                }
+                                                            } catch (e) {
+                                                                startTimeRef.current.click();
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                                >
+                                                    <span className="text-[13px] text-white font-medium">
+                                                        {formData.startTime ? new Date('2000-01-01T' + formData.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Select time'}
+                                                    </span>
+                                                </div>
                                                 <input
                                                     ref={startTimeRef}
                                                     type="time"
                                                     value={formData.startTime}
                                                     onChange={(e) => updateField('startTime', e.target.value)}
-                                                    className="sr-only"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%',
+                                                        colorScheme: 'dark'
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -372,34 +479,73 @@ function CreateEventForm() {
                                             <span className="text-[13px] text-white/70">End</span>
                                         </div>
                                         <div className="flex-1 flex items-center gap-3">
-                                            <div
-                                                onClick={() => endDateRef.current?.showPicker()}
-                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                            >
-                                                <span className="text-[13px] text-white font-medium">
-                                                    {new Date(formData.endDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                </span>
+                                            <div className="relative">
+                                                <div
+                                                    onClick={() => {
+                                                        if (endDateRef.current) {
+                                                            try {
+                                                                if ('showPicker' in HTMLInputElement.prototype) {
+                                                                    endDateRef.current.showPicker();
+                                                                } else {
+                                                                    endDateRef.current.click();
+                                                                }
+                                                            } catch (e) {
+                                                                endDateRef.current.click();
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                                >
+                                                    <span className="text-[13px] text-white font-medium">
+                                                        {formData.endDate ? new Date(formData.endDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Select date'}
+                                                    </span>
+                                                </div>
                                                 <input
                                                     ref={endDateRef}
                                                     type="date"
                                                     value={formData.endDate}
                                                     onChange={(e) => updateField('endDate', e.target.value)}
-                                                    className="sr-only"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%',
+                                                        colorScheme: 'dark'
+                                                    }}
                                                 />
                                             </div>
-                                            <div
-                                                onClick={() => endTimeRef.current?.showPicker()}
-                                                className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                            >
-                                                <span className="text-[13px] text-white font-medium">
-                                                    {new Date('2000-01-01T' + formData.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                                </span>
+                                            <div className="relative">
+                                                <div
+                                                    onClick={() => {
+                                                        if (endTimeRef.current) {
+                                                            try {
+                                                                if ('showPicker' in HTMLInputElement.prototype) {
+                                                                    endTimeRef.current.showPicker();
+                                                                } else {
+                                                                    endTimeRef.current.click();
+                                                                }
+                                                            } catch (e) {
+                                                                endTimeRef.current.click();
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
+                                                >
+                                                    <span className="text-[13px] text-white font-medium">
+                                                        {formData.endTime ? new Date('2000-01-01T' + formData.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Select time'}
+                                                    </span>
+                                                </div>
                                                 <input
                                                     ref={endTimeRef}
                                                     type="time"
                                                     value={formData.endTime}
                                                     onChange={(e) => updateField('endTime', e.target.value)}
-                                                    className="sr-only"
+                                                    className="absolute inset-0 cursor-pointer"
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%', 
+                                                        opacity: 0,
+                                                        colorScheme: 'dark'
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -407,33 +553,103 @@ function CreateEventForm() {
                                 </div>
 
                                 {/* Right side: Timezone - spanning both rows */}
-                                <div className="flex items-center justify-center px-4 min-w-[100px]">
-                                    <div className="text-center text-white/60">
-                                        <Globe size={16} className="mx-auto mb-1" />
-                                        <div className="text-[11px] font-medium">{formData.timezone.split('/')[1] || formData.timezone}</div>
-                                        <div className="text-[10px] text-white/40">{formData.timezone.split('/')[0]}</div>
+                                <div className="flex items-center justify-center px-3 min-w-[140px] relative z-20">
+                                    <div className="w-full">
+                                        <TimezoneSelect
+                                            value={formData.timezone}
+                                            onChange={(tz) => updateField('timezone', tz)}
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Location - Compact like Luma */}
+                        {/* Location - Compact like Luma with Autocomplete */}
                         {isEditingLocation ? (
-                            <div className="bg-(--surface-1) rounded-xl p-3 border border-white/10">
-                                <input
-                                    type="text"
-                                    value={formData.location}
-                                    onChange={(e) => updateField('location', e.target.value)}
-                                    placeholder="Enter address or virtual meeting link..."
-                                    className="w-full bg-transparent text-[13px] text-white placeholder:text-white/30 outline-none"
-                                    autoFocus
-                                    onBlur={() => setIsEditingLocation(false)}
-                                    onKeyDown={(e) => e.key === 'Enter' && setIsEditingLocation(false)}
-                                />
+                            <div className="bg-(--surface-1) rounded-xl border border-white/10 relative">
+                                <div className="p-3 flex items-center gap-2">
+                                    {isSearchingLocation ? (
+                                        <Loader2 size={16} className="text-white/50 shrink-0 animate-spin" />
+                                    ) : (
+                                        <MapPin size={16} className="text-white/50 shrink-0" />
+                                    )}
+                                    <input
+                                        type="text"
+                                        value={locationSearchQuery}
+                                        onChange={(e) => {
+                                            setLocationSearchQuery(e.target.value);
+                                            if (e.target.value !== formData.location) {
+                                                updateField('location', e.target.value);
+                                                updateField('locationCoords', null);
+                                                updateField('city', '');
+                                            }
+                                        }}
+                                        placeholder="Search for a location (e.g., Dubai, New York)..."
+                                        className="flex-1 bg-transparent text-[13px] text-white placeholder:text-white/30 outline-none"
+                                        autoFocus
+                                        onFocus={() => {
+                                            if (formData.location) {
+                                                setLocationSearchQuery(formData.location);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            // Delay to allow click on results
+                                            setTimeout(() => {
+                                                setShowLocationResults(false);
+                                                if (!formData.locationCoords && locationSearchQuery) {
+                                                    setIsEditingLocation(false);
+                                                }
+                                            }, 200);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && locationResults.length > 0) {
+                                                selectLocation(locationResults[0]);
+                                            } else if (e.key === 'Escape') {
+                                                setShowLocationResults(false);
+                                                setIsEditingLocation(false);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                
+                                {/* Location Results Dropdown */}
+                                {showLocationResults && locationResults.length > 0 && (
+                                    <div className="border-t border-white/10 max-h-48 overflow-y-auto">
+                                        {locationResults.map((result, idx) => (
+                                            <div
+                                                key={idx}
+                                                onClick={() => selectLocation(result)}
+                                                className="px-3 py-2.5 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-b-0"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin size={14} className="text-white/40 shrink-0" />
+                                                    <div className="flex-1">
+                                                        <p className="text-[13px] font-medium text-white">
+                                                            {result.name}
+                                                        </p>
+                                                        <p className="text-[11px] text-white/50">
+                                                            {result.admin1 ? `${result.admin1}, ${result.country}` : result.country}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* No results message */}
+                                {showLocationResults && locationResults.length === 0 && locationSearchQuery.length >= 2 && !isSearchingLocation && (
+                                    <div className="px-3 py-2.5 border-t border-white/10">
+                                        <p className="text-[12px] text-white/50">No locations found</p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div
-                                onClick={() => setIsEditingLocation(true)}
+                                onClick={() => {
+                                    setIsEditingLocation(true);
+                                    setLocationSearchQuery(formData.location);
+                                }}
                                 className="py-3 px-4 bg-(--surface-1) rounded-xl border border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/4 transition-colors"
                             >
                                 <MapPin size={16} className="text-white/50 shrink-0" />
@@ -441,7 +657,8 @@ function CreateEventForm() {
                                     <p className="text-[13px] font-medium text-white">
                                         {formData.location || 'Add Event Location'}
                                     </p>
-                                    {!formData.location && <p className="text-[11px] text-white/40">Offline location or virtual link</p>}
+                                    {!formData.location && <p className="text-[11px] text-white/40">Search for a location or enter address</p>}
+                                    {formData.city && <p className="text-[11px] text-white/40">{formData.city}</p>}
                                 </div>
                             </div>
                         )}
@@ -481,18 +698,38 @@ function CreateEventForm() {
                                         <Ticket size={16} className="text-white/50" />
                                         <span className="text-sm font-medium text-white">Ticket Price</span>
                                     </div>
-                                    <div className="flex items-center gap-1 text-white/70 text-sm">
-                                        {formData.ticketPrice ? `$${formData.ticketPrice}` : 'Free'}
-                                        <button
-                                            onClick={() => {
-                                                const price = prompt('Enter ticket price (leave empty for free):', formData.ticketPrice?.toString() || '');
-                                                updateField('ticketPrice', price ? parseFloat(price) : null);
-                                            }}
-                                            className="text-white/30 hover:text-white ml-1"
+                                    {isEditingPrice ? (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-white/50 text-sm">$</span>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={formData.ticketPrice || ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    updateField('ticketPrice', value === '' ? null : parseFloat(value));
+                                                }}
+                                                onBlur={() => setIsEditingPrice(false)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === 'Escape') {
+                                                        setIsEditingPrice(false);
+                                                    }
+                                                }}
+                                                placeholder="0.00"
+                                                className="w-24 bg-white/10 rounded-lg px-2 py-1 text-[13px] text-white placeholder:text-white/30 outline-none focus:bg-white/15 border border-white/10 focus:border-white/20"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => setIsEditingPrice(true)}
+                                            className="flex items-center gap-2 text-white/70 text-sm cursor-pointer hover:text-white transition-colors"
                                         >
-                                            ✎
-                                        </button>
-                                    </div>
+                                            <span>{formData.ticketPrice ? `$${formData.ticketPrice.toFixed(2)}` : 'Free'}</span>
+                                            <span className="text-white/30 hover:text-white">✎</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Require Approval */}
@@ -515,18 +752,34 @@ function CreateEventForm() {
                                         <UsersIcon size={16} className="text-white/50" />
                                         <span className="text-sm font-medium text-white">Capacity</span>
                                     </div>
-                                    <div className="flex items-center gap-1 text-white/70 text-sm">
-                                        {formData.capacity ? formData.capacity : 'Unlimited'}
-                                        <button
-                                            onClick={() => {
-                                                const cap = prompt('Enter capacity (leave empty for unlimited):', formData.capacity?.toString() || '');
-                                                updateField('capacity', cap ? parseInt(cap) : null);
+                                    {isEditingCapacity ? (
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={formData.capacity || ''}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                updateField('capacity', value === '' ? null : parseInt(value));
                                             }}
-                                            className="text-white/30 hover:text-white ml-1"
+                                            onBlur={() => setIsEditingCapacity(false)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === 'Escape') {
+                                                    setIsEditingCapacity(false);
+                                                }
+                                            }}
+                                            placeholder="Unlimited"
+                                            className="w-24 bg-white/10 rounded-lg px-2 py-1 text-[13px] text-white placeholder:text-white/30 outline-none focus:bg-white/15 border border-white/10 focus:border-white/20 text-right"
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <div
+                                            onClick={() => setIsEditingCapacity(true)}
+                                            className="flex items-center gap-2 text-white/70 text-sm cursor-pointer hover:text-white transition-colors"
                                         >
-                                            ✎
-                                        </button>
-                                    </div>
+                                            <span>{formData.capacity ? formData.capacity : 'Unlimited'}</span>
+                                            <span className="text-white/30 hover:text-white">✎</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

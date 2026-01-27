@@ -243,7 +243,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
 
 
                     {/* RIGHT COLUMN: WHEN & WHERE */}
-                    <div className="flex flex-col h-full gap-6">
+                    <div className="flex flex-col gap-5">
                         <h3 className="text-2xl font-semibold text-white">When & Where</h3>
 
                         {/* Date Block */}
@@ -263,7 +263,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                         </div>
 
                         {/* Location Block */}
-                        <div className="flex gap-4">
+                        <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
                                 <MapPin className="w-5 h-5 text-white/60" />
                             </div>
@@ -278,14 +278,14 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                             </div>
                         </div>
 
-                        <div className="text-white/40 text-[13px]">
+                        <p className="text-white/40 text-[13px]">
                             The address is shown publicly on the event page.
-                        </div>
+                        </p>
 
                         {/* Check-in Button */}
                         <Link
                             href={`/events/${id}/scan`}
-                            className="mt-auto w-full h-12 rounded-xl bg-white/10 text-white hover:bg-white/15 transition-colors flex items-center justify-center gap-2 font-medium border border-white/5"
+                            className="w-full h-12 rounded-xl bg-white/10 text-white hover:bg-white/15 transition-colors flex items-center justify-center gap-2 font-medium border border-white/5 mt-2"
                         >
                             <div className="w-5 h-5 border-2 border-white/40 rounded flex items-center justify-center">
                                 <div className="w-2.5 h-0.5 bg-white/40" />

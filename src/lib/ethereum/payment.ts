@@ -5,9 +5,8 @@
 import { ethers } from 'ethers';
 
 // Constants
-// TODO: Replace with real organizer wallet
-export const EVM_RECIPIENT_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // Hardhat default account #0 as placeholder
-// export const EVM_RECIPIENT_ADDRESS = '0xYourRealWalletAddress'; 
+// Use environment variable or fallback to Hardhat default for testing
+export const EVM_RECIPIENT_ADDRESS = process.env.NEXT_PUBLIC_EVM_RECIPIENT_ADDRESS || '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 export const SUPPORTED_CHAINS = {
     // Mainnet

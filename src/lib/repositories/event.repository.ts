@@ -3,41 +3,14 @@
  * Storing events in existing Supabase 'events' table
  */
 
-import { createClient } from '@supabase/supabase-js';
 import type { Event, CreateEventInput } from '@/types';
 import type { Database } from '@/types/database.types';
 import { generateId } from '@/lib/utils';
+import { getServiceSupabase } from '@/lib/supabase';
 
 type EventRow = Database['public']['Tables']['events']['Row'];
 type EventInsert = Database['public']['Tables']['events']['Insert'];
 type EventUpdate = Database['public']['Tables']['events']['Update'];
-
-// Create supabase client for read operations (works in both server and client)
-const getPublicClient = () => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!url || !anonKey) {
-        console.warn('[EventRepo] Missing Supabase env vars');
-        return null;
-    }
-
-    return createClient(url, anonKey);
-};
-
-// Create service role client for write operations (server-only)
-const getAdminClient = () => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!url || !serviceKey) {
-        throw new Error('Service role key required for this operation');
-    }
-
-    return createClient(url, serviceKey, {
-        auth: { autoRefreshToken: false, persistSession: false }
-    });
-};
 
 // Mock data for fallback when fetch fails or no data
 const failedFetchFallback: Event[] = [];
@@ -63,6 +36,8 @@ function normalizeEvent(item: EventRow): Event {
         status: (item.status as 'published' | 'draft' | 'archived' | 'live' | 'ended') || 'published',
         visibility: (item.visibility as 'public' | 'private') || 'public',
         requireApproval: item.require_approval || undefined,
+        requireStake: (item as any).require_stake || false,
+        stakeAmount: (item as any).stake_amount || undefined,
         socialLinks: (item.social_links as any) || {}, // Json type
         agenda: (item.agenda as any) || [], // Json type
         hosts: (item.hosts as any) || [], // Json type
@@ -77,28 +52,33 @@ function normalizeEvent(item: EventRow): Event {
 }
 
 /**
- * Get all events (uses public client - safe for client-side)
+ * Get all events (OPTIMIZED: selective columns)
  */
 export async function findAll(): Promise<Event[]> {
     try {
-        const client = getPublicClient();
-        if (!client) return failedFetchFallback;
-
-        const { data, error } = await client
+        const supabase = getServiceSupabase();
+        const { data, error } = await supabase
             .from('events')
-            .select('*')
-            // Fetch all visible states: published (future), live (now), ended (past)
+            .select(`
+                id, title, description, date, location, city,
+                latitude, longitude, cover_image, attendee_count,
+                tags, organizer_name, organizer_id, calendar_id,
+                capacity, price, status, visibility, require_approval,
+                social_links, agenda, hosts, about, presented_by,
+                registration_questions, theme, theme_color,
+                created_at, updated_at
+            `)
             .in('status', ['published', 'live', 'ended'])
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
+            .limit(100);
 
         if (error || !data) {
-            console.log('[EventRepo] Error fetching events from Supabase:', error);
             return failedFetchFallback;
         }
 
         return data.map(normalizeEvent);
     } catch (error) {
-        console.error('[EventRepo] Error fetching events from Supabase:', error);
+        console.error('[EventRepo] Error fetching events:', error);
         return failedFetchFallback;
     }
 }
@@ -110,9 +90,12 @@ export async function findById(id: string): Promise<Event | null> {
     if (!id) return null;
 
     try {
-        const client = getPublicClient();
-        if (!client) return null;
+        // Use public client for client-side compatibility
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+        const client = createClient(supabaseUrl, supabaseAnonKey);
         const { data, error } = await client
             .from('events')
             .select('*')
@@ -143,7 +126,7 @@ export async function findByAttendee(userId: string): Promise<Event[]> {
  */
 export async function findByCity(city: string): Promise<Event[]> {
     try {
-        const supabase = getAdminClient();
+        const supabase = getServiceSupabase();
         const { data, error } = await supabase
             .from('events')
             .select('*')
@@ -163,7 +146,7 @@ export async function search(queryStr: string): Promise<Event[]> {
     if (!queryStr || queryStr.length < 2) return [];
 
     try {
-        const supabase = getAdminClient();
+        const supabase = getServiceSupabase();
         // Simple ILIKE search on title or description
         const { data, error } = await supabase
             .from('events')
@@ -183,7 +166,7 @@ export async function search(queryStr: string): Promise<Event[]> {
  */
 export async function findByTag(tag: string): Promise<Event[]> {
     try {
-        const supabase = getAdminClient();
+        const supabase = getServiceSupabase();
         const { data, error } = await supabase
             .from('events')
             .select('*')
@@ -201,7 +184,7 @@ export async function findByTag(tag: string): Promise<Event[]> {
  */
 export async function getUniqueCities(): Promise<string[]> {
     try {
-        const supabase = getAdminClient();
+        const supabase = getServiceSupabase();
         const { data } = await supabase.from('events').select('*');
         if (!data) return [];
         // distinct
@@ -216,8 +199,7 @@ export async function getUniqueCities(): Promise<string[]> {
  * Create a new event
  */
 export async function create(input: CreateEventInput): Promise<Event> {
-    const supabase = getAdminClient();
-    const eventId = input.id || generateId();
+    const supabase = getServiceSupabase();
 
     // Parse date safely
     let isoDate = input.date;
@@ -239,8 +221,15 @@ export async function create(input: CreateEventInput): Promise<Event> {
         throw new Error('Organizer ID is required to create an event');
     }
 
-    const payload: EventInsert = {
-        id: eventId,
+    // Validate organizer_id is a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(input.organizerId)) {
+        throw new Error(`Invalid organizer ID format. Expected UUID, got: ${input.organizerId}. Please ensure you are authenticated via Supabase Auth.`);
+    }
+
+    // Build payload WITHOUT id - let PostgreSQL auto-generate the UUID
+    // This ensures the event_id is always a proper UUID type for triggers
+    const payload: Partial<EventInsert> = {
         title: input.title,
         description: input.description,
         date: isoDate,
@@ -253,12 +242,15 @@ export async function create(input: CreateEventInput): Promise<Event> {
         tags: input.tags || [],
         organizer_name: input.organizer,
         organizer_id: input.organizerId,
-        calendar_id: input.calendarId,
+        // Only include calendar_id if it's a valid UUID
+        ...(input.calendarId && uuidRegex.test(input.calendarId) ? { calendar_id: input.calendarId } : {}),
         capacity: input.capacity,
         price: input.price,
         status: input.status || 'published',
         visibility: input.visibility || 'public',
         require_approval: input.requireApproval || false,
+        require_stake: input.requireStake || false,
+        stake_amount: input.stakeAmount || null,
         social_links: (input.socialLinks || {}) as any,
         agenda: (input.agenda || []) as any,
         hosts: (input.hosts || []) as any,
@@ -267,18 +259,71 @@ export async function create(input: CreateEventInput): Promise<Event> {
         registration_questions: (input.registrationQuestions || []) as any,
         theme: input.theme,
         theme_color: input.themeColor,
-    } as any;
+    };
 
+    console.log('[EventRepo] Creating event with payload:', {
+        title: payload.title,
+        organizer_id: payload.organizer_id,
+        date: payload.date
+    });
+
+    // First, try standard insert
     const { data, error } = await supabase
         .from('events')
-        .insert(payload)
+        .insert(payload as any)
         .select()
         .single();
 
     if (error) {
+        console.error('[EventRepo] Standard insert failed:', error.message);
+
+        // If the error is related to UUID/TEXT mismatch in triggers, try raw SQL
+        if (error.message.includes('uuid') && error.message.includes('text')) {
+            console.log('[EventRepo] Attempting raw SQL insert to bypass trigger issues...');
+
+            try {
+                // Use RPC or raw SQL approach
+                const { data: rawData, error: rawError } = await supabase.rpc('create_event_safe', {
+                    p_title: payload.title,
+                    p_description: payload.description || '',
+                    p_date: payload.date,
+                    p_location: payload.location || '',
+                    p_city: payload.city || '',
+                    p_organizer_id: payload.organizer_id,
+                    p_organizer_name: payload.organizer_name || '',
+                    p_price: payload.price || 0,
+                    p_require_approval: payload.require_approval || false,
+                    p_cover_image: payload.cover_image || '',
+                    p_status: payload.status || 'published',
+                    p_visibility: payload.visibility || 'public',
+                });
+
+                if (rawError) {
+                    throw rawError;
+                }
+
+                // Fetch the created event
+                if (rawData) {
+                    const { data: eventData } = await supabase
+                        .from('events')
+                        .select('*')
+                        .eq('id', rawData)
+                        .single();
+
+                    if (eventData) {
+                        console.log('[EventRepo] Event created via RPC:', rawData);
+                        return normalizeEvent(eventData);
+                    }
+                }
+            } catch (rpcError: any) {
+                console.error('[EventRepo] RPC fallback also failed:', rpcError.message);
+            }
+        }
+
         throw new Error(`Failed to create event: ${error.message}`);
     }
 
+    console.log('[EventRepo] Event created successfully:', data?.id);
     return normalizeEvent(data);
 }
 
@@ -286,7 +331,7 @@ export async function create(input: CreateEventInput): Promise<Event> {
  * Update an event
  */
 export async function update(id: string, updates: Partial<CreateEventInput>): Promise<void> {
-    const supabase = getAdminClient();
+    const supabase = getServiceSupabase();
 
     // Convert snake_case if needed, but for now we map manually what we support in repository updates
     const supabaseUpdates: EventUpdate = {};
@@ -310,7 +355,7 @@ export async function update(id: string, updates: Partial<CreateEventInput>): Pr
  * Delete an event
  */
 export async function remove(id: string): Promise<boolean> {
-    const supabase = getAdminClient();
+    const supabase = getServiceSupabase();
     const { error } = await supabase.from('events').delete().eq('id', id);
     return !error;
 }
@@ -320,10 +365,9 @@ export async function remove(id: string): Promise<boolean> {
  */
 export async function findByOrganizer(userId: string): Promise<Event[]> {
     try {
-        const client = getPublicClient();
-        if (!client) return [];
+        const supabase = getServiceSupabase();
 
-        const { data, error } = await client
+        const { data, error } = await supabase
             .from('events')
             .select('*')
             .eq('organizer_id', userId)
@@ -343,7 +387,7 @@ export async function findByCalendarId(calendarId: string): Promise<Event[]> {
     if (!calendarId) return [];
 
     try {
-        const supabase = getAdminClient();
+        const supabase = getServiceSupabase();
         const { data, error } = await supabase
             .from('events')
             .select('*')
