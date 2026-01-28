@@ -63,7 +63,7 @@ export function EventHeader({ eventId, eventLink = '' }: EventHeaderProps) {
             <div className="flex items-center gap-1">
                 <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     className="w-8 h-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
                     disabled
                 >
@@ -71,7 +71,7 @@ export function EventHeader({ eventId, eventLink = '' }: EventHeaderProps) {
                 </Button>
                 <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     className="w-8 h-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
                     disabled
                 >

@@ -17,11 +17,11 @@ const CONFIG = {
     CHAIN_ID: 11155111, // Sepolia
     ESCROW_ADDRESS: process.env.NEXT_PUBLIC_ESCROW_ADDRESS || '',
     API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
-    
+
     // Test wallets (use test accounts, never real keys)
     ORGANIZER_PRIVATE_KEY: process.env.TEST_ORGANIZER_KEY || '',
     ATTENDEE_PRIVATE_KEY: process.env.TEST_ATTENDEE_KEY || '',
-    
+
     // Test event data
     EVENT_ID: process.env.TEST_EVENT_ID || '',
     GUEST_ID: process.env.TEST_GUEST_ID || '',
@@ -32,10 +32,10 @@ const CONFIG = {
 // ============================================================================
 
 class EscrowTester {
-    private provider: ethers.JsonRpcProvider;
-    private organizerWallet: ethers.Wallet;
-    private attendeeWallet: ethers.Wallet;
-    private escrowContract: ethers.Contract;
+    public provider: ethers.JsonRpcProvider;
+    public organizerWallet: ethers.Wallet;
+    public attendeeWallet: ethers.Wallet;
+    public escrowContract: ethers.Contract;
 
     constructor() {
         if (!CONFIG.ESCROW_ADDRESS || CONFIG.ESCROW_ADDRESS === '0x0000000000000000000000000000000000000000') {
@@ -70,6 +70,9 @@ class EscrowTester {
     async waitForTx(tx: ethers.ContractTransactionResponse, label: string) {
         this.log(`⏳ Waiting for ${label}...`);
         const receipt = await tx.wait();
+        if (!receipt) {
+            throw new Error(`${label} failed - no receipt`);
+        }
         this.log(`✅ ${label} confirmed`, {
             txHash: receipt.hash,
             blockNumber: receipt.blockNumber,
@@ -319,13 +322,13 @@ async function runTests() {
             // Test 2: Verify stake via API
             await testVerifyStake(
                 CONFIG.EVENT_ID,
-                stakeResult.walletAddress,
+                stakeResult.walletAddress!,
                 stakeResult.txHash,
                 CONFIG.GUEST_ID
             );
 
             // Test 3: Get stake status
-            await testGetStakeStatus(CONFIG.EVENT_ID, stakeResult.walletAddress);
+            await testGetStakeStatus(CONFIG.EVENT_ID, stakeResult.walletAddress!);
 
             // Test 4: Release (check-in)
             // Uncomment to test release:

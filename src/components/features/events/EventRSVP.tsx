@@ -34,6 +34,11 @@ interface EventRSVPProps {
     registrationQuestions?: RegistrationQuestion[];
     requireApproval?: boolean;
     theme?: 'default' | 'luma';
+    // Staking props
+    requireStake?: boolean;
+    stakeAmount?: number;
+    organizerWallet?: string;
+    eventStartTime?: number;
 }
 
 export default function EventRSVP({
@@ -42,7 +47,12 @@ export default function EventRSVP({
     price = 0,
     registrationQuestions,
     requireApproval = false,
-    theme = 'default'
+    theme = 'default',
+    // Staking props
+    requireStake = false,
+    stakeAmount,
+    organizerWallet,
+    eventStartTime
 }: EventRSVPProps) {
     const { user } = useAuth();
     const router = useRouter();
@@ -525,6 +535,12 @@ export default function EventRSVP({
                 solAmount={solAmount}
                 ethAmount={ethAmount}
                 onSuccess={handlePaymentSuccess}
+                // Staking mode props
+                stakeMode={requireStake}
+                stakeAmount={stakeAmount || 0}
+                eventId={eventId}
+                organizerWallet={organizerWallet}
+                eventStartTime={eventStartTime}
             />
         </div>
     );

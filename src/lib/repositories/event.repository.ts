@@ -36,8 +36,9 @@ function normalizeEvent(item: EventRow): Event {
         status: (item.status as 'published' | 'draft' | 'archived' | 'live' | 'ended') || 'published',
         visibility: (item.visibility as 'public' | 'private') || 'public',
         requireApproval: item.require_approval || undefined,
-        requireStake: (item as any).require_stake || false,
-        stakeAmount: (item as any).stake_amount || undefined,
+        requireStake: item.require_stake || false,
+        stakeAmount: item.stake_amount || undefined,
+        organizerWallet: item.organizer_wallet || undefined,
         socialLinks: (item.social_links as any) || {}, // Json type
         agenda: (item.agenda as any) || [], // Json type
         hosts: (item.hosts as any) || [], // Json type
@@ -60,12 +61,14 @@ export async function findAll(): Promise<Event[]> {
         const { data, error } = await supabase
             .from('events')
             .select(`
-                id, title, description, date, location, city,
+                id, title, description, date, end_date, location, city,
                 latitude, longitude, cover_image, attendee_count,
                 tags, organizer_name, organizer_id, calendar_id,
-                capacity, price, status, visibility, require_approval,
+                capacity, price, currency, status, visibility, 
+                require_approval, require_stake, stake_amount, organizer_wallet,
                 social_links, agenda, hosts, about, presented_by,
                 registration_questions, theme, theme_color,
+                counters, settings, metadata, who_should_attend, event_format,
                 created_at, updated_at
             `)
             .in('status', ['published', 'live', 'ended'])
@@ -251,6 +254,7 @@ export async function create(input: CreateEventInput): Promise<Event> {
         require_approval: input.requireApproval || false,
         require_stake: input.requireStake || false,
         stake_amount: input.stakeAmount || null,
+        organizer_wallet: input.organizerWallet || null,
         social_links: (input.socialLinks || {}) as any,
         agenda: (input.agenda || []) as any,
         hosts: (input.hosts || []) as any,

@@ -14,12 +14,11 @@ export function getConfig() {
         chains: [sepolia, mainnet],
         connectors: [
             // MetaMask connector first - highest priority
-            metaMask({ 
+            metaMask({
                 dappMetadata: { name: 'PlanX Events' },
-                shimDisconnect: true 
             }),
             // Fallback to other injected wallets (Rainbow, Coinbase, etc.)
-            injected({ shimDisconnect: true }),
+            injected(),
         ],
         ssr: true,
         storage: createStorage({

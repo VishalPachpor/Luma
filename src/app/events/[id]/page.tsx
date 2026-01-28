@@ -189,6 +189,10 @@ export default async function EventPage({ params }: EventPageProps) {
                                         registrationQuestions={event.registrationQuestions || []}
                                         requireApproval={event.requireApproval || false}
                                         theme="luma"
+                                        requireStake={event.requireStake || false}
+                                        stakeAmount={event.stakeAmount}
+                                        organizerWallet={event.organizerWallet}
+                                        eventStartTime={new Date(event.date).getTime() / 1000}
                                     />
                                 </>
                             )}

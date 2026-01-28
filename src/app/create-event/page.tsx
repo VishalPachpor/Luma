@@ -25,6 +25,9 @@ import {
     Image as ImageIcon,
     X,
     Loader2,
+    Lock,
+    Coins,
+    Wallet,
 } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { useImmersiveNavbar } from '@/contexts/NavbarThemeContext';
@@ -70,6 +73,10 @@ interface EventFormData {
     // Calendar & Visibility
     calendarId: string | null;
     visibility: EventVisibility;
+    // Staking
+    requireStake: boolean;
+    stakeAmount: number | null;
+    organizerWallet: string;
 }
 
 function CreateEventForm() {
@@ -111,6 +118,10 @@ function CreateEventForm() {
         // Calendar & Visibility
         calendarId: null,
         visibility: 'public',
+        // Staking
+        requireStake: false,
+        stakeAmount: null,
+        organizerWallet: '',
     });
 
     // UI State
@@ -118,9 +129,10 @@ function CreateEventForm() {
     const [isEditingDescription, setIsEditingDescription] = useState(false);
     const [isEditingPrice, setIsEditingPrice] = useState(false);
     const [isEditingCapacity, setIsEditingCapacity] = useState(false);
+    const [isEditingStakeAmount, setIsEditingStakeAmount] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
-    
+
     // Location Search State
     const [locationSearchQuery, setLocationSearchQuery] = useState('');
     const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -196,7 +208,7 @@ function CreateEventForm() {
         const locationString = location.admin1
             ? `${location.name}, ${location.admin1}, ${location.country}`
             : `${location.name}, ${location.country}`;
-        
+
         setFormData((prev) => ({
             ...prev,
             location: locationString,
@@ -288,6 +300,10 @@ function CreateEventForm() {
                 calendarId: formData.calendarId ?? undefined,
                 theme: currentTheme.name,
                 themeColor: currentTheme.colors.accentMain,
+                // Staking settings
+                requireStake: formData.requireStake,
+                stakeAmount: formData.stakeAmount || undefined,
+                organizerWallet: formData.organizerWallet || undefined,
             });
 
             console.log('Event created:', event);
@@ -428,8 +444,8 @@ function CreateEventForm() {
                                                     value={formData.startDate}
                                                     onChange={(e) => updateField('startDate', e.target.value)}
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    style={{ 
-                                                        width: '100%', 
+                                                    style={{
+                                                        width: '100%',
                                                         height: '100%',
                                                         colorScheme: 'dark'
                                                     }}
@@ -462,8 +478,8 @@ function CreateEventForm() {
                                                     value={formData.startTime}
                                                     onChange={(e) => updateField('startTime', e.target.value)}
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    style={{ 
-                                                        width: '100%', 
+                                                    style={{
+                                                        width: '100%',
                                                         height: '100%',
                                                         colorScheme: 'dark'
                                                     }}
@@ -506,8 +522,8 @@ function CreateEventForm() {
                                                     value={formData.endDate}
                                                     onChange={(e) => updateField('endDate', e.target.value)}
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    style={{ 
-                                                        width: '100%', 
+                                                    style={{
+                                                        width: '100%',
                                                         height: '100%',
                                                         colorScheme: 'dark'
                                                     }}
@@ -540,9 +556,9 @@ function CreateEventForm() {
                                                     value={formData.endTime}
                                                     onChange={(e) => updateField('endTime', e.target.value)}
                                                     className="absolute inset-0 cursor-pointer"
-                                                    style={{ 
-                                                        width: '100%', 
-                                                        height: '100%', 
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
                                                         opacity: 0,
                                                         colorScheme: 'dark'
                                                     }}
@@ -611,7 +627,7 @@ function CreateEventForm() {
                                         }}
                                     />
                                 </div>
-                                
+
                                 {/* Location Results Dropdown */}
                                 {showLocationResults && locationResults.length > 0 && (
                                     <div className="border-t border-white/10 max-h-48 overflow-y-auto">
@@ -636,7 +652,7 @@ function CreateEventForm() {
                                         ))}
                                     </div>
                                 )}
-                                
+
                                 {/* No results message */}
                                 {showLocationResults && locationResults.length === 0 && locationSearchQuery.length >= 2 && !isSearchingLocation && (
                                     <div className="px-3 py-2.5 border-t border-white/10">
@@ -781,6 +797,85 @@ function CreateEventForm() {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Require Stake Toggle */}
+                                <div className="flex items-center justify-between p-4">
+                                    <div className="flex items-center gap-3">
+                                        <Lock size={16} className="text-white/50" />
+                                        <div>
+                                            <span className="text-sm font-medium text-white">Require Stake</span>
+                                            <p className="text-[11px] text-white/40">Attendees commit ETH, refunded on check-in</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => updateField('requireStake', !formData.requireStake)}
+                                        className={`w-11 h-6 rounded-full relative transition-colors ${formData.requireStake ? 'bg-emerald-500' : 'bg-white/20'}`}
+                                    >
+                                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all ${formData.requireStake ? 'left-6 bg-white' : 'left-1 bg-white/60'}`} />
+                                    </button>
+                                </div>
+
+                                {/* Stake Amount (shown when Require Stake is enabled) */}
+                                {formData.requireStake && (
+                                    <>
+                                        <div className="flex items-center justify-between p-4 bg-emerald-500/5">
+                                            <div className="flex items-center gap-3">
+                                                <Coins size={16} className="text-emerald-400" />
+                                                <span className="text-sm font-medium text-white">Stake Amount</span>
+                                            </div>
+                                            {isEditingStakeAmount ? (
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        step="0.001"
+                                                        min="0.001"
+                                                        value={formData.stakeAmount || ''}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            updateField('stakeAmount', value === '' ? null : parseFloat(value));
+                                                        }}
+                                                        onBlur={() => setIsEditingStakeAmount(false)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === 'Escape') {
+                                                                setIsEditingStakeAmount(false);
+                                                            }
+                                                        }}
+                                                        placeholder="0.01"
+                                                        className="w-20 bg-white/10 rounded-lg px-2 py-1 text-[13px] text-white placeholder:text-white/30 outline-none focus:bg-white/15 border border-white/10 focus:border-emerald-500/50 text-right"
+                                                        autoFocus
+                                                    />
+                                                    <span className="text-white/50 text-sm">ETH</span>
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onClick={() => setIsEditingStakeAmount(true)}
+                                                    className="flex items-center gap-2 text-emerald-400 text-sm cursor-pointer hover:text-emerald-300 transition-colors"
+                                                >
+                                                    <span>{formData.stakeAmount ? `${formData.stakeAmount} ETH` : '0.01 ETH'}</span>
+                                                    <span className="text-white/30 hover:text-white">✎</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Organizer Wallet Address */}
+                                        <div className="flex items-center justify-between p-4 bg-emerald-500/5 border-t border-emerald-500/10">
+                                            <div className="flex items-center gap-3">
+                                                <Wallet size={16} className="text-emerald-400" />
+                                                <div>
+                                                    <span className="text-sm font-medium text-white">Your Wallet</span>
+                                                    <p className="text-[11px] text-white/40">Receives stakes after event</p>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={formData.organizerWallet}
+                                                onChange={(e) => updateField('organizerWallet', e.target.value)}
+                                                placeholder="0x..."
+                                                className="w-36 bg-white/10 rounded-lg px-2 py-1 text-[12px] text-white placeholder:text-white/30 outline-none focus:bg-white/15 border border-white/10 focus:border-emerald-500/50 font-mono"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 

@@ -95,6 +95,7 @@ export interface Database {
                     require_approval: boolean
                     require_stake: boolean
                     stake_amount: number | null
+                    organizer_wallet: string | null
                     capacity: number | null
                     price: number | null
                     currency: string
@@ -111,6 +112,8 @@ export interface Database {
                     attendee_count: number
                     counters: Json
                     settings: Json
+                    theme: string | null
+                    theme_color: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -133,6 +136,7 @@ export interface Database {
                     require_approval?: boolean
                     require_stake?: boolean
                     stake_amount?: number | null
+                    organizer_wallet?: string | null
                     capacity?: number | null
                     price?: number | null
                     currency?: string
@@ -149,6 +153,8 @@ export interface Database {
                     attendee_count?: number
                     counters?: Json
                     settings?: Json
+                    theme?: string | null
+                    theme_color?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -171,6 +177,7 @@ export interface Database {
                     require_approval?: boolean
                     require_stake?: boolean
                     stake_amount?: number | null
+                    organizer_wallet?: string | null
                     capacity?: number | null
                     price?: number | null
                     currency?: string
@@ -187,6 +194,8 @@ export interface Database {
                     attendee_count?: number
                     counters?: Json
                     settings?: Json
+                    theme?: string | null
+                    theme_color?: string | null
                     created_at?: string
                     updated_at?: string
                 }

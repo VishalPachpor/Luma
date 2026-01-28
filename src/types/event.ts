@@ -74,6 +74,7 @@ export interface Event {
     // Staking
     requireStake?: boolean;
     stakeAmount?: number;
+    organizerWallet?: string; // Ethereum wallet address for stake payments
 
     // Custom Registration
     registrationQuestions?: RegistrationQuestion[];
