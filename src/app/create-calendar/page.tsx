@@ -132,7 +132,7 @@ export default function CreateCalendarPage() {
 
             <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
                 {/* Main Card */}
-                <GlossyCard className="overflow-hidden bg-[#1C1C1E]">
+                <GlossyCard className="overflow-hidden bg-surface-1">
                     {/* Cover Image Area */}
                     <div className="h-48 bg-white/5 relative group">
                         {coverImage ? (
@@ -170,7 +170,7 @@ export default function CreateCalendarPage() {
                         <div className="-mt-10 mb-6 relative inline-block z-20">
                             <div
                                 onClick={() => avatarInputRef.current?.click()}
-                                className="w-20 h-20 rounded-2xl bg-[#2C2C2E] border-4 border-[#1C1C1E] flex items-center justify-center shadow-xl cursor-pointer hover:bg-[#3C3C3E] transition-colors group overflow-hidden relative"
+                                className="w-20 h-20 rounded-2xl bg-surface-2 border-4 border-surface-1 flex items-center justify-center shadow-xl cursor-pointer hover:bg-surface-3 transition-colors group overflow-hidden relative"
                             >
                                 {avatarImage ? (
                                     <Image
@@ -217,7 +217,7 @@ export default function CreateCalendarPage() {
                 </GlossyCard>
 
                 {/* Customization Card */}
-                <GlossyCard className="p-8 bg-[#1C1C1E] space-y-8">
+                <GlossyCard className="p-8 bg-surface-1 space-y-8">
                     <h2 className="text-lg font-bold text-text-primary">Customization</h2>
 
                     {/* Tint Color */}
@@ -228,7 +228,7 @@ export default function CreateCalendarPage() {
                                 <button
                                     key={color.id}
                                     onClick={() => setSelectedColor(color.id)}
-                                    className={`w-8 h-8 rounded-full ${color.value} flex items-center justify-center transition-transform hover:scale-110 ${selectedColor === color.id ? 'ring-2 ring-white ring-offset-2 ring-offset-[#1C1C1E]' : ''
+                                    className={`w-8 h-8 rounded-full ${color.value} flex items-center justify-center transition-transform hover:scale-110 ${selectedColor === color.id ? 'ring-2 ring-white ring-offset-2 ring-offset-surface-1' : ''
                                         }`}
                                 >
                                     {selectedColor === color.id && <Check size={14} className="text-white" />}
@@ -255,10 +255,10 @@ export default function CreateCalendarPage() {
                         <label className="text-sm font-medium text-text-secondary">Location</label>
                         <div className="flex gap-4">
                             {/* Toggle */}
-                            <div className="w-[200px] h-[44px] bg-[#2C2C2E] p-1 rounded-lg flex shrink-0">
+                            <div className="w-[200px] h-[44px] bg-surface-2 p-1 rounded-lg flex shrink-0">
                                 <button
                                     onClick={() => setLocationType('city')}
-                                    className={`flex-1 rounded-md text-sm font-medium transition-all ${locationType === 'city' ? 'bg-[#3A3A3C] text-white shadow-sm' : 'text-text-muted hover:text-text-secondary'
+                                    className={`flex-1 rounded-md text-sm font-medium transition-all ${locationType === 'city' ? 'bg-surface-3 text-white shadow-sm' : 'text-text-muted hover:text-text-secondary'
                                         }`}
                                 >
                                     City
@@ -272,7 +272,7 @@ export default function CreateCalendarPage() {
                                             zoom: 1.5
                                         });
                                     }}
-                                    className={`flex-1 rounded-md text-sm font-medium transition-all ${locationType === 'global' ? 'bg-[#3A3A3C] text-white shadow-sm' : 'text-text-muted hover:text-text-secondary'
+                                    className={`flex-1 rounded-md text-sm font-medium transition-all ${locationType === 'global' ? 'bg-surface-3 text-white shadow-sm' : 'text-text-muted hover:text-text-secondary'
                                         }`}
                                 >
                                     Global
@@ -293,7 +293,7 @@ export default function CreateCalendarPage() {
                                 </div>
 
                                 <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-                                    <div className={`w-full max-w-[280px] h-[40px] bg-[#1C1C1E]/90 backdrop-blur-md rounded-lg flex items-center px-3 gap-3 border border-white/10 shadow-lg pointer-events-auto relative z-20 transition-transform ${locationType === 'city' ? 'hover:scale-[1.02]' : 'opacity-50'}`}>
+                                    <div className={`w-full max-w-[280px] h-[40px] bg-surface-1/90 backdrop-blur-md rounded-lg flex items-center px-3 gap-3 border border-white/10 shadow-lg pointer-events-auto relative z-20 transition-transform ${locationType === 'city' ? 'hover:scale-[1.02]' : 'opacity-50'}`}>
                                         {isSearching ? <Loader2 size={16} className="text-text-muted animate-spin shrink-0" /> : <MapPin size={16} className="text-text-muted shrink-0" />}
                                         <input
                                             type="text"
@@ -316,7 +316,7 @@ export default function CreateCalendarPage() {
                                 </div>
 
                                 {showResults && searchResults.length > 0 && locationType === 'city' && (
-                                    <div className="absolute top-[85px] left-1/2 -translate-x-1/2 w-full max-w-[280px] bg-[#1C1C1E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-30 flex flex-col">
+                                    <div className="absolute top-[85px] left-1/2 -translate-x-1/2 w-full max-w-[280px] bg-surface-1 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-30 flex flex-col">
                                         {searchResults.map((city) => (
                                             <button
                                                 key={city.id}

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { Plus, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import { useSolanaWallet } from '@/contexts/WalletContext';
 
 // Provider icons - Luma exact styling
@@ -96,11 +97,11 @@ export default function ThirdPartyAccounts() {
     };
 
     const handleAppleConnect = async () => {
-        alert('Apple Sign-In requires additional Firebase configuration.');
+        toast.info('Apple Sign-In requires additional Firebase configuration.');
     };
 
     const handleZoomConnect = async () => {
-        alert('Zoom integration requires OAuth setup. Coming soon.');
+        toast.info('Zoom integration requires OAuth setup. Coming soon.');
     };
 
     const handleEthereumConnect = async () => {
@@ -178,13 +179,13 @@ export default function ThirdPartyAccounts() {
     const ProviderCard = ({ provider }: { provider: Provider }) => (
         <button
             onClick={provider.onClick}
-            className="flex items-center justify-between p-3 bg-[var(--luma-bg-card)] border border-[var(--luma-border)] rounded-lg hover:bg-[var(--luma-bg-input)] transition-colors"
+            className="flex items-center justify-between p-3 bg-(--luma-bg-card) border border-(--luma-border) rounded-lg hover:bg-(--luma-bg-input) transition-colors"
         >
             <div className="flex items-center gap-3">
                 {provider.icon}
                 <div className="text-left">
                     <div className="text-sm font-medium text-white">{provider.name}</div>
-                    <div className="text-xs text-[var(--luma-text-muted)]">
+                    <div className="text-xs text-(--luma-text-muted)">
                         {provider.isLinked
                             ? (provider.address || 'Linked')
                             : 'Not Linked'
@@ -195,10 +196,10 @@ export default function ThirdPartyAccounts() {
             {provider.isLoading ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />
             ) : provider.isLinked ? (
-                <Check className="w-5 h-5 text-[var(--luma-success-badge)]" />
+                <Check className="w-5 h-5 text-(--luma-success-badge)" />
             ) : (
-                <div className="w-6 h-6 flex items-center justify-center border border-[var(--luma-border)] rounded">
-                    <Plus className="w-3.5 h-3.5 text-[var(--luma-text-muted)]" />
+                <div className="w-6 h-6 flex items-center justify-center border border-(--luma-border) rounded">
+                    <Plus className="w-3.5 h-3.5 text-(--luma-text-muted)" />
                 </div>
             )}
         </button>
@@ -208,7 +209,7 @@ export default function ThirdPartyAccounts() {
         <section className="space-y-4">
             <div>
                 <h3 className="text-lg font-semibold text-white">Third Party Accounts</h3>
-                <p className="text-sm text-[var(--luma-text-muted)] mt-1">
+                <p className="text-sm text-(--luma-text-muted) mt-1">
                     Link your accounts to sign in to Pulse and automate your workflows.
                 </p>
             </div>

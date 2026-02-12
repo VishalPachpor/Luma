@@ -11,6 +11,7 @@ import Modal from '@/components/modals/Modal';
 import { Share2, Loader2, AlertTriangle, Ticket, QrCode, Users } from 'lucide-react';
 import { Button } from '@/components/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import EventRSVP from './EventRSVP';
 import InviteSender from './InviteSender';
 import AddToCalendar from './AddToCalendar';
@@ -79,7 +80,7 @@ export default function EventActions({
             window.location.href = '/';
         } catch (error: any) {
             console.error('Delete error:', error);
-            alert(`Failed to delete event: ${error.message}`);
+            toast.error(`Failed to delete event: ${error.message}`);
             setIsDeleting(false);
             setShowDeleteModal(false);
         }
@@ -89,7 +90,7 @@ export default function EventActions({
     const Container = theme === 'luma' ? 'div' : 'div';
     const containerClasses = theme === 'luma'
         ? "space-y-4" // No padding, no border, no background, just spacing
-        : "bg-[#151A29] rounded-2xl border border-indigo-500/20 shadow-2xl shadow-indigo-500/5 hover-card relative z-10 transition-all p-6 space-y-6";
+        : "bg-bg-secondary rounded-2xl border border-indigo-500/20 shadow-2xl shadow-indigo-500/5 hover-card relative z-10 transition-all p-6 space-y-6";
 
     return (
         <>

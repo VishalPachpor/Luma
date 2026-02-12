@@ -66,7 +66,7 @@ export function ProfileDropdown() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute right-0 top-full mt-2 w-64 bg-[#1A1D21] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 py-1.5 origin-top-right"
+                        className="absolute right-0 top-full mt-2 w-64 bg-bg-tertiary border border-border-primary rounded-xl shadow-2xl overflow-hidden z-50 py-1.5 origin-top-right"
                     >
                         {/* User Header */}
                         <div className="px-4 py-3 border-b border-white/5 mb-1">
@@ -84,7 +84,7 @@ export function ProfileDropdown() {
                                     <p className="text-sm font-medium text-white truncate">
                                         {user.displayName || 'User'}
                                     </p>
-                                    <p className="text-xs text-[#888888] truncate">
+                                    <p className="text-xs text-text-muted truncate">
                                         {user.email}
                                     </p>
                                 </div>
@@ -96,7 +96,7 @@ export function ProfileDropdown() {
                             <Link
                                 href="/profile"
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#D4D4D4] hover:text-white hover:bg-white/5 transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
                             >
                                 <User size={16} strokeWidth={2} />
                                 View Profile
@@ -104,7 +104,7 @@ export function ProfileDropdown() {
                             <Link
                                 href="/settings"
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#D4D4D4] hover:text-white hover:bg-white/5 transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
                             >
                                 <Settings size={16} strokeWidth={2} />
                                 Settings
@@ -115,7 +115,7 @@ export function ProfileDropdown() {
 
                         <button
                             onClick={handleSignOut}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#D4D4D4] hover:text-white hover:bg-white/5 transition-colors text-left"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-text-secondary hover:text-white hover:bg-white/5 transition-colors text-left"
                         >
                             <LogOut size={16} strokeWidth={2} />
                             Sign Out

@@ -41,7 +41,7 @@ export default async function CalendarsPage() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen bg-[#0E0F13] flex items-center justify-center">
+                <div className="min-h-screen bg-bg-primary flex items-center justify-center">
                     <div className="animate-pulse text-white/50">Loading calendars...</div>
                 </div>
             }

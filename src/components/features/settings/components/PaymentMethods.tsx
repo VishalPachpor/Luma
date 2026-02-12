@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { GlossyCard, Button } from '@/components/components/ui';
 import { CreditCard, Plus, Trash2, Loader2, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface PaymentMethod {
     id: string;
@@ -30,7 +31,7 @@ const CardBrandIcon = ({ brand }: { brand: string }) => {
             );
         case 'mastercard':
             return (
-                <div className="w-8 h-5 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center">
+                <div className="w-8 h-5 bg-linear-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-xs">MC</span>
                 </div>
             );
@@ -56,13 +57,8 @@ export default function PaymentMethods() {
 
         // Simulate loading
         setTimeout(() => {
-            alert(
-                'Stripe Integration Required\n\n' +
-                'To enable card payments:\n' +
-                '1. Create a Stripe account at stripe.com\n' +
-                '2. Add STRIPE_PUBLISHABLE_KEY to .env.local\n' +
-                '3. Install @stripe/stripe-js and @stripe/react-stripe-js\n' +
-                '4. Integrate Stripe Elements for secure card input'
+            toast.info(
+                'Stripe Integration Required. Create a Stripe account, add STRIPE_PUBLISHABLE_KEY to .env.local, and install @stripe/stripe-js.'
             );
             setIsAddingCard(false);
         }, 1000);

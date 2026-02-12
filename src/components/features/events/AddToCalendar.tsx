@@ -107,7 +107,7 @@ export default function AddToCalendar({
                     <Portal>
                         {/* Backdrop to close on click outside - completely transparent but captures clicks */}
                         <div
-                            className="fixed inset-0 z-[9998]"
+                            className="fixed inset-0 z-9998"
                             onClick={() => setIsOpen(false)}
                         />
 
@@ -123,7 +123,7 @@ export default function AddToCalendar({
                                 left: coords.left,
                                 width: '16rem' // w-64
                             }}
-                            className="bg-[#1A2033]/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-[9999] ring-1 ring-white/5"
+                            className="bg-bg-secondary/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-9999 ring-1 ring-white/5"
                         >
                             <div className="p-1.5 space-y-0.5">
                                 <button

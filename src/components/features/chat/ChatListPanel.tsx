@@ -139,7 +139,7 @@ export default function ChatListPanel({ isOpen, onClose, onSelectChat }: ChatLis
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.2 }}
-                    className="fixed bottom-4 right-4 w-[320px] bg-[#1a1a1a] rounded-2xl shadow-2xl border border-white/10 overflow-hidden z-50"
+                    className="fixed bottom-4 right-4 w-[320px] bg-bg-primary rounded-2xl shadow-2xl border border-white/10 overflow-hidden z-50"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b border-white/5">
@@ -186,7 +186,7 @@ export default function ChatListPanel({ isOpen, onClose, onSelectChat }: ChatLis
                                                 className="rounded-xl object-cover"
                                             />
                                         ) : (
-                                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                            <div className="w-11 h-11 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                                 <MessageCircle className="w-5 h-5 text-white" />
                                             </div>
                                         )}

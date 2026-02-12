@@ -36,7 +36,7 @@ export default function CalendarsPageClient({
     }, [initialMyCalendars, initialSubscribedCalendars]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#0E0F13]">
+        <div className="flex flex-col min-h-screen bg-bg-primary">
             <main className="flex-1">
                 <div className="max-w-[800px] mx-auto px-8 pt-4 pb-10 scroll-mt-16">
                     {/* Page Title */}

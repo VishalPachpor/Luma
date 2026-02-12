@@ -30,9 +30,9 @@ export default function Button({
 
     const variants = {
         primary: `
-            bg-accent-primary text-white 
+            bg-accent-primary text-black 
             rounded-xl
-            hover:brightness-110 
+            hover:brightness-95 
             border border-white/10
             shadow-glow-primary
         `,

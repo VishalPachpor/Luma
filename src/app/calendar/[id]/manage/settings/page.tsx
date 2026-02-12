@@ -112,7 +112,7 @@ export default function DisplaySettingsPage() {
                         id="name"
                         value={formData.name}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="bg-[#1C1C1E] border-white/10 text-white focus:border-white/20 placeholder:text-white/20"
+                        className="bg-bg-elevated border-white/10 text-white focus:border-white/20 placeholder:text-white/20"
                         placeholder="e.g. Personal Calendar"
                     />
                 </div>
@@ -121,14 +121,14 @@ export default function DisplaySettingsPage() {
                 <div className="space-y-2">
                     <Label htmlFor="slug" className="text-white">Calendar URL</Label>
                     <div className="flex items-center">
-                        <span className="bg-[#1C1C1E] border border-r-0 border-white/10 text-white/40 px-3 py-2 rounded-l-md text-sm">
+                        <span className="bg-bg-elevated border border-r-0 border-white/10 text-white/40 px-3 py-2 rounded-l-md text-sm">
                             lumma.com/
                         </span>
                         <Input
                             id="slug"
                             value={formData.slug}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                            className="rounded-l-none bg-[#1C1C1E] border-white/10 text-white focus:border-white/20 placeholder:text-white/20"
+                            className="rounded-l-none bg-bg-elevated border-white/10 text-white focus:border-white/20 placeholder:text-white/20"
                             placeholder="my-calendar"
                         />
                     </div>
@@ -141,7 +141,7 @@ export default function DisplaySettingsPage() {
                         id="description"
                         value={formData.description}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                        className="bg-[#1C1C1E] border-white/10 text-white focus:border-white/20 placeholder:text-white/20 min-h-[100px]"
+                        className="bg-bg-elevated border-white/10 text-white focus:border-white/20 placeholder:text-white/20 min-h-[100px]"
                         placeholder="A brief description of your calendar events..."
                     />
                 </div>

@@ -271,13 +271,13 @@ export default function EditEventPage() {
     // RENDER (Same as CreateEventPage basically)
     return (
         <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
-            <div className="w-full max-w-7xl bg-[#1C1C1E] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl flex flex-col lg:flex-row h-[90vh]">
+            <div className="w-full max-w-7xl bg-surface-1 rounded-[32px] overflow-hidden border border-white/10 shadow-2xl flex flex-col lg:flex-row h-[90vh]">
 
                 {/* Left: Image Upload & Theme */}
-                <div className="lg:w-[45%] bg-[#2C2C2E]/50 p-10 flex flex-col gap-8 border-r border-white/10 relative overflow-y-auto custom-scrollbar">
+                <div className="lg:w-[45%] bg-surface-2/50 p-10 flex flex-col gap-8 border-r border-white/10 relative overflow-y-auto custom-scrollbar">
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="aspect-square w-full rounded-[32px] overflow-hidden relative group cursor-pointer border-2 border-dashed border-white/10 hover:border-accent/40 transition-all flex flex-col items-center justify-center gap-4 bg-[#1C1C1E]/50 shrink-0"
+                        className="aspect-square w-full rounded-[32px] overflow-hidden relative group cursor-pointer border-2 border-dashed border-white/10 hover:border-accent/40 transition-all flex flex-col items-center justify-center gap-4 bg-surface-1/50 shrink-0"
                     >
                         <Image
                             src={formData.imageUrl || "https://picsum.photos/seed/abstract/800/800"}
@@ -306,7 +306,7 @@ export default function EditEventPage() {
                     </button>
 
                     <div className="flex items-center gap-3 shrink-0">
-                        <div className="flex-1 flex items-center justify-between p-4 bg-[#1C1C1E]/50 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
+                        <div className="flex-1 flex items-center justify-between p-4 bg-surface-1/50 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
                                     <LayoutGrid size={20} className="text-text-muted" />
@@ -323,7 +323,7 @@ export default function EditEventPage() {
                             <ChevronDown size={18} className="text-text-muted" />
                         </div>
 
-                        <button className="h-full aspect-square flex items-center justify-center p-4 bg-[#1C1C1E]/50 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
+                        <button className="h-full aspect-square flex items-center justify-center p-4 bg-surface-1/50 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
                             <Dices size={20} className="text-text-muted" />
                         </button>
                     </div>
@@ -338,7 +338,7 @@ export default function EditEventPage() {
                 </div>
 
                 {/* Right: Form */}
-                <div className="lg:w-[55%] p-10 flex flex-col h-full bg-[#1C1C1E] relative">
+                <div className="lg:w-[55%] p-10 flex flex-col h-full bg-surface-1 relative">
                     {/* Close Button desktop */}
                     <button
                         onClick={() => router.back()}
@@ -385,7 +385,7 @@ export default function EditEventPage() {
                                         {/* Start Row */}
                                         <div className="flex items-center justify-between relative z-10">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-[#2C2C2E]" />
+                                                <div className="w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-surface-2" />
                                                 <span className="text-sm font-medium text-text-primary">
                                                     Start
                                                 </span>
@@ -396,14 +396,14 @@ export default function EditEventPage() {
                                                     type="date"
                                                     value={formData.startDate}
                                                     onChange={(e) => updateField('startDate', e.target.value)}
-                                                    className="text-sm bg-[#1C1C1E]/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
+                                                    className="text-sm bg-surface-1/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
                                                 />
                                                 <input
                                                     ref={startTimeRef}
                                                     type="time"
                                                     value={formData.startTime}
                                                     onChange={(e) => updateField('startTime', e.target.value)}
-                                                    className="text-sm bg-[#1C1C1E]/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
+                                                    className="text-sm bg-surface-1/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
                                                 />
                                             </div>
                                         </div>
@@ -411,7 +411,7 @@ export default function EditEventPage() {
                                         {/* End Row */}
                                         <div className="flex items-center justify-between relative z-10">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-2.5 h-2.5 rounded-full border border-text-muted bg-[#2C2C2E] ring-2 ring-[#2C2C2E]" />
+                                                <div className="w-2.5 h-2.5 rounded-full border border-text-muted bg-surface-2 ring-2 ring-surface-2" />
                                                 <span className="text-sm font-medium text-text-primary">
                                                     End
                                                 </span>
@@ -422,14 +422,14 @@ export default function EditEventPage() {
                                                     type="date"
                                                     value={formData.endDate}
                                                     onChange={(e) => updateField('endDate', e.target.value)}
-                                                    className="text-sm bg-[#1C1C1E]/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
+                                                    className="text-sm bg-surface-1/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
                                                 />
                                                 <input
                                                     ref={endTimeRef}
                                                     type="time"
                                                     value={formData.endTime}
                                                     onChange={(e) => updateField('endTime', e.target.value)}
-                                                    className="text-sm bg-[#1C1C1E]/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
+                                                    className="text-sm bg-surface-1/50 px-3 py-1.5 rounded-lg border border-white/10 text-text-secondary hover:bg-white/10 transition-colors cursor-pointer scheme-dark"
                                                 />
                                             </div>
                                         </div>

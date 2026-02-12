@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { GlossyCard, Button } from '@/components/components/ui';
 import { Sparkles, Check, ExternalLink, Loader2, ChevronRight, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface SubscriptionPlan {
     id: string;
@@ -68,13 +69,8 @@ export default function PremiumSubscription() {
 
         // Simulate loading
         setTimeout(() => {
-            alert(
-                'Stripe Subscription Integration Required\n\n' +
-                'To enable subscriptions:\n' +
-                '1. Set up Stripe Billing in your Stripe Dashboard\n' +
-                '2. Create subscription products and prices\n' +
-                '3. Implement Stripe Checkout for subscription flow\n' +
-                '4. Set up webhooks for subscription lifecycle events'
+            toast.info(
+                'Stripe Subscription Integration Required. Set up Stripe Billing, create subscription products, and implement Stripe Checkout.'
             );
             setIsUpgrading(false);
         }, 1000);
@@ -101,8 +97,8 @@ export default function PremiumSubscription() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isPremium
-                                ? 'bg-gradient-to-br from-yellow-500 to-orange-500'
-                                : 'bg-white/10'
+                            ? 'bg-linear-to-br from-yellow-500 to-orange-500'
+                            : 'bg-white/10'
                             }`}>
                             {isPremium ? (
                                 <Zap className="w-6 h-6 text-white" />
@@ -126,7 +122,7 @@ export default function PremiumSubscription() {
                         <Button
                             onClick={() => handleUpgrade('plus_monthly')}
                             disabled={isUpgrading}
-                            className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400"
+                            className="gap-2 bg-linear-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400"
                         >
                             {isUpgrading ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -159,6 +155,6 @@ export default function PremiumSubscription() {
                 <ExternalLink className="w-3 h-3" />
                 Pulse Plus applies on the calendar level. Choose the desired calendar above to manage its membership.
             </p>
-        </section>
+        </section >
     );
 }

@@ -45,6 +45,7 @@ function normalizeEvent(item: EventRow): Event {
         about: (item.about as any) || [], // Json type
         presentedBy: item.presented_by || undefined,
         registrationQuestions: (item.registration_questions as any) || [], // Json type
+        settings: (item.settings as any) || {}, // Json type
         createdAt: item.created_at,
         updatedAt: item.updated_at,
         theme: (item as any).theme,
@@ -348,6 +349,7 @@ export async function update(id: string, updates: Partial<CreateEventInput>): Pr
     if (updates.price !== undefined) supabaseUpdates.price = updates.price;
     if (updates.theme) (supabaseUpdates as any).theme = updates.theme;
     if (updates.themeColor) (supabaseUpdates as any).theme_color = updates.themeColor;
+    if (updates.settings) (supabaseUpdates as any).settings = updates.settings;
     // Add other fields as needed
 
     const { error } = await supabase.from('events').update(supabaseUpdates).eq('id', id);

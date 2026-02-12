@@ -8,6 +8,7 @@ import { Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 import './globals.css';
 import Providers from './providers';
+import { Toaster } from 'sonner';
 import Navbar from '@/components/components/layout/Navbar';
 import CommandPalette from '@/components/features/CommandPalette';
 
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
     width: 'device-width',
     initialScale: 1,
-    themeColor: '#0B0C0E',
+    themeColor: '#131517',
 };
 
 export default async function RootLayout({
@@ -45,13 +46,26 @@ export default async function RootLayout({
 
     return (
         <html lang="en" className={inter.variable} suppressHydrationWarning>
-            <body className="min-h-screen bg-[#0E0F13] text-white">
+            <body className="min-h-screen bg-bg-primary text-white" suppressHydrationWarning>
                 {/* App Content */}
                 <Providers cookie={cookie}>
                     <Navbar />
                     {children}
                     {/* Global Command Palette (Cmd+K) */}
                     <CommandPalette />
+                    {/* Toast Notifications */}
+                    <Toaster
+                        theme="dark"
+                        position="bottom-right"
+                        toastOptions={{
+                            style: {
+                                background: 'rgba(30, 32, 36, 0.95)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                color: '#fff',
+                                backdropFilter: 'blur(12px)',
+                            },
+                        }}
+                    />
                 </Providers>
             </body>
         </html>

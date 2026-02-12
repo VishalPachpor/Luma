@@ -37,7 +37,7 @@ export function RegistrationForm({ eventId, initialQuestions }: RegistrationForm
     };
 
     return (
-        <div className="bg-[#0B1221] border border-white/10 rounded-xl p-6">
+        <div className="bg-surface-1 border border-white/10 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-white">Registration Questions</h3>

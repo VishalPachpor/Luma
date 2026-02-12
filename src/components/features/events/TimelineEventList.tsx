@@ -63,7 +63,7 @@ export default function TimelineEventList({ events }: TimelineEventListProps) {
                     <div className="absolute left-0 md:left-0 top-0 flex flex-col md:items-end w-full md:w-24">
                         <div className="flex items-center gap-3 md:gap-4 md:flex-row-reverse">
                             {/* Dot */}
-                            <div className="w-5 h-5 rounded-full border-4 border-bg-primary bg-text-muted shrink-0 relative z-10 shadow-[0_0_0_4px_#0B0C0E]" />
+                            <div className="w-5 h-5 rounded-full border-4 border-bg-primary bg-text-muted shrink-0 relative z-10 shadow-[0_0_0_4px_#131517]" />
 
                             {/* Date Label (Desktop: Left, Mobile: Right) */}
                             <div className="text-left md:text-right">

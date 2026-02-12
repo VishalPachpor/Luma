@@ -99,6 +99,7 @@ export interface Event {
     about?: string[]; // Array of paragraphs
 
     // Appearance & Settings
+    settings?: any;
     theme?: string;
     themeColor?: string;
     font?: string;

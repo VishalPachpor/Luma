@@ -1,11 +1,16 @@
 /**
  * Check-in API
  * POST /api/checkin
- * Validates QR token and marks guest as checked in
+ * Validates QR token and marks guest as checked in via the lifecycle service.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
+import {
+    transitionTicketStatus,
+    TicketTransitionError,
+} from '@/lib/services/ticket-lifecycle.service';
+import type { GuestStatus } from '@/types/commerce';
 
 export async function POST(request: NextRequest) {
     try {
@@ -53,8 +58,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 3. Check status
-        if (guest.status === 'scanned') {
+        // 3. Check if already checked in
+        if (guest.status === 'checked_in' || guest.status === 'scanned') {
             return NextResponse.json({
                 success: true,
                 alreadyScanned: true,
@@ -62,15 +67,15 @@ export async function POST(request: NextRequest) {
                     id: guest.id,
                     userId: guest.user_id,
                     ticketTierId: guest.ticket_tier_id,
-                    status: 'scanned',
+                    status: guest.status,
                 },
                 message: 'Already checked in'
             });
         }
 
-        // Allow check-in for 'issued', 'staked', or 'approved' status
-        const validCheckInStatuses = ['issued', 'staked', 'approved'];
-        if (!validCheckInStatuses.includes(guest.status)) {
+        // 4. Validate check-in eligibility
+        const validCheckInStatuses: GuestStatus[] = ['issued', 'staked', 'approved'];
+        if (!validCheckInStatuses.includes(guest.status as GuestStatus)) {
             console.log('[CheckIn API] Invalid status for check-in:', { guestId: guest.id, status: guest.status });
             return NextResponse.json(
                 { error: `Invalid ticket status: ${guest.status}`, code: 'INVALID_STATUS' },
@@ -78,40 +83,51 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. Update status to 'scanned' (checked_in equivalent - matches DB constraint)
-        const now = new Date().toISOString();
-        const { error: updateError } = await supabase
-            .from('guests')
-            .update({
-                status: 'scanned',
-                previous_status: guest.status,
-                checked_in_at: now,
-                updated_at: now,
-            })
-            .eq('id', guest.id);
-
-        if (updateError) {
-            console.error('[CheckIn API] Update error:', updateError);
-            return NextResponse.json(
-                { error: 'Failed to check in: ' + updateError.message, code: 'UPDATE_FAILED' },
-                { status: 500 }
-            );
-        }
-
-        // 5. Trigger escrow release if staked (via Inngest event)
-        if (guest.status === 'staked' && guest.stake_wallet_address) {
-            const { inngest } = await import('@/inngest/client');
-            await inngest.send({
-                name: 'app/ticket_checked_in',
-                data: {
-                    guestId: guest.id,
-                    eventId,
-                    stakeWalletAddress: guest.stake_wallet_address,
-                },
+        // 5. Transition via lifecycle service (provides guards, audit log, optimistic locking)
+        let result;
+        const previousStatus = guest.status;
+        try {
+            result = await transitionTicketStatus({
+                guestId: guest.id,
+                targetStatus: 'checked_in',
+                triggeredBy: 'system',
+                reason: 'QR code check-in',
             });
+        } catch (error) {
+            // Fall back to 'scanned' for backward compatibility if 'checked_in'
+            // fails (e.g., DB constraint hasn't been migrated yet)
+            if (error instanceof TicketTransitionError) {
+                console.warn('[CheckIn API] checked_in transition failed, falling back to scanned:', error.message);
+                result = await transitionTicketStatus({
+                    guestId: guest.id,
+                    targetStatus: 'scanned',
+                    triggeredBy: 'system',
+                    reason: 'QR code check-in (scanned fallback)',
+                });
+            } else {
+                throw error;
+            }
         }
 
-        // 6. Return success
+        // 6. Trigger escrow release if this was a staked ticket (async via Inngest)
+        if (previousStatus === 'staked' && guest.stake_wallet_address) {
+            try {
+                const { inngest } = await import('@/inngest/client');
+                await inngest.send({
+                    name: 'app/ticket_checked_in',
+                    data: {
+                        guestId: guest.id,
+                        eventId,
+                        stakeWalletAddress: guest.stake_wallet_address,
+                    },
+                });
+            } catch (inngestError) {
+                // Log but don't fail the check-in — escrow release can be retried
+                console.error('[CheckIn API] Inngest send failed:', inngestError);
+            }
+        }
+
+        // 7. Return success
         return NextResponse.json({
             success: true,
             alreadyScanned: false,
@@ -119,15 +135,23 @@ export async function POST(request: NextRequest) {
                 id: guest.id,
                 userId: guest.user_id,
                 ticketTierId: guest.ticket_tier_id,
-                status: 'scanned',
+                status: result.newStatus,
             },
-            previousStatus: guest.status,
-            newStatus: 'scanned',
-            willReleaseEscrow: guest.status === 'staked' && !!guest.stake_wallet_address,
+            previousStatus: result.previousStatus,
+            newStatus: result.newStatus,
+            willReleaseEscrow: previousStatus === 'staked' && !!guest.stake_wallet_address,
             message: 'Check-in successful'
         });
 
     } catch (error: any) {
+        // Handle lifecycle errors with structured response
+        if (error instanceof TicketTransitionError) {
+            return NextResponse.json(
+                { error: error.message, code: error.code },
+                { status: 400 }
+            );
+        }
+
         console.error('[CheckIn API] Error:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
@@ -135,3 +159,4 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+

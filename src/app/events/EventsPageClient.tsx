@@ -30,7 +30,7 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
             try {
                 const response = await fetch('/api/events');
                 const data = await response.json();
-                
+
                 if (data.success && data.events) {
                     setEvents(data.events);
                 }
@@ -65,7 +65,7 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
         for (const event of events) {
             const eventDate = new Date(event.date);
             const eventDateStr = eventDate.toDateString();
-            
+
             let dayName: string;
             let dateLabel: string;
 
@@ -96,7 +96,7 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
             if (!event.date) return false;
             const eventMs = new Date(event.date).getTime();
             if (isNaN(eventMs)) return false;
-            
+
             const isPast = eventMs < nowMs;
             return activeTab === 'upcoming' ? !isPast : isPast;
         });
@@ -114,7 +114,7 @@ export default function EventsPageClient({ cookie }: EventsPageClientProps) {
     const groupedEvents = useMemo(() => groupEventsByDate(sortedEvents), [sortedEvents]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#0E0F13]">
+        <div className="flex flex-col min-h-screen bg-bg-primary">
             <main className="flex-1">
                 <div className="max-w-[800px] mx-auto px-8 pt-4 pb-10 scroll-mt-16">
                     {/* Header with Tabs */}

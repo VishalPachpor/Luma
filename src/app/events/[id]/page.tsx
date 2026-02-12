@@ -46,11 +46,11 @@ export default async function EventPage({ params }: EventPageProps) {
     const isPast = event.status === 'ended' || new Date(event.date) < new Date();
 
     return (
-        <div className="min-h-screen bg-[#0E0F13] text-white">
+        <div className="min-h-screen bg-bg-primary text-white">
             <ViewTracker eventId={event.id} />
 
             {/* Navbar */}
-            <header className="sticky top-0 z-50 h-16 bg-[#0E0F13]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6">
+            <header className="sticky top-0 z-50 h-16 bg-bg-primary/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6">
                 <div className="max-w-6xl mx-auto w-full">
                     <Link href="/events" className="text-white/60 hover:text-white transition-colors text-sm font-medium flex items-center gap-2">
                         ← Back to Events
@@ -82,7 +82,7 @@ export default async function EventPage({ params }: EventPageProps) {
 
                         {/* Manage Banner */}
                         {isOrganizer && (
-                            <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-4 flex items-center justify-between">
+                            <div className="bg-surface-1 border border-white/10 rounded-xl p-4 flex items-center justify-between">
                                 <div>
                                     <div className="text-sm font-medium text-white">You have manage access</div>
                                     <div className="text-xs text-white/50">Edit details, view guests...</div>
@@ -217,7 +217,7 @@ export default async function EventPage({ params }: EventPageProps) {
                                 <div className="text-lg font-medium text-white">{event.location}</div>
                                 <div className="text-sm text-white/50 mb-4">{event.city}</div>
 
-                                <div className="relative w-full h-[320px] rounded-2xl overflow-hidden border border-white/10 bg-[#1C1C1E]">
+                                <div className="relative w-full h-[320px] rounded-2xl overflow-hidden border border-white/10 bg-surface-1">
                                     <EventMap lat={event.coords.lat} lng={event.coords.lng} zoom={13} interactive={false} />
                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                         <a
@@ -226,7 +226,7 @@ export default async function EventPage({ params }: EventPageProps) {
                                             rel="noopener noreferrer"
                                             className="pointer-events-auto"
                                         >
-                                            <Button variant="secondary" className="bg-[#0E0F13]/90 backdrop-blur-md text-white border border-white/10 shadow-xl px-5 py-2 h-auto text-sm rounded-xl hover:bg-black">
+                                            <Button variant="secondary" className="bg-bg-primary/90 backdrop-blur-md text-white border border-white/10 shadow-xl px-5 py-2 h-auto text-sm rounded-xl hover:bg-black">
                                                 Open in Maps
                                             </Button>
                                         </a>

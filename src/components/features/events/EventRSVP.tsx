@@ -26,6 +26,7 @@ import TicketView from '@/components/features/tickets/TicketView';
 import { useRouter } from 'next/navigation';
 import { RegistrationQuestion } from '@/types/event';
 import { Guest } from '@/types/commerce';
+import { toast } from 'sonner';
 
 interface EventRSVPProps {
     eventId: string;
@@ -226,7 +227,7 @@ export default function EventRSVP({
         // Prevent direct registration for paid events (must go through payment flow)
         if (!isFree && status === 'going') {
             console.error('[EventRSVP] Cannot register for paid event without payment');
-            alert('Payment required. Please complete payment to register.');
+            toast.warning('Payment required. Please complete payment to register.');
             return;
         }
 
@@ -248,11 +249,11 @@ export default function EventRSVP({
                 setRegistrationOpen(false); // Close modal if open
             } else {
                 console.error('RSVP failed:', result.error);
-                alert(result.error || 'Registration failed. Please try again.');
+                toast.error(result.error || 'Registration failed. Please try again.');
             }
         } catch (error) {
             console.error('RSVP error:', error);
-            alert('An unexpected error occurred');
+            toast.error('An unexpected error occurred');
         }
     };
 
@@ -305,7 +306,7 @@ export default function EventRSVP({
 
         } catch (error) {
             console.error('RSVP Fulfillment failed:', error);
-            alert('Payment confirmed but ticket issuance failed. Contact support.');
+            toast.error('Payment confirmed but ticket issuance failed. Contact support.');
         } finally {
             setIsVerifying(false);
         }

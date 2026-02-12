@@ -3,6 +3,8 @@ import { inngest } from "@/inngest/client";
 import { sendInviteEmail } from "@/inngest/functions/sendInvite";
 import { sendEventReminders, send1HourReminders } from "@/inngest/functions/sendReminders";
 import { handleInviteCreated, handleEmailWebhook } from "@/inngest/functions/handleInviteCreated";
+import { sendBlastEmail } from "@/inngest/functions/sendBlast";
+import { sendNewsletter } from "@/inngest/functions/sendNewsletter";
 import { indexEvent, indexEventUpdate } from "@/inngest/functions/indexEntity";
 import { reindexAll } from "@/inngest/functions/reindex";
 import { eventStartJob, eventEndJob, handleManualTransition } from "@/inngest/functions/eventLifecycle";
@@ -34,6 +36,9 @@ export const { GET, POST, PUT } = serve({
         // New invite lifecycle handling
         handleInviteCreated,
         handleEmailWebhook,
+        // Blast emails
+        sendBlastEmail,
+        sendNewsletter,
         // Reminders
         sendEventReminders,   // 24h reminder (hourly cron)
         send1HourReminders,   // 1h reminder (every 15 min cron)

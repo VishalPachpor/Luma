@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { Lock, Shield, Key, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -65,50 +66,70 @@ export default function SecuritySection() {
         }
     };
 
+    const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+    const [verifyCode, setVerifyCode] = useState('');
+    const [enrollFactorId, setEnrollFactorId] = useState<string | null>(null);
+
     /**
      * Enable 2FA - Supabase MFA enrollment
-     * Note: Requires Supabase MFA to be enabled in project settings
+     * Step 1: Enroll (get QR code)
      */
     const handleEnable2FA = async () => {
         setLoadingItem('2fa');
         try {
             const supabase = createSupabaseBrowserClient();
-
-            // Enroll in TOTP MFA
             const { data, error } = await supabase.auth.mfa.enroll({
                 factorType: 'totp',
-                friendlyName: 'Authenticator App',
+                friendlyName: 'Luma Clone App',
             });
 
             if (error) throw error;
 
-            // In a real implementation, you'd show a QR code modal here
-            // data.totp.qr_code contains the QR code data URL
-            // data.totp.secret contains the TOTP secret
-
-            if (data?.totp?.qr_code) {
-                // For now, open QR code in new window (you'd want a proper modal)
-                const newWindow = window.open('', '_blank', 'width=400,height=400');
-                if (newWindow) {
-                    newWindow.document.write(`
-                        <html>
-                            <head><title>Scan QR Code</title></head>
-                            <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a1a1f;color:white;font-family:system-ui;">
-                                <h2>Scan with Authenticator App</h2>
-                                <img src="${data.totp.qr_code}" alt="2FA QR Code" style="margin:20px 0;" />
-                                <p style="font-size:12px;color:#888;">Secret: ${data.totp.secret}</p>
-                            </body>
-                        </html>
-                    `);
-                }
-                showFeedback('success', '2FA enrollment started. Scan the QR code with your authenticator app.');
-            }
+            setEnrollFactorId(data.id);
+            setQrCodeUrl(data.totp.qr_code);
+            // Don't close loading yet, we switch to verification UI
         } catch (err: any) {
             console.error('Failed to enable 2FA:', err);
-            showFeedback('error', err.message || 'Failed to enable 2FA. Make sure MFA is enabled in your Supabase project.');
+            showFeedback('error', err.message);
+            setLoadingItem(null);
+        }
+    };
+
+    /**
+     * Step 2: Verify OTP to finalize enrollment
+     */
+    const handleVerifyOTP = async () => {
+        if (!enrollFactorId || !verifyCode) return;
+        setLoadingItem('verify-otp');
+
+        try {
+            const supabase = createSupabaseBrowserClient();
+            const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+                factorId: enrollFactorId,
+                code: verifyCode,
+            });
+
+            if (error) throw error;
+
+            showFeedback('success', 'Two-factor authentication enabled successfully!');
+            setQrCodeUrl(null);
+            setVerifyCode('');
+            setEnrollFactorId(null);
+        } catch (err: any) {
+            console.error('Failed to verify OTP:', err);
+            showFeedback('error', err.message || 'Invalid code. Please try again.');
         } finally {
             setLoadingItem(null);
         }
+    };
+
+    /**
+     * Disable 2FA
+     */
+    const handleDisable2FA = async () => {
+        // Implementation would require listing factors and un-enrolling
+        // For now, this is a placeholder or could link to account management
+        alert('To disable 2FA, please contact support or use the Supabase dashboard (dev mode).');
     };
 
     /**
@@ -144,7 +165,7 @@ export default function SecuritySection() {
     const securityItems = [
         {
             id: 'password',
-            icon: <Lock className="w-5 h-5 text-[var(--text-muted)]" />,
+            icon: <Lock className="w-5 h-5 text-(--text-muted)" />,
             title: 'Account Password',
             description: 'Set a password to secure your account.',
             buttonText: 'Set Password',
@@ -153,7 +174,7 @@ export default function SecuritySection() {
         },
         {
             id: '2fa',
-            icon: <Shield className="w-5 h-5 text-[var(--text-muted)]" />,
+            icon: <Shield className="w-5 h-5 text-(--text-muted)" />,
             title: 'Two-Factor Authentication',
             description: 'Add an extra layer of security with an authenticator app.',
             buttonText: 'Enable 2FA',
@@ -162,7 +183,7 @@ export default function SecuritySection() {
         },
         {
             id: 'passkey',
-            icon: <Key className="w-5 h-5 text-[var(--text-muted)]" />,
+            icon: <Key className="w-5 h-5 text-(--text-muted)" />,
             title: 'Passkeys',
             description: 'Passkeys are a secure and convenient way to sign in.',
             buttonText: 'Add Passkey',
@@ -175,7 +196,7 @@ export default function SecuritySection() {
         <section className="space-y-4">
             <div>
                 <h3 className="text-lg font-semibold text-white">Password & Security</h3>
-                <p className="text-sm text-[var(--text-muted)] mt-1">
+                <p className="text-sm text-(--text-muted) mt-1">
                     Secure your account with password and two-factor authentication.
                 </p>
             </div>
@@ -183,22 +204,79 @@ export default function SecuritySection() {
             {/* Feedback Banner */}
             {feedback.type && (
                 <div className={`p-4 rounded-lg flex items-center gap-3 ${feedback.type === 'success'
-                        ? 'bg-[var(--success-soft)] border border-[var(--success)]/20'
-                        : 'bg-[var(--error-soft)] border border-[var(--error)]/20'
+                    ? 'bg-(--success-soft) border border-(--success)/20'
+                    : 'bg-(--error-soft) border border-(--error)/20'
                     }`}>
                     {feedback.type === 'success' ? (
-                        <CheckCircle className="w-5 h-5 text-[var(--success)]" />
+                        <CheckCircle className="w-5 h-5 text-(--success)" />
                     ) : (
-                        <AlertCircle className="w-5 h-5 text-[var(--error)]" />
+                        <AlertCircle className="w-5 h-5 text-(--error)" />
                     )}
-                    <p className={`text-sm ${feedback.type === 'success' ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
+                    <p className={`text-sm ${feedback.type === 'success' ? 'text-(--success)' : 'text-(--error)'}`}>
                         {feedback.message}
                     </p>
                 </div>
             )}
 
+            {/* QR Code & Verification UI */}
+            {qrCodeUrl && (
+                <div className="bg-(--bg-tertiary) border border-(--border-primary) rounded-xl p-6 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                        <div className="bg-white p-4 rounded-xl border border-white/10 mx-auto md:mx-0">
+                            <QRCodeSVG value={qrCodeUrl} size={160} />
+                        </div>
+                        <div className="flex-1 space-y-4 w-full">
+                            <div>
+                                <h4 className="text-lg font-medium text-white">Scan QR Code</h4>
+                                <p className="text-sm text-(--text-muted) mt-1">
+                                    Use your authenticator app (like Google Authenticator or Authy) to scan this code.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs uppercase font-bold text-(--text-muted) tracking-wider">
+                                    Verification Code
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={verifyCode}
+                                        onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        placeholder="000000"
+                                        className="flex-1 bg-(--bg-elevated) border border-(--border-primary) rounded-lg px-4 py-2.5 text-white font-mono text-lg tracking-widest placeholder:text-white/10 outline-none focus:border-(--accent-blue) transition-colors text-center"
+                                        maxLength={6}
+                                        autoFocus
+                                    />
+                                    <button
+                                        onClick={handleVerifyOTP}
+                                        disabled={loadingItem === 'verify-otp' || verifyCode.length !== 6}
+                                        className="px-6 py-2.5 bg-white text-black font-medium rounded-lg hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[100px]"
+                                    >
+                                        {loadingItem === 'verify-otp' ? (
+                                            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                                        ) : (
+                                            'Verify'
+                                        )}
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setQrCodeUrl(null);
+                                        setVerifyCode('');
+                                        setEnrollFactorId(null);
+                                    }}
+                                    className="text-xs text-(--text-muted) hover:text-white transition-colors"
+                                >
+                                    Cancel setup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Security Items List */}
-            <div className="bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg divide-y divide-[var(--border-primary)]">
+            <div className="bg-(--bg-tertiary) border border-(--border-primary) rounded-lg divide-y divide-(--border-primary)">
                 {securityItems.map((item) => (
                     <div
                         key={item.id}
@@ -208,7 +286,7 @@ export default function SecuritySection() {
                             <div className="mt-0.5">{item.icon}</div>
                             <div>
                                 <h4 className="text-sm font-medium text-white">{item.title}</h4>
-                                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                <p className="text-xs text-(--text-muted) mt-0.5">
                                     {item.description}
                                 </p>
                             </div>
@@ -216,7 +294,7 @@ export default function SecuritySection() {
                         <button
                             onClick={item.onClick}
                             disabled={item.isLoading}
-                            className="shrink-0 px-4 py-2 bg-[var(--bg-elevated)] border border-[var(--btn-secondary-border)] rounded-lg text-white text-sm font-medium hover:bg-[var(--bg-hover)] disabled:opacity-50 transition-colors"
+                            className="shrink-0 px-4 py-2 bg-(--bg-elevated) border border-(--btn-secondary-border) rounded-lg text-white text-sm font-medium hover:bg-(--bg-hover) disabled:opacity-50 transition-colors"
                         >
                             {item.isLoading ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -231,12 +309,12 @@ export default function SecuritySection() {
             {/* Password Modal */}
             {showPasswordModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-xl p-6 w-full max-w-md mx-4 space-y-4">
+                    <div className="bg-(--bg-tertiary) border border-(--border-primary) rounded-xl p-6 w-full max-w-md mx-4 space-y-4">
                         <h3 className="text-lg font-semibold text-white">Set Password</h3>
 
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-sm text-[var(--text-secondary)] mb-2">
+                                <label className="block text-sm text-(--text-secondary) mb-2">
                                     New Password
                                 </label>
                                 <input
@@ -244,11 +322,11 @@ export default function SecuritySection() {
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="Enter new password"
-                                    className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[var(--text-muted)] focus:border-[var(--border-hover)] outline-none"
+                                    className="w-full bg-(--bg-elevated) border border-(--border-primary) rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-(--text-muted) focus:border-(--border-hover) outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-[var(--text-secondary)] mb-2">
+                                <label className="block text-sm text-(--text-secondary) mb-2">
                                     Confirm Password
                                 </label>
                                 <input
@@ -256,7 +334,7 @@ export default function SecuritySection() {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Confirm new password"
-                                    className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[var(--text-muted)] focus:border-[var(--border-hover)] outline-none"
+                                    className="w-full bg-(--bg-elevated) border border-(--border-primary) rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-(--text-muted) focus:border-(--border-hover) outline-none"
                                 />
                             </div>
                         </div>
@@ -279,7 +357,7 @@ export default function SecuritySection() {
                                     setNewPassword('');
                                     setConfirmPassword('');
                                 }}
-                                className="px-4 py-2.5 text-[var(--text-muted)] text-sm font-medium hover:text-white transition-colors"
+                                className="px-4 py-2.5 text-(--text-muted) text-sm font-medium hover:text-white transition-colors"
                             >
                                 Cancel
                             </button>

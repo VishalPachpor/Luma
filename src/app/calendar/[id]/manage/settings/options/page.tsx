@@ -102,7 +102,7 @@ export default function OptionsSettingsPage() {
 
             <div className="space-y-6">
                 {/* Event Defaults Section */}
-                <div className="bg-[#1C1C1E] border border-white/10 rounded-xl overflow-hidden divide-y divide-white/5">
+                <div className="bg-bg-elevated border border-white/10 rounded-xl overflow-hidden divide-y divide-white/5">
                     <div className="px-4 py-3 bg-white/5 border-b border-white/5">
                         <h3 className="text-sm font-medium text-white">Event Defaults</h3>
                     </div>
@@ -122,7 +122,7 @@ export default function OptionsSettingsPage() {
                             <SelectTrigger className="w-[140px] bg-white/5 border-white/10 text-white">
                                 <SelectValue placeholder="Select visibility" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#1C1C1E] border-white/10 text-white">
+                            <SelectContent className="bg-bg-elevated border-white/10 text-white">
                                 <SelectItem value="public">Public</SelectItem>
                                 <SelectItem value="private">Private</SelectItem>
                             </SelectContent>

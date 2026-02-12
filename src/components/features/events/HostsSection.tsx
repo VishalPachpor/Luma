@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, ExternalLink, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import AddHostModal from './AddHostModal';
 
 interface Host {
@@ -64,7 +65,7 @@ export default function HostsSection({ eventId, organizerName, organizerEmail }:
             if (res.ok) {
                 setHosts(prev => prev.filter(h => h.id !== hostId));
             } else {
-                alert('Failed to remove host');
+                toast.error('Failed to remove host');
             }
         } catch (error) {
             console.error('Error removing host', error);
@@ -84,7 +85,7 @@ export default function HostsSection({ eventId, organizerName, organizerEmail }:
                 </button>
             </div>
 
-            <div className="rounded-xl bg-[#1e2025] border border-white/5 overflow-hidden divide-y divide-white/5">
+            <div className="rounded-xl bg-bg-elevated border border-white/5 overflow-hidden divide-y divide-white/5">
                 {/* Creator / Organizer (Always specific) */}
                 <div className="p-3 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-inner">

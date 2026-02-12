@@ -56,7 +56,7 @@ export default function ProfilePage() {
 
     if (loading || fetching) {
         return (
-            <div className="min-h-screen bg-[#0B1221] flex items-center justify-center">
+            <div className="min-h-screen bg-bg-primary flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
             </div>
         );
@@ -83,7 +83,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#13151A] text-white pt-20 pb-20">
+        <div className="min-h-screen bg-bg-secondary text-white pt-20 pb-20">
             <div className="max-w-3xl mx-auto px-6">
                 {/* Profile Header - Left Aligned */}
                 <div className="flex items-start gap-6 mb-8">
@@ -99,9 +99,9 @@ export default function ProfilePage() {
 
                     <div className="flex-1 pt-2">
                         <h1 className="text-2xl font-bold mb-0.5">{user.displayName}</h1>
-                        <p className="text-sm text-[#888888] mb-3">@{user.email?.split('@')[0]}</p>
+                        <p className="text-sm text-text-muted mb-3">@{user.email?.split('@')[0]}</p>
 
-                        <div className="flex items-center gap-6 text-[13px] text-[#888888] mb-3">
+                        <div className="flex items-center gap-6 text-[13px] text-text-muted mb-3">
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={13} />
                                 <span>Joined {format(joinedDate, 'MMMM yyyy')}</span>
@@ -111,17 +111,17 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-4 text-[13px]">
                             <div>
                                 <span className="text-white font-medium">{hostedEvents.length}</span>
-                                <span className="text-[#888888] ml-1">Hosted</span>
+                                <span className="text-text-muted ml-1">Hosted</span>
                             </div>
                             <div>
                                 <span className="text-white font-medium">{attendedEvents.length}</span>
-                                <span className="text-[#888888] ml-1">Attended</span>
+                                <span className="text-text-muted ml-1">Attended</span>
                             </div>
                         </div>
 
                         {/* Social Links */}
                         <div className="flex items-center gap-3 mt-4">
-                            <button className="text-[#888888] hover:text-white transition-colors">
+                            <button className="text-text-muted hover:text-white transition-colors">
                                 <div className="w-5 h-5 flex items-center justify-center">
                                     <span className="font-mono text-xs">𝕏</span>
                                 </div>
@@ -147,7 +147,7 @@ export default function ProfilePage() {
                     <h2 className="text-xl font-bold mb-5">Past Events</h2>
 
                     {pastDetails.length === 0 ? (
-                        <div className="text-center py-16 text-[#666666]">
+                        <div className="text-center py-16 text-text-disabled">
                             <p>No past events</p>
                         </div>
                     ) : (
@@ -195,13 +195,13 @@ function EventCard({ event, onClick }: EventCardProps) {
                     )}
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="text-[13px] text-[#888888] mb-1">
+                    <div className="text-[13px] text-text-muted mb-1">
                         {format(new Date(event.date), 'EEE, MMM d, yyyy, h:mm a')}
                     </div>
                     <h3 className="text-base font-semibold text-white mb-1.5 group-hover:underline">
                         {event.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-[13px] text-[#888888]">
+                    <div className="flex items-center gap-2 text-[13px] text-text-muted">
                         <div className="flex items-center gap-1.5">
                             <div className="w-4 h-4 rounded-full bg-white/10 overflow-hidden relative">
                                 <Image

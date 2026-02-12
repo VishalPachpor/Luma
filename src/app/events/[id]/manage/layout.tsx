@@ -39,7 +39,7 @@ export default async function ManageLayout({ children, params }: ManageLayoutPro
 
     return (
         <ManagePageWrapper>
-            <div className="min-h-screen bg-[#13151A]">
+            <div className="min-h-screen bg-bg-primary">
                 {/* Progressive Collapsing Header */}
                 <EventManageHeader
                     eventId={id}

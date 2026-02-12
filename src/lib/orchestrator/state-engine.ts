@@ -119,21 +119,28 @@ class StateEngine {
                     return { ...base, name: 'FORFEIT_TICKET', payload: { ticketId: entityId, reason: context.reason } };
                 case 'refunded':
                     return { ...base, name: 'REFUND_TICKET', payload: { ticketId: entityId } };
-                // 'staked' is typically handled by blockchain event listener calling STAKE_TICKET directly, 
-                // but for completeness in legacy transition calls:
-                case 'staked':
-                    // This one requires more payload data (amount, txHash) usually not present in legacy simple transition.
-                    // It might fail validation in orchestrator if payload incomplete.
+                // 'staked' requires real payment data. The legacy bridge reads 
+                // it from context.metadata — if not present, we reject the transition
+                // to prevent invalid data entering the orchestrator.
+                case 'staked': {
+                    const meta = context.metadata as Record<string, any> | undefined;
+                    if (!meta?.amount || !meta?.txHash) {
+                        console.warn('[StateEngine] STAKE_TICKET requires metadata.amount and metadata.txHash');
+                        return null;
+                    }
                     return {
                         ...base,
                         name: 'STAKE_TICKET',
                         payload: {
                             ticketId: entityId,
-                            amount: 0, // Legacy transition didn't pass amount
-                            txHash: 'legacy-transition',
-                            chain: 'ethereum'
+                            amount: meta.amount,
+                            txHash: meta.txHash,
+                            chain: meta.chain || 'ethereum',
+                            currency: meta.currency || 'ETH',
+                            walletAddress: meta.walletAddress || undefined,
                         }
                     };
+                }
             }
         }
 

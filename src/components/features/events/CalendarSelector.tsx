@@ -165,7 +165,7 @@ export function CalendarSelector({ userId, selectedCalendarId, onSelect, userNam
             </button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-[#2C2C2E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-bg-elevated border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-2 border-b border-white/10">
                         <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-2">
                             Your Calendars

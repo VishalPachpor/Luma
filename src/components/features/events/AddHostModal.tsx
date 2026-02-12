@@ -5,6 +5,7 @@ import Modal from '@/components/modals/Modal';
 import { Button } from '@/components/components/ui';
 import { Loader2, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface AddHostModalProps {
     isOpen: boolean;
@@ -40,11 +41,11 @@ export default function AddHostModal({ isOpen, onClose, eventId, onHostAdded }: 
                 setEmail('');
             } else {
                 const error = await res.json();
-                alert(`Failed to add host: ${error.error}`);
+                toast.error(`Failed to add host: ${error.error}`);
             }
         } catch (error) {
             console.error('Error adding host:', error);
-            alert('An unexpected error occurred.');
+            toast.error('An unexpected error occurred.');
         } finally {
             setLoading(false);
         }

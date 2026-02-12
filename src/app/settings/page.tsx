@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function SettingsPage() {
     return (
-        <main className="min-h-screen bg-[#1a1a1f] pt-24 pb-16 px-4">
+        <main className="min-h-screen bg-bg-primary pt-24 pb-16 px-4">
             <SettingsLayout />
         </main>
     );

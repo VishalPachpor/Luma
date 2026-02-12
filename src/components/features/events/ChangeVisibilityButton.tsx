@@ -41,7 +41,7 @@ export function ChangeVisibilityButton({ eventId, currentVisibility }: ChangeVis
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className="px-4 py-2 bg-[#1C1F26] hover:bg-[#242830] border border-white/10 text-white text-sm font-medium rounded-[10px] transition-all"
+                className="px-4 py-2 bg-bg-elevated hover:bg-bg-hover border border-white/10 text-white text-sm font-medium rounded-[10px] transition-all"
             >
                 Change Visibility
             </button>
@@ -49,7 +49,7 @@ export function ChangeVisibilityButton({ eventId, currentVisibility }: ChangeVis
             {/* Visibility Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#1C1F26] border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-bg-elevated border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-white">Event Visibility</h3>
                             <button
@@ -65,8 +65,8 @@ export function ChangeVisibilityButton({ eventId, currentVisibility }: ChangeVis
                             <button
                                 onClick={() => setVisibility('public')}
                                 className={`w-full p-4 rounded-xl border transition-all flex items-start gap-4 text-left ${visibility === 'public'
-                                        ? 'bg-green-500/10 border-green-500/30'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                                    ? 'bg-green-500/10 border-green-500/30'
+                                    : 'bg-white/5 border-white/10 hover:border-white/20'
                                     }`}
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${visibility === 'public' ? 'bg-green-500/20' : 'bg-white/10'
@@ -87,8 +87,8 @@ export function ChangeVisibilityButton({ eventId, currentVisibility }: ChangeVis
                             <button
                                 onClick={() => setVisibility('private')}
                                 className={`w-full p-4 rounded-xl border transition-all flex items-start gap-4 text-left ${visibility === 'private'
-                                        ? 'bg-orange-500/10 border-orange-500/30'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                                    ? 'bg-orange-500/10 border-orange-500/30'
+                                    : 'bg-white/5 border-white/10 hover:border-white/20'
                                     }`}
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${visibility === 'private' ? 'bg-orange-500/20' : 'bg-white/10'

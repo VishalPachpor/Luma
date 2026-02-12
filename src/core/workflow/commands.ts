@@ -54,6 +54,8 @@ export interface StakeTicketCommand extends Command<{
     amount: number;
     txHash: string;
     chain: string;
+    currency?: string;
+    walletAddress?: string;
 }> {
     name: 'STAKE_TICKET';
 }

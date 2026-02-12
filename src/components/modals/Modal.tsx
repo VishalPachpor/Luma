@@ -40,7 +40,7 @@ export default function Modal({
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className={`relative w-full ${maxWidth} bg-[#1C1C1E] border border-white/10 rounded-[32px] shadow-[0_32px_64px_rgba(0,0,0,0.6)] overflow-hidden`}
+                    className={`relative w-full ${maxWidth} bg-bg-elevated border border-white/10 rounded-[32px] shadow-[0_32px_64px_rgba(0,0,0,0.6)] overflow-hidden`}
                 >
                     {title && (
                         <div className="p-6 border-b border-white/10 flex items-center justify-between">

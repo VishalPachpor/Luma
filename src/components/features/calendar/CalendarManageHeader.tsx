@@ -43,7 +43,7 @@ export function CalendarManageHeader({ calendarId, calendarName }: CalendarManag
     return (
         <header
             className={cn(
-                "border-b border-white/5 bg-[#0E1016]/95 backdrop-blur-md sticky z-40 pt-8 transition-all duration-300",
+                "border-b border-white/5 bg-bg-primary/95 backdrop-blur-md sticky z-40 pt-8 transition-all duration-300",
                 navbarHidden ? "top-0" : "top-12" // Move up when navbar hides
             )}
         >

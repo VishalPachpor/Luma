@@ -42,7 +42,7 @@ export default function CalendarView() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {myCalendars?.length === 0 && (
-                            <GlossyCard className="p-6 flex items-center justify-center border-dashed border-white/10 bg-white/[0.02]">
+                            <GlossyCard className="p-6 flex items-center justify-center border-dashed border-white/10 bg-white/2">
                                 <div className="text-center">
                                     <p className="text-text-muted text-sm mb-4">You haven't created any calendars yet.</p>
                                     <Link href="/create-calendar">
@@ -55,7 +55,7 @@ export default function CalendarView() {
                         {myCalendars?.map((calendar) => (
                             <GlossyCard
                                 key={calendar.id}
-                                className="p-6 flex items-center gap-4 hover:border-accent/50 transition-all hover:scale-[1.02] cursor-pointer group bg-[#1C1C1E]"
+                                className="p-6 flex items-center gap-4 hover:border-accent/50 transition-all hover:scale-[1.02] cursor-pointer group bg-bg-elevated"
                             >
                                 <div className={`w-16 h-16 rounded-2xl overflow-hidden border border-white/10 group-hover:border-${calendar.color || 'indigo'}-500/50 transition-colors bg-white/5 relative flex items-center justify-center`}>
                                     {calendar.avatarUrl ? (
@@ -92,7 +92,7 @@ export default function CalendarView() {
                 <h2 className="text-xl font-bold text-text-primary">Subscribed Calendars</h2>
 
                 {/* Placeholder for subscriptions until endpoint is ready/hook used */}
-                <GlossyCard className="p-12 flex flex-col items-center justify-center text-center border-dashed border-white/10 bg-white/[0.02]">
+                <GlossyCard className="p-12 flex flex-col items-center justify-center text-center border-dashed border-white/10 bg-white/2">
                     <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 text-text-muted">
                         <CalendarIcon className="w-8 h-8 text-text-muted" />
                     </div>

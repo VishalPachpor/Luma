@@ -581,14 +581,59 @@ export interface Database {
                     user_id?: string | null
                     sender_name?: string
                     sender_avatar?: string | null
-                    content?: string
                     type?: 'text' | 'system' | 'announcement'
                     reply_to_id?: string | null
                     created_at?: string
                     deleted_at?: string | null
                 }
                 Relationships: []
-            }
+            },
+            invites: {
+                Row: {
+                    id: string
+                    event_id: string
+                    inviter_id: string
+                    email: string
+                    code: string
+                    status: 'pending' | 'accepted' | 'expired'
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    event_id: string
+                    inviter_id: string
+                    email: string
+                    code: string
+                    status?: 'pending' | 'accepted' | 'expired'
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    event_id?: string
+                    inviter_id?: string
+                    email?: string
+                    code?: string
+                    status?: 'pending' | 'accepted' | 'expired'
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "invites_event_id_fkey"
+                        columns: ["event_id"]
+                        referencedRelation: "events"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "invites_inviter_id_fkey"
+                        columns: ["inviter_id"]
+                        referencedRelation: "profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
             event_chat_settings: {
                 Row: {
                     event_id: string

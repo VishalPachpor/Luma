@@ -73,7 +73,7 @@ export type TicketTransitionErrorCode =
  * Key is the current status, value is array of allowed target statuses.
  */
 const VALID_TRANSITIONS: Record<GuestStatus, GuestStatus[]> = {
-    pending: ['pending_approval', 'issued', 'staked'],
+    pending: ['pending_approval', 'issued'],
     pending_approval: ['approved', 'rejected'],
     approved: ['staked', 'issued', 'revoked'],
     rejected: [], // Terminal

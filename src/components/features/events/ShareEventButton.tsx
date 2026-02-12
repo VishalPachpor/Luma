@@ -50,7 +50,7 @@ export function ShareEventButton({ eventId, eventTitle, variant = 'button' }: Sh
             <>
                 <button
                     onClick={handleShare}
-                    className="flex items-center gap-4 p-5 bg-[#1a1d24] hover:bg-[#1f232b] border border-white/10 rounded-2xl transition-all group text-left w-full"
+                    className="flex items-center gap-4 p-5 bg-bg-secondary hover:bg-bg-tertiary border border-white/10 rounded-2xl transition-all group text-left w-full"
                 >
                     <div className="w-10 h-10 rounded-xl bg-linear-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
                         <Share2 className="w-5 h-5 text-white" />
@@ -67,7 +67,7 @@ export function ShareEventButton({ eventId, eventTitle, variant = 'button' }: Sh
 
         return (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-[#1C1F26] border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-bg-elevated border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-white">Share Event</h3>
                         <button

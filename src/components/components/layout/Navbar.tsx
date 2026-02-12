@@ -93,7 +93,7 @@ export default function Navbar() {
                 <nav
                     className={cn(
                         "backdrop-blur-md transition-colors duration-500",
-                        !navbarBgColor && "bg-[#13151A]/95 border-b border-white/5"
+                        !navbarBgColor && "bg-bg-secondary/95 border-b border-white/5"
                     )}
                     style={navbarStyle}
                 >
@@ -120,10 +120,10 @@ export default function Navbar() {
                                         href={link.href}
                                         className={`flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium transition-colors rounded-md ${isActive
                                             ? 'text-white'
-                                            : 'text-[#888888] hover:text-[#D4D4D4]'
+                                            : 'text-text-muted hover:text-text-secondary'
                                             }`}
                                     >
-                                        <Icon size={14} className={isActive ? "text-white" : "text-[#666666]"} strokeWidth={2} />
+                                        <Icon size={14} className={isActive ? "text-white" : "text-text-disabled"} strokeWidth={2} />
                                         {link.label}
                                     </Link>
                                 );
@@ -133,7 +133,7 @@ export default function Navbar() {
                         {/* Right: Time, Create Event, Search, Notifications, Avatar */}
                         <div className="flex items-center gap-5">
                             {/* Current Time */}
-                            <span className="text-[13px] text-[#666666] font-medium tabular-nums hidden xl:block">
+                            <span className="text-[13px] text-text-disabled font-medium tabular-nums hidden xl:block">
                                 {currentTime}
                             </span>
 
@@ -149,13 +149,13 @@ export default function Navbar() {
                                 {/* Search */}
                                 <button
                                     onClick={() => setIsSearchOpen(true)}
-                                    className="text-[#888888] hover:text-white transition-colors"
+                                    className="text-text-muted hover:text-white transition-colors"
                                 >
                                     <Search size={16} strokeWidth={2} />
                                 </button>
 
                                 {/* Notifications */}
-                                <button className="text-[#888888] hover:text-white transition-colors">
+                                <button className="text-text-muted hover:text-white transition-colors">
                                     <Bell size={16} strokeWidth={2} />
                                 </button>
 

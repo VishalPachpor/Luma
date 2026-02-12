@@ -336,7 +336,7 @@ function FeedbackEmptyState() {
         <div className="py-12 text-center">
             <div className="relative w-28 h-24 mx-auto mb-4">
                 <Star className="absolute top-0 left-2 h-6 w-6 text-yellow-500 fill-yellow-500" />
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-[#1C1C1E] border border-white/10 rounded-lg w-20 h-14 flex flex-col items-center justify-center shadow-lg">
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-bg-elevated border border-white/10 rounded-lg w-20 h-14 flex flex-col items-center justify-center shadow-lg">
                     <div className="w-12 h-2 bg-white/20 rounded mb-2" />
                     <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((i) => (

@@ -1,7 +1,8 @@
 
 import { getDashboardStats } from '@/lib/repositories/analytics.repository';
 import { notFound } from 'next/navigation';
-import { Eye, Mail, Users, TrendingUp, BarChart3, ArrowUpRight } from 'lucide-react';
+import { Eye, Mail, Users, TrendingUp, BarChart3, ArrowUpRight, CheckCircle2, Clock, UserCheck, XCircle } from 'lucide-react';
+import { getServiceSupabase } from '@/lib/supabase';
 
 interface InfoCardProps {
     title: string;
@@ -13,7 +14,7 @@ interface InfoCardProps {
 
 function InfoCard({ title, value, subtext, icon, trend }: InfoCardProps) {
     return (
-        <div className="bg-[#151A29] border border-white/5 rounded-2xl p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
+        <div className="bg-surface-1 border border-white/5 rounded-2xl p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
             <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-white/5 rounded-xl text-white/80 group-hover:text-white transition-colors">
                     {icon}
@@ -38,9 +39,32 @@ function InfoCard({ title, value, subtext, icon, trend }: InfoCardProps) {
     );
 }
 
+async function getGuestBreakdown(eventId: string) {
+    const supabase = getServiceSupabase();
+    const { data: guests } = await supabase
+        .from('guests')
+        .select('status')
+        .eq('event_id', eventId);
+
+    if (!guests) return { approved: 0, pending: 0, checkedIn: 0, rejected: 0, total: 0 };
+
+    const breakdown = {
+        approved: guests.filter(g => g.status === 'issued' || g.status === 'approved').length,
+        pending: guests.filter(g => g.status === 'pending_approval').length,
+        checkedIn: guests.filter(g => g.status === 'scanned').length,
+        rejected: guests.filter(g => g.status === 'rejected' || g.status === 'forfeited').length,
+        total: guests.length,
+    };
+
+    return breakdown;
+}
+
 export default async function InsightsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const stats = await getDashboardStats(id);
+    const [stats, guestBreakdown] = await Promise.all([
+        getDashboardStats(id),
+        getGuestBreakdown(id),
+    ]);
 
     if (!stats) {
         notFound();
@@ -49,6 +73,22 @@ export default async function InsightsPage({ params }: { params: Promise<{ id: s
     const conversionRate = stats.totalViews > 0
         ? ((stats.registrations / stats.totalViews) * 100).toFixed(1)
         : '0.0';
+
+    // Build funnel data
+    const funnelSteps = [
+        { label: 'Views', value: stats.totalViews, color: 'bg-blue-500' },
+        { label: 'Registrations', value: stats.registrations, color: 'bg-indigo-500' },
+        { label: 'Checked In', value: guestBreakdown.checkedIn, color: 'bg-green-500' },
+    ];
+    const funnelMax = Math.max(...funnelSteps.map(s => s.value), 1);
+
+    // Guest status segments
+    const statusSegments = [
+        { label: 'Approved', value: guestBreakdown.approved, color: 'bg-green-500', icon: <CheckCircle2 size={14} /> },
+        { label: 'Pending', value: guestBreakdown.pending, color: 'bg-yellow-500', icon: <Clock size={14} /> },
+        { label: 'Checked In', value: guestBreakdown.checkedIn, color: 'bg-blue-500', icon: <UserCheck size={14} /> },
+        { label: 'Rejected', value: guestBreakdown.rejected, color: 'bg-red-500', icon: <XCircle size={14} /> },
+    ];
 
     return (
         <div className="max-w-5xl mx-auto space-y-8">
@@ -88,15 +128,93 @@ export default async function InsightsPage({ params }: { params: Promise<{ id: s
                 />
             </div>
 
-            {/* Placeholder for future charts */}
-            <div className="bg-[#151A29] border border-white/5 rounded-2xl p-8 text-center py-20">
-                <div className="inline-flex p-4 bg-white/5 rounded-full mb-4">
-                    <TrendingUp className="w-6 h-6 text-purple-400" />
+            {/* Registration Funnel */}
+            <div className="bg-surface-1 border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-white/5 rounded-lg">
+                        <TrendingUp size={18} className="text-purple-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-white font-semibold">Registration Funnel</h3>
+                        <p className="text-sm text-white/40">Conversion at each stage</p>
+                    </div>
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">Detailed Analytics Coming Soon</h3>
-                <p className="text-white/40 max-w-sm mx-auto">
-                    We're building advanced charts to track your traffic sources and daily trends.
-                </p>
+                <div className="space-y-4">
+                    {funnelSteps.map((step, i) => {
+                        const pct = funnelMax > 0 ? (step.value / funnelMax) * 100 : 0;
+                        const prevStep = i > 0 ? funnelSteps[i - 1] : null;
+                        const dropoff = prevStep && prevStep.value > 0
+                            ? ((1 - step.value / prevStep.value) * 100).toFixed(0)
+                            : null;
+
+                        return (
+                            <div key={step.label}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm text-white/60">{step.label}</span>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-semibold text-white">{step.value.toLocaleString()}</span>
+                                        {dropoff && (
+                                            <span className="text-xs text-white/30">-{dropoff}%</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full ${step.color} rounded-full transition-all duration-700`}
+                                        style={{ width: `${Math.max(pct, 2)}%` }}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Guest Status Breakdown */}
+            <div className="bg-surface-1 border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-white/5 rounded-lg">
+                        <Users size={18} className="text-indigo-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-white font-semibold">Guest Breakdown</h3>
+                        <p className="text-sm text-white/40">{guestBreakdown.total} total guests</p>
+                    </div>
+                </div>
+
+                {guestBreakdown.total === 0 ? (
+                    <p className="text-sm text-white/30 text-center py-8">No guests registered yet</p>
+                ) : (
+                    <>
+                        {/* Horizontal stacked bar */}
+                        <div className="h-4 rounded-full overflow-hidden flex mb-6">
+                            {statusSegments.map((seg) => {
+                                const pct = guestBreakdown.total > 0 ? (seg.value / guestBreakdown.total) * 100 : 0;
+                                if (pct === 0) return null;
+                                return (
+                                    <div
+                                        key={seg.label}
+                                        className={`${seg.color} transition-all duration-500`}
+                                        style={{ width: `${pct}%` }}
+                                    />
+                                );
+                            })}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {statusSegments.map((seg) => (
+                                <div key={seg.label} className="flex items-center gap-3 p-3 bg-white/2 rounded-xl">
+                                    <div className={`w-3 h-3 rounded-full ${seg.color}`} />
+                                    <div>
+                                        <p className="text-sm font-medium text-white">{seg.value}</p>
+                                        <p className="text-xs text-white/30">{seg.label}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

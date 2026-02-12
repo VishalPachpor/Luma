@@ -89,7 +89,9 @@ export interface TicketStakedPayload {
     eventId: string;
     amount: number;
     txHash: string;
-    chain: string;
+    chain?: string;
+    currency?: string;
+    walletAddress?: string;
 }
 
 export interface TicketCheckedInPayload {

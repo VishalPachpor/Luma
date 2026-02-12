@@ -159,7 +159,7 @@ export default function CalendarEventsPage() {
             <div className="flex items-center justify-between mb-8 w-full relative z-10">
                 <div className="flex items-center gap-3">
                     <h2 className="text-xl font-bold text-white">Events</h2>
-                    <Link href="/create-event" className="flex items-center justify-center w-6 h-6 rounded-full bg-[#222] text-[#888] hover:bg-[#333] hover:text-white transition-colors">
+                    <Link href="/create-event" className="flex items-center justify-center w-6 h-6 rounded-full bg-bg-hover text-text-muted hover:bg-bg-hover hover:text-white transition-colors">
                         <Plus className="h-3.5 w-3.5" />
                     </Link>
                 </div>
@@ -204,14 +204,14 @@ export default function CalendarEventsPage() {
                             <div className="w-24 shrink-0 pt-1 text-right md:text-left">
                                 <div className="md:sticky md:top-36">
                                     <div className="font-bold text-white text-lg leading-tight">{group.mainLabel}</div>
-                                    <div className="text-[#666] text-sm mt-0.5 font-medium">{group.subLabel}</div>
+                                    <div className="text-text-disabled text-sm mt-0.5 font-medium">{group.subLabel}</div>
                                 </div>
                             </div>
 
                             {/* Timeline Line */}
                             <div className="hidden md:flex flex-col items-center relative mr-2">
-                                <div className="w-2 h-2 rounded-full bg-[#333] mt-2.5 z-10" />
-                                <div className="w-px bg-[#333]/50 absolute top-4 bottom-0 left-1/2 -translate-x-1/2 h-full group-last:h-auto" />
+                                <div className="w-2 h-2 rounded-full bg-bg-hover mt-2.5 z-10" />
+                                <div className="w-px bg-bg-hover/50 absolute top-4 bottom-0 left-1/2 -translate-x-1/2 h-full group-last:h-auto" />
                             </div>
 
                             {/* Events List for this date */}
@@ -232,33 +232,33 @@ function EventCard({ event }: { event: CalendarEvent }) {
     const eventTime = format(parseISO(event.date), 'h:mm a');
 
     return (
-        <div className="bg-[#1C1C1E] rounded-2xl p-5 hover:bg-[#252528] transition-colors group relative overflow-hidden border border-white/5 shadow-sm">
+        <div className="bg-bg-elevated rounded-2xl p-5 hover:bg-bg-hover transition-colors group relative overflow-hidden border border-white/5 shadow-sm">
             <div className="flex justify-between gap-6">
                 <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div>
-                        <div className="text-[#888] text-sm font-medium mb-1.5 font-mono tracking-tight">{eventTime}</div>
+                        <div className="text-text-muted text-sm font-medium mb-1.5 font-mono tracking-tight">{eventTime}</div>
                         <h3 className="text-xl font-bold text-white mb-3 truncate pr-4">{event.title}</h3>
 
                         <div className="space-y-2 mb-6">
                             {event.location && (
-                                <div className="flex items-center gap-2 text-[#888] text-sm">
-                                    <MapPin className="h-4 w-4 shrink-0 text-[#666]" />
+                                <div className="flex items-center gap-2 text-text-muted text-sm">
+                                    <MapPin className="h-4 w-4 shrink-0 text-text-disabled" />
                                     <span className="truncate">{event.location}</span>
                                 </div>
                             )}
-                            <div className="flex items-center gap-2 text-[#888] text-sm">
-                                <Users className="h-4 w-4 shrink-0 text-[#666]" />
+                            <div className="flex items-center gap-2 text-text-muted text-sm">
+                                <Users className="h-4 w-4 shrink-0 text-text-disabled" />
                                 <span>{event.attendee_count === 0 ? 'No guests' : `${event.attendee_count} guests`}</span>
                             </div>
                         </div>
 
                         {/* Tags */}
                         <div className="flex gap-2 mb-6">
-                            <button className="text-xs font-medium text-[#666] hover:text-[#999] bg-[#2A2A2D] hover:bg-[#333] px-2.5 py-1 rounded-md transition-colors flex items-center gap-1">
+                            <button className="text-xs font-medium text-text-disabled hover:text-text-muted bg-bg-hover hover:bg-bg-hover px-2.5 py-1 rounded-md transition-colors flex items-center gap-1">
                                 <Plus className="w-3 h-3" /> Add Tag
                             </button>
                             {event.tags?.map((tag) => (
-                                <span key={tag} className="text-xs font-medium text-[#AAA] bg-[#2A2A2D] px-2.5 py-1 rounded-md">
+                                <span key={tag} className="text-xs font-medium text-text-secondary bg-bg-hover px-2.5 py-1 rounded-md">
                                     {tag}
                                 </span>
                             ))}
@@ -266,8 +266,8 @@ function EventCard({ event }: { event: CalendarEvent }) {
                     </div>
 
                     <Link href={`/events/${event.id}/manage`} className="inline-flex">
-                        <button className="bg-[#2A2A2D] hover:bg-[#333] text-white text-xs font-semibold px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors">
-                            Manage Event <ArrowRight className="w-3 h-3 text-[#666] group-hover:text-white transition-colors" />
+                        <button className="bg-bg-hover hover:bg-bg-hover text-white text-xs font-semibold px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors">
+                            Manage Event <ArrowRight className="w-3 h-3 text-text-disabled group-hover:text-white transition-colors" />
                         </button>
                     </Link>
                 </div>
@@ -279,11 +279,11 @@ function EventCard({ event }: { event: CalendarEvent }) {
                             src={event.cover_image}
                             alt={event.title}
                             fill
-                            className="object-cover rounded-xl bg-[#2A2A2D]"
+                            className="object-cover rounded-xl bg-bg-hover"
                         />
                     ) : (
-                        <div className="w-full h-full rounded-xl bg-[#2A2A2D] border border-white/5 flex items-center justify-center">
-                            <div className="text-[#444] font-bold text-2xl">{event.title.charAt(0)}</div>
+                        <div className="w-full h-full rounded-xl bg-bg-hover border border-white/5 flex items-center justify-center">
+                            <div className="text-text-disabled font-bold text-2xl">{event.title.charAt(0)}</div>
                         </div>
                     )}
                 </div>
@@ -295,13 +295,13 @@ function EventCard({ event }: { event: CalendarEvent }) {
 function EmptyState({ filter }: { filter: FilterType }) {
     return (
         <div className="text-center py-24">
-            <div className="w-16 h-16 bg-[#1C1C1E] rounded-full flex items-center justify-center mx-auto mb-6">
-                <Plus className="h-6 w-6 text-[#666]" />
+            <div className="w-16 h-16 bg-bg-elevated rounded-full flex items-center justify-center mx-auto mb-6">
+                <Plus className="h-6 w-6 text-text-disabled" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2">
                 {filter === 'upcoming' ? 'No upcoming events' : 'No past events'}
             </h3>
-            <p className="text-[#888] mb-8 max-w-sm mx-auto">
+            <p className="text-text-muted mb-8 max-w-sm mx-auto">
                 {filter === 'upcoming'
                     ? "Your upcoming events will appear here. Create an event to get started."
                     : "Events you've hosted in the past will show up here for your reference."}
@@ -323,10 +323,10 @@ function EventsSkeleton() {
             {[1, 2].map((i) => (
                 <div key={i} className="flex gap-8">
                     <div className="w-24 shrink-0">
-                        <div className="h-5 w-16 bg-[#222] rounded mb-2" />
-                        <div className="h-4 w-12 bg-[#222] rounded" />
+                        <div className="h-5 w-16 bg-bg-hover rounded mb-2" />
+                        <div className="h-4 w-12 bg-bg-hover rounded" />
                     </div>
-                    <div className="flex-1 bg-[#1C1C1E] h-48 rounded-2xl p-5 border border-white/5 animate-pulse" />
+                    <div className="flex-1 bg-bg-elevated h-48 rounded-2xl p-5 border border-white/5 animate-pulse" />
                 </div>
             ))}
         </div>

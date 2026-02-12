@@ -60,7 +60,7 @@ class WorkflowOrchestrator {
 
             // 6. Update Read Model (Supabase) - In V3 this ideally happens async via consumer, 
             // but for hybrid V2/V3 we update immediately for UI responsiveness
-            await this.updateReadModel(entityType, entityId, targetState, entityData);
+            await this.updateReadModel(entityType, entityId, targetState, entityData, command);
 
             return { success: true, eventId: envelope.id };
 
@@ -172,8 +172,9 @@ class WorkflowOrchestrator {
                         guestId: payload.ticketId,
                         eventId: entity.event_id,
                         amount: payload.amount,
+                        currency: payload.currency || 'ETH',
                         txHash: payload.txHash,
-                        chain: payload.chain
+                        walletAddress: payload.walletAddress || entity.stake_wallet_address || '',
                     }
                 };
 
@@ -191,14 +192,46 @@ class WorkflowOrchestrator {
         throw new Error(`No event definition for command ${command.name}`);
     }
 
-    private async updateReadModel(entityType: string, entityId: string, newState: string, entity: any) {
+    private async updateReadModel(
+        entityType: string,
+        entityId: string,
+        newState: string,
+        entity: any,
+        command?: WorkflowCommand
+    ) {
         const supabase = getServiceSupabase();
+        const now = new Date().toISOString();
 
         if (entityType === 'event') {
-            await supabase.from('events').update({ status: newState, updated_at: new Date().toISOString() }).eq('id', entityId);
+            await supabase.from('events').update({ status: newState, updated_at: now }).eq('id', entityId);
         } else {
-            const updates: any = { status: newState, updated_at: new Date().toISOString() };
-            if (newState === 'checked_in') updates.checked_in_at = new Date().toISOString();
+            const updates: any = {
+                status: newState,
+                updated_at: now,
+                previous_status: entity.status,
+                status_changed_at: now,
+            };
+
+            // Persist staking data
+            if (newState === 'staked' && command?.name === 'STAKE_TICKET') {
+                const p = command.payload as any;
+                updates.stake_amount = p.amount;
+                updates.stake_tx_hash = p.txHash;
+                updates.stake_wallet_address = p.walletAddress || null;
+                updates.stake_currency = p.currency || 'ETH';
+            }
+
+            // Terminal state timestamps
+            if (newState === 'checked_in' || newState === 'scanned') {
+                updates.checked_in_at = now;
+            }
+            if (newState === 'forfeited') {
+                updates.forfeited_at = now;
+            }
+            if (newState === 'refunded') {
+                updates.refunded_at = now;
+            }
+
             await supabase.from('guests').update(updates).eq('id', entityId);
         }
     }

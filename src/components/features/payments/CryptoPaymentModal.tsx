@@ -10,6 +10,7 @@ import { useEscrowStake } from '@/hooks/useEscrowStake';
 import { GlossyCard, Button } from '@/components/components/ui';
 import { Loader2, Check, AlertCircle, X, Wallet, Lock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 // Icons
 const SolanaLogo = () => (
@@ -151,7 +152,7 @@ export default function CryptoPaymentModal({
             // Convert USDC amount (USD) to ETH using exchange rate
             // Example: $2 USDC / $3000 ETH = 0.000667 ETH
             if (!exchangeRates || !exchangeRates.eth) {
-                alert('Exchange rates not available. Please try again.');
+                toast.error('Exchange rates not available. Please try again.');
                 return;
             }
             const ethAmountForUsdc = usdcAmount / exchangeRates.eth;
@@ -192,7 +193,7 @@ export default function CryptoPaymentModal({
                 console.log('[CryptoPaymentModal] Connecting with:', targetConnector.name || targetConnector.id);
                 connect({ connector: targetConnector });
             } else {
-                alert('No wallet detected. Please install MetaMask or another browser wallet.');
+                toast.error('No wallet detected. Please install MetaMask or another browser wallet.');
             }
         }
     };
@@ -208,7 +209,7 @@ export default function CryptoPaymentModal({
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="w-full max-w-md"
                 >
-                    <GlossyCard className="relative overflow-hidden border border-white/10 shadow-2xl bg-[#000000]">
+                    <GlossyCard className="relative overflow-hidden border border-white/10 shadow-2xl bg-black">
 
                         {/* Header Gradient */}
                         <div className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${chain === 'usdc-ethereum' || chain === 'usdc-solana' ? 'from-blue-500 to-blue-600' : chain === 'solana' ? 'from-[#9945FF] to-[#14F195]' : 'from-blue-600 to-indigo-400'}`} />
@@ -226,13 +227,13 @@ export default function CryptoPaymentModal({
                             {activePayment.status === 'idle' && (
                                 <div className="flex flex-col gap-2 w-full">
                                     {/* USDC Options */}
-                                    <div className="flex bg-[#1C1C1E] p-1 rounded-xl border border-white/5 gap-1">
+                                    <div className="flex bg-bg-elevated p-1 rounded-xl border border-white/5 gap-1">
                                         <button
                                             onClick={() => setChain('usdc-ethereum')}
                                             className={`flex-1 py-2 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all ${chain === 'usdc-ethereum' ? 'bg-blue-500/20 text-blue-400 shadow-lg border border-blue-500/30' : 'text-text-muted hover:text-white'}`}
                                             title="USDC on Ethereum (ETH-Sepolia) - Uses MetaMask"
                                         >
-                                            <div className="w-4 h-4 flex items-center justify-center bg-white rounded-full overflow-hidden p-[1px]"><EthLogo /></div>
+                                            <div className="w-4 h-4 flex items-center justify-center bg-white rounded-full overflow-hidden p-px"><EthLogo /></div>
                                             <span className="text-xs font-bold">USDC</span>
                                             <span className="text-[10px] text-text-muted">ETH</span>
                                         </button>
@@ -248,7 +249,7 @@ export default function CryptoPaymentModal({
                                     </div>
                                     {/* Alternative Options */}
                                     {(solAmount > 0 || ethAmount > 0) && (
-                                        <div className="flex bg-[#1C1C1E] p-1 rounded-xl border border-white/5 gap-1">
+                                        <div className="flex bg-bg-elevated p-1 rounded-xl border border-white/5 gap-1">
                                             {solAmount > 0 && (
                                                 <button
                                                     onClick={() => setChain('solana')}
@@ -272,7 +273,7 @@ export default function CryptoPaymentModal({
 
                             {/* Icon / Status */}
                             <div className="relative pt-2">
-                                <div className={`w-20 h-20 rounded-full bg-[#1C1C1E] flex items-center justify-center border border-white/10 relative z-10 ${activePayment.status === 'success' ? 'border-green-500' : ''}`}>
+                                <div className={`w-20 h-20 rounded-full bg-bg-elevated flex items-center justify-center border border-white/10 relative z-10 ${activePayment.status === 'success' ? 'border-green-500' : ''}`}>
                                     {activePayment.status === 'success' ? (
                                         <Check className="w-10 h-10 text-green-500" />
                                     ) : activePayment.status === 'error' ? (

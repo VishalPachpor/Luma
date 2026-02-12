@@ -106,7 +106,7 @@ export default function MainContent({
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#0E0F13]">
+        <div className="flex flex-col min-h-screen bg-bg-primary">
 
             {/* Main Content - Centered with generous side spacing like Luma */}
             <main className="flex-1">

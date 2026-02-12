@@ -31,7 +31,7 @@ export function DashboardTabs({ eventId }: DashboardTabsProps) {
                         href={tab.href}
                         className={`px-1 py-3 text-[15px] font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
                             ? 'border-white text-white'
-                            : 'border-transparent text-[#888888] hover:text-white'
+                            : 'border-transparent text-text-muted hover:text-white'
                             }`}
                     >
                         {tab.label}

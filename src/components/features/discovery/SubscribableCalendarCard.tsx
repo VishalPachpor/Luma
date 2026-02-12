@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Loader2 } from 'lucide-react';
 import { FeaturedCalendar } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import {
     subscribeToCalendarAction,
     unsubscribeFromCalendarAction,
@@ -42,7 +43,7 @@ export default function SubscribableCalendarCard({ calendar, index }: Subscribab
     const handleSubscribe = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!user) {
-            alert('Please sign in to subscribe to calendars');
+            toast.info('Please sign in to subscribe to calendars');
             return;
         }
 
@@ -57,7 +58,7 @@ export default function SubscribableCalendarCard({ calendar, index }: Subscribab
             }
         } catch (err) {
             console.error('Subscription error:', err);
-            alert('Failed to update subscription. Please try again.');
+            toast.error('Failed to update subscription. Please try again.');
         } finally {
             setLoading(false);
         }

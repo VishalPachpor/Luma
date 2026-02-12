@@ -1,83 +1,113 @@
-/**
- * API Route: Get Event Invitations
- * 
- * GET /api/events/[id]/invites
- * Returns list of sent invitations for an event with lifecycle status
- */
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import * as invitationRepo from '@/lib/repositories/invitation.repository';
-import type { Database } from '@/types/database.types';
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-interface RouteParams {
-    params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function POST(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
         const { id: eventId } = await params;
+        const { emails } = await request.json();
 
-        // Verify authorization
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
+        if (!emails || !Array.isArray(emails) || emails.length === 0) {
+            return NextResponse.json({ error: 'Invalid emails' }, { status: 400 });
+        }
+
+        const supabase = await createSupabaseServerClient();
+
+        // 1. Verify user is event organizer
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const token = authHeader.substring(7);
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-            global: { headers: { Authorization: `Bearer ${token}` } }
-        });
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        // Verify user can manage this event
-        const { data: event } = await (supabase
-            .from('events') as any)
-            .select('organizer_id')
+        // Check if user is organizer
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('title, organizer_id')
             .eq('id', eventId)
-            .single() as { data: { organizer_id: string } | null; error: any };
+            .single();
 
-        if (!event || event.organizer_id !== user.id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (eventError || !event || event.organizer_id !== user.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        // Get pagination params
-        const url = new URL(request.url);
-        const limit = parseInt(url.searchParams.get('limit') || '50');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
-        const status = url.searchParams.get('status') as any;
+        // 2. Create invites in DB
+        // For simplicity in this demo, we'll process one by one to generate codes
+        const invitesToSend = [];
 
-        // Fetch invitations
-        const result = await invitationRepo.findByEvent(eventId, { limit, offset, status });
+        for (const email of emails) {
+            const { nanoid } = await import('nanoid');
+            const code = nanoid(10);
 
-        // Transform for frontend
-        const invitations = result.invitations.map(inv => ({
-            id: inv.id,
-            email: inv.email,
-            recipientName: inv.recipientName,
-            status: inv.status,
-            sentAt: inv.sentAt,
-            openedAt: inv.openedAt,
-            clickedAt: inv.clickedAt,
-            createdAt: inv.createdAt,
-        }));
+            const { data: invite, error: inviteError } = await supabase
+                .from('invites')
+                .insert({
+                    event_id: eventId,
+                    inviter_id: user.id,
+                    email,
+                    code,
+                    status: 'pending'
+                })
+                .select()
+                .single();
 
-        return NextResponse.json({
-            invitations,
-            total: result.total,
-            limit,
-            offset,
-        });
+            if (!inviteError && invite) {
+                invitesToSend.push({ ...invite, eventTitle: event.title });
+            }
+        }
+
+        // 3. Send emails via Resend (Background task in real app, here inline for MVP)
+        // In a production app, use Inngest for this!
+        if (process.env.RESEND_API_KEY) {
+            await Promise.allSettled(invitesToSend.map(invite =>
+                resend.emails.send({
+                    from: 'Luma Clone <events@yourdomain.com>',
+                    to: invite.email,
+                    subject: `You're invited to ${invite.eventTitle}`,
+                    html: `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2>You've been invited!</h2>
+                            <p>You have been invited to join <strong>${invite.eventTitle}</strong>.</p>
+                            <p>Click the button below to accept your invitation:</p>
+                            <a href="${process.env.NEXT_PUBLIC_APP_URL}/invite/${invite.code}" 
+                               style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                               Accept Invitation
+                            </a>
+                        </div>
+                    `
+                })
+            ));
+        }
+
+        return NextResponse.json({ success: true, count: invitesToSend.length });
 
     } catch (error) {
-        console.error('[API] Get invites error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error sending invites:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
+}
+
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id: eventId } = await params;
+    const supabase = await createSupabaseServerClient();
+
+    const { data: invites, error } = await supabase
+        .from('invites')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(invites);
 }

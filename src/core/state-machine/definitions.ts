@@ -53,12 +53,16 @@ export const EventStateMachine = {
 
 export const TicketStates = {
     PENDING: 'pending',
+    PENDING_APPROVAL: 'pending_approval',
     APPROVED: 'approved',
     REJECTED: 'rejected',
+    ISSUED: 'issued',
     STAKED: 'staked',
     CHECKED_IN: 'checked_in',
+    SCANNED: 'scanned',
     FORFEITED: 'forfeited',
     REFUNDED: 'refunded',
+    REVOKED: 'revoked',
     CANCELLED: 'cancelled',
 } as const;
 
@@ -66,23 +70,37 @@ export type TicketStatus = typeof TicketStates[keyof typeof TicketStates];
 
 export const TicketStateMachine = {
     [TicketStates.PENDING]: {
+        request_approval: TicketStates.PENDING_APPROVAL,
+        issue: TicketStates.ISSUED,          // Free registration, no approval
+        cancel: TicketStates.CANCELLED,
+    },
+    [TicketStates.PENDING_APPROVAL]: {
         approve: TicketStates.APPROVED,
         reject: TicketStates.REJECTED,
-        cancel: TicketStates.CANCELLED,
     },
     [TicketStates.APPROVED]: {
         stake: TicketStates.STAKED,
+        issue: TicketStates.ISSUED,          // Free event after approval
+        revoke: TicketStates.REVOKED,
         cancel: TicketStates.CANCELLED,
-        reject: TicketStates.REJECTED, // Revoke
+    },
+    [TicketStates.ISSUED]: {
+        check_in: TicketStates.CHECKED_IN,
+        scan: TicketStates.SCANNED,          // Legacy check-in
+        revoke: TicketStates.REVOKED,
     },
     [TicketStates.STAKED]: {
         check_in: TicketStates.CHECKED_IN,
+        scan: TicketStates.SCANNED,          // Legacy check-in
         refund: TicketStates.REFUNDED,
         forfeit: TicketStates.FORFEITED,
-        cancel: TicketStates.REFUNDED, // Cancelled staked ticket = refund
+        cancel: TicketStates.REFUNDED,       // Cancelled staked ticket = refund
     },
     [TicketStates.CHECKED_IN]: {
         // Terminal
+    },
+    [TicketStates.SCANNED]: {
+        // Terminal (legacy, same as checked_in)
     },
     [TicketStates.REJECTED]: {
         // Terminal
@@ -91,6 +109,9 @@ export const TicketStateMachine = {
         // Terminal
     },
     [TicketStates.REFUNDED]: {
+        // Terminal
+    },
+    [TicketStates.REVOKED]: {
         // Terminal
     },
     [TicketStates.CANCELLED]: {

@@ -27,7 +27,7 @@ export default function EventMap({
     }), [lng, lat, zoom]);
 
     return (
-        <div className={`relative w-full h-full overflow-hidden rounded-xl bg-[#1C1C1E] ${className}`}>
+        <div className={`relative w-full h-full overflow-hidden rounded-xl bg-bg-elevated ${className}`}>
             <Map
                 initialViewState={initialViewState}
                 style={{ width: '100%', height: '100%' }}
@@ -44,7 +44,7 @@ export default function EventMap({
 
                 <Marker longitude={lng} latitude={lat} anchor="bottom">
                     <div className="relative flex flex-col items-center">
-                        <div className="relative z-10 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.5)] border-2 border-[#0B1221]">
+                        <div className="relative z-10 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.5)] border-2 border-border-primary">
                             <MapPin size={16} className="text-white fill-white" />
                         </div>
                         <div className="w-1 h-8 bg-linear-to-b from-blue-600/50 to-transparent -mt-1" />

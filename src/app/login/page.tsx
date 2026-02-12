@@ -104,8 +104,8 @@ export default function LoginPage() {
                 <div className="w-full max-w-md">
                     {/* Logo/Icon */}
                     <div className="flex justify-center mb-8">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-xl">
-                            <span className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-xl">
+                            <span className="text-3xl font-bold bg-linear-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                                 P
                             </span>
                         </div>
@@ -126,7 +126,7 @@ export default function LoginPage() {
                     </div>
 
                     {/* Login Card */}
-                    <GlossyCard className="p-8 bg-[#1C1C1E]">
+                    <GlossyCard className="p-8 bg-surface-1">
                         <form onSubmit={handleEmailSubmit} className="space-y-4">
                             {/* Email Input */}
                             <div>
@@ -184,7 +184,7 @@ export default function LoginPage() {
                                 size="lg"
                                 fullWidth
                                 disabled={isLoading}
-                                className="h-12 text-base font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50"
+                                className="h-12 text-base font-semibold bg-linear-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50"
                             >
                                 {isLoading ? (
                                     <Loader2 className="animate-spin" size={20} />
@@ -237,7 +237,7 @@ export default function LoginPage() {
                                 <div className="w-full border-t border-white/10"></div>
                             </div>
                             <div className="relative flex justify-center text-xs">
-                                <span className="px-3 bg-[#1C1C1E] text-text-muted">or</span>
+                                <span className="px-3 bg-surface-1 text-text-muted">or</span>
                             </div>
                         </div>
 

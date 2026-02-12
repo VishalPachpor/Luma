@@ -3,7 +3,7 @@
  * CRUD operations for ticket_tiers table
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase, getServiceSupabase } from '@/lib/supabase';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { TicketTier, TicketType } from '@/types/commerce';
 import type { Database } from '@/types/database.types';
@@ -75,9 +75,9 @@ export async function createTicketTier(
         salesEnd?: string;
     }
 ): Promise<TicketTier> {
-    const supabaseBrowser = createSupabaseBrowserClient();
+    const supabaseService = getServiceSupabase();
 
-    const { data, error } = await supabaseBrowser
+    const { data, error } = await supabaseService
         .from('ticket_tiers')
         .insert({
             event_id: eventId,
@@ -117,7 +117,7 @@ export async function updateTicketTier(
         salesEnd: string;
     }>
 ): Promise<TicketTier | null> {
-    const supabaseBrowser = createSupabaseBrowserClient();
+    const supabaseService = getServiceSupabase();
 
     const updateRow: any = {}; // Keep explicit any for update object construction dynamic keys
     if (updates.name !== undefined) updateRow.name = updates.name;
@@ -128,7 +128,7 @@ export async function updateTicketTier(
     if (updates.salesStart !== undefined) updateRow.sales_start = updates.salesStart;
     if (updates.salesEnd !== undefined) updateRow.sales_end = updates.salesEnd;
 
-    const { data, error } = await supabaseBrowser
+    const { data, error } = await supabaseService
         .from('ticket_tiers')
         .update(updateRow)
         .eq('id', tierId)
@@ -147,9 +147,9 @@ export async function updateTicketTier(
  * Delete a ticket tier
  */
 export async function deleteTicketTier(tierId: string): Promise<boolean> {
-    const supabaseBrowser = createSupabaseBrowserClient();
+    const supabaseService = getServiceSupabase();
 
-    const { error } = await supabaseBrowser
+    const { error } = await supabaseService
         .from('ticket_tiers')
         .delete()
         .eq('id', tierId);
@@ -181,10 +181,10 @@ export async function getRemainingInventory(tierId: string): Promise<number> {
  * Increment sold count (called after successful purchase)
  */
 export async function incrementSoldCount(tierId: string, quantity: number = 1): Promise<void> {
-    const supabaseBrowser = createSupabaseBrowserClient();
+    const supabaseService = getServiceSupabase();
 
     // Use RPC or manual increment
-    const { data: tier } = await supabaseBrowser
+    const { data: tier } = await supabaseService
         .from('ticket_tiers')
         .select('sold_count')
         .eq('id', tierId)
@@ -192,7 +192,7 @@ export async function incrementSoldCount(tierId: string, quantity: number = 1): 
 
     if (!tier) return;
 
-    await supabaseBrowser
+    await supabaseService
         .from('ticket_tiers')
         .update({ sold_count: (tier.sold_count || 0) + quantity })
         .eq('id', tierId);

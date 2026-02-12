@@ -21,7 +21,7 @@ export function EventHeader({ eventId, eventLink = '' }: EventHeaderProps) {
     };
 
     return (
-        <header className="sticky top-0 z-50 h-[60px] bg-[#0E0F13] border-b border-white/5 flex items-center justify-between px-4 transition-all duration-200">
+        <header className="sticky top-0 z-50 h-[60px] bg-bg-primary border-b border-white/5 flex items-center justify-between px-4 transition-all duration-200">
             <div className="flex items-center gap-3">
                 {/* Collapse / Back Button */}
                 <Link href="/events" className="group">

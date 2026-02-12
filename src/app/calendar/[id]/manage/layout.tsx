@@ -96,9 +96,9 @@ export default async function CalendarManageLayout({ children, params }: LayoutP
     }
 
     return (
-        <div className="min-h-screen bg-[#0E1016] text-white pt-12">
+        <div className="min-h-screen bg-bg-primary text-white pt-12">
             {/* Header - Client component with scroll-hide */}
-            <Suspense fallback={<div className="h-32 bg-[#0E1016]" />}>
+            <Suspense fallback={<div className="h-32 bg-bg-primary" />}>
                 <CalendarManageHeader calendarId={id} calendarName={calendar.name} />
             </Suspense>
 

@@ -100,13 +100,13 @@ export default function CalendarPaymentPage() {
             {/* Crypto Wallet Configuration */}
             <section className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                    <Wallet className="w-5 h-5 text-[var(--accent-solid)]" />
+                    <Wallet className="w-5 h-5 text-(--accent-solid)" />
                     <h2 className="text-lg font-semibold">Crypto Wallet</h2>
                 </div>
 
-                <div className="relative bg-gradient-to-br from-[#1C1C1E] to-[#151517] border border-white/[0.08] rounded-xl p-6 shadow-xl shadow-black/20 overflow-hidden">
+                <div className="relative bg-linear-to-br from-surface-1 to-bg-primary border border-white/8 rounded-xl p-6 shadow-xl shadow-black/20 overflow-hidden">
                     {/* Subtle shine overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-br from-white/3 via-transparent to-transparent pointer-events-none" />
                     <div className="flex flex-col gap-6">
                         <div className="flex items-start justify-between">
                             <div>
@@ -131,7 +131,7 @@ export default function CalendarPaymentPage() {
                                 <label className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Network</label>
                                 <div className="relative">
                                     <select
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none appearance-none focus:border-[var(--accent-glow)] transition-colors cursor-pointer"
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none appearance-none focus:border-(--accent-glow) transition-colors cursor-pointer"
                                         value={config?.network || 'ethereum'}
                                         onChange={(e) => {
                                             const net = e.target.value;
@@ -157,7 +157,7 @@ export default function CalendarPaymentPage() {
                                     value={config?.wallet_address || ''}
                                     onChange={(e) => setConfig(curr => ({ ...curr!, wallet_address: e.target.value }))}
                                     onBlur={(e) => handleSaveConfig({ wallet_address: e.target.value })}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm font-mono text-white focus:border-[var(--accent-glow)] outline-none transition-colors"
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-sm font-mono text-white focus:border-(--accent-glow) outline-none transition-colors"
                                 />
                             </div>
                         </div>
@@ -169,7 +169,7 @@ export default function CalendarPaymentPage() {
             <section className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                        <Ticket className="w-5 h-5 text-[var(--accent-solid)]" />
+                        <Ticket className="w-5 h-5 text-(--accent-solid)" />
                         <h2 className="text-lg font-semibold">Coupons</h2>
                     </div>
                     <button
@@ -181,7 +181,7 @@ export default function CalendarPaymentPage() {
                 </div>
 
                 {coupons.length === 0 ? (
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-8 text-center flex flex-col items-center gap-3">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl p-8 text-center flex flex-col items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
                             <Ticket className="w-5 h-5 text-white/30" />
                         </div>
@@ -193,9 +193,9 @@ export default function CalendarPaymentPage() {
                 ) : (
                     <div className="grid gap-3">
                         {coupons.map(coupon => (
-                            <div key={coupon.id} className="bg-[#1C1C1E] border border-white/10 rounded-xl p-4 flex items-center justify-between">
+                            <div key={coupon.id} className="bg-bg-elevated border border-white/10 rounded-xl p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-lg bg-[var(--accent-main)]/10 flex items-center justify-center text-[var(--accent-solid)] font-mono font-bold">
+                                    <div className="w-10 h-10 rounded-lg bg-(--accent-main)/10 flex items-center justify-center text-(--accent-solid) font-mono font-bold">
                                         %
                                     </div>
                                     <div>
@@ -248,7 +248,7 @@ export default function CalendarPaymentPage() {
                             ✏️ Edit
                         </button>
                     </div>
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-5 space-y-4">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl p-5 space-y-4">
                         <div className="flex justify-between items-center">
                             <span className="text-xs text-white/50">Seller Name</span>
                             <span className="text-sm text-white font-medium">{config?.seller_name || '—'}</span>
@@ -270,7 +270,7 @@ export default function CalendarPaymentPage() {
                         <Receipt className="w-5 h-5 text-white/60" />
                         <h2 className="text-lg font-semibold">Tax</h2>
                     </div>
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-5 h-full flex items-center justify-between">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl p-5 h-full flex items-center justify-between">
                         <div>
                             <p className="text-sm text-white/70">Calculate and add taxes on top of ticket prices.</p>
                         </div>
@@ -294,7 +294,7 @@ export default function CalendarPaymentPage() {
                 </div>
 
                 {config?.refund_policy_type === 'no_refund' || !config?.refund_policy_type ? (
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-6 flex items-center gap-4">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl p-6 flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
                             <Ban className="w-5 h-5 text-white/30" />
                         </div>
@@ -304,31 +304,31 @@ export default function CalendarPaymentPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-5">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl p-5">
                         <div className="space-y-3">
                             <div
                                 onClick={() => handleSaveConfig({ refund_policy_type: 'no_refund' })}
                                 className={cn(
                                     "p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between",
                                     config?.refund_policy_type === 'no_refund'
-                                        ? "bg-[var(--accent-main)]/10 border-[var(--accent-solid)]"
+                                        ? "bg-(--accent-main)/10 border-(--accent-solid)"
                                         : "bg-black/20 border-white/5 hover:border-white/20"
                                 )}
                             >
                                 <span className="text-sm font-medium">No Refunds</span>
-                                {config?.refund_policy_type === 'no_refund' && <div className="w-2 h-2 rounded-full bg-[var(--accent-solid)]" />}
+                                {config?.refund_policy_type === 'no_refund' && <div className="w-2 h-2 rounded-full bg-(--accent-solid)" />}
                             </div>
                             <div
                                 onClick={() => handleSaveConfig({ refund_policy_type: '7_days' })}
                                 className={cn(
                                     "p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between",
                                     config?.refund_policy_type === '7_days'
-                                        ? "bg-[var(--accent-main)]/10 border-[var(--accent-solid)]"
+                                        ? "bg-(--accent-main)/10 border-(--accent-solid)"
                                         : "bg-black/20 border-white/5 hover:border-white/20"
                                 )}
                             >
                                 <span className="text-sm font-medium">Refund up to 7 days</span>
-                                {config?.refund_policy_type === '7_days' && <div className="w-2 h-2 rounded-full bg-[var(--accent-solid)]" />}
+                                {config?.refund_policy_type === '7_days' && <div className="w-2 h-2 rounded-full bg-(--accent-solid)" />}
                             </div>
                         </div>
                     </div>
@@ -370,7 +370,7 @@ export default function CalendarPaymentPage() {
                 </div>
 
                 {transactions.length === 0 ? (
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-6 flex items-center gap-4">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl p-6 flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
                             <Receipt className="w-5 h-5 text-white/30" />
                         </div>
@@ -380,7 +380,7 @@ export default function CalendarPaymentPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-xl overflow-hidden">
+                    <div className="bg-bg-elevated border border-white/10 rounded-xl overflow-hidden">
                         <table className="w-full text-left text-sm">
                             <thead className="bg-white/5 text-white/60 border-b border-white/5">
                                 <tr>
@@ -395,7 +395,7 @@ export default function CalendarPaymentPage() {
                                     <tr key={tx.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-4 py-3 text-white">{tx.event?.title || 'Unknown Event'}</td>
                                         <td className="px-4 py-3 text-white/70">{tx.user?.display_name || tx.user?.email}</td>
-                                        <td className="px-4 py-3 text-right font-mono text-[var(--accent-solid)]">
+                                        <td className="px-4 py-3 text-right font-mono text-(--accent-solid)">
                                             {tx.amount} {tx.currency}
                                         </td>
                                         <td className="px-4 py-3 text-right text-white/40">
@@ -416,7 +416,7 @@ export default function CalendarPaymentPage() {
                     <h2 className="text-lg font-semibold">Payout History</h2>
                 </div>
 
-                <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-6 flex items-center gap-4">
+                <div className="bg-bg-elevated border border-white/10 rounded-xl p-6 flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
                         <Wallet className="w-5 h-5 text-white/30" />
                     </div>
@@ -430,7 +430,7 @@ export default function CalendarPaymentPage() {
             {/* Coupon Modal */}
             {isCouponModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in">
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-6">
+                    <div className="bg-bg-elevated border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold">Create Coupon</h3>
                             <button onClick={() => setIsCouponModalOpen(false)}><X className="w-5 h-5 text-white/50" /></button>
@@ -440,7 +440,7 @@ export default function CalendarPaymentPage() {
                             <div>
                                 <label className="text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1.5 block">Coupon Code</label>
                                 <input
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-mono font-bold text-white uppercase placeholder:text-white/20 outline-none focus:border-[var(--accent-solid)] focus:ring-1 focus:ring-[var(--accent-solid)]/50 transition-all"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-mono font-bold text-white uppercase placeholder:text-white/20 outline-none focus:border-(--accent-solid) focus:ring-1 focus:ring-(--accent-solid)/50 transition-all"
                                     placeholder="SUMMER2025"
                                     autoFocus
                                     value={newCoupon.code}
@@ -509,7 +509,7 @@ export default function CalendarPaymentPage() {
             {/* Invoicing Edit Modal */}
             {isInvoicingModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in">
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-6">
+                    <div className="bg-bg-elevated border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold">Edit Invoicing</h3>
                             <button onClick={() => setIsInvoicingModalOpen(false)}><X className="w-5 h-5 text-white/50" /></button>

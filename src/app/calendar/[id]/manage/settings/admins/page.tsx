@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation';
 import { getCalendarMembers, inviteCalendarMember, removeCalendarMember, type CalendarMember } from '@/app/actions/calendar-members';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function AdminsSettingsPage() {
     const params = useParams();
@@ -72,7 +73,7 @@ export default function AdminsSettingsPage() {
             if (result.success) {
                 setMembers(prev => prev.filter(m => m.user_id !== userId));
             } else {
-                alert('Failed to remove admin');
+                toast.error('Failed to remove admin');
             }
         } catch (error) {
             console.error(error);
@@ -103,7 +104,7 @@ export default function AdminsSettingsPage() {
 
             {/* In-line Add Form */}
             {isAdding ? (
-                <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-6 animate-in fade-in slide-in-from-top-2">
+                <div className="bg-bg-elevated border border-white/10 rounded-xl p-6 animate-in fade-in slide-in-from-top-2">
                     <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
                         <UserPlus className="w-4 h-4" /> Add New Admin
                     </h3>
@@ -167,14 +168,14 @@ export default function AdminsSettingsPage() {
                         Loading members...
                     </div>
                 ) : members.length === 0 ? (
-                    <div className="bg-[#1C1C1E] border border-white/10 rounded-lg p-8 text-center">
+                    <div className="bg-bg-elevated border border-white/10 rounded-lg p-8 text-center">
                         <Shield className="w-8 h-8 text-white/20 mx-auto mb-3" />
                         <p className="text-white/60">No additional admins yet.</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
                         {members.map((member) => (
-                            <div key={member.id} className="bg-[#1C1C1E] border border-white/10 rounded-lg p-4 flex items-center justify-between group">
+                            <div key={member.id} className="bg-bg-elevated border border-white/10 rounded-lg p-4 flex items-center justify-between group">
                                 <div className="flex items-center gap-3">
                                     <Avatar
                                         src={member.user?.avatar_url}

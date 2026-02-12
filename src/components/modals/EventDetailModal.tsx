@@ -38,10 +38,10 @@ export default function EventDetailModal({ events }: EventDetailModalProps) {
                         exit={{ opacity: 0, y: 100, scale: 0.95 }}
                         className="fixed inset-0 z-101 flex items-center justify-center p-4 sm:p-6 pointer-events-none"
                     >
-                        <div className="bg-[#0F1012] w-full max-w-[600px] max-h-[90vh] rounded-3xl shadow-2xl overflow-y-auto pointer-events-auto border border-white/10 hide-scrollbar">
+                        <div className="bg-bg-primary w-full max-w-[600px] max-h-[90vh] rounded-3xl shadow-2xl overflow-y-auto pointer-events-auto border border-white/10 hide-scrollbar">
 
                             {/* Header Actions */}
-                            <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-[#0F1012]/80 backdrop-blur-md border-b border-white/5">
+                            <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-bg-primary/80 backdrop-blur-md border-b border-white/5">
                                 <div className="flex items-center gap-2">
 
 
@@ -102,7 +102,7 @@ export default function EventDetailModal({ events }: EventDetailModalProps) {
                                 </div>
 
                                 {/* Registration Box */}
-                                <div className="bg-[#1A1B1E] rounded-xl overflow-hidden border border-white/5">
+                                <div className="bg-bg-elevated rounded-xl overflow-hidden border border-white/5">
                                     <div className="px-4 py-2 bg-white/5 border-b border-white/5 text-xs font-medium text-text-secondary">
                                         Registration
                                     </div>
@@ -201,7 +201,7 @@ export default function EventDetailModal({ events }: EventDetailModalProps) {
                                         Please register to see the exact location of this event.<br />
                                         <span className="text-white">Menlo Park, California</span>
                                     </p>
-                                    <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-[#1C1C1E]">
+                                    <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-bg-elevated">
                                         <EventMap lat={event.coords.lat} lng={event.coords.lng} zoom={13} interactive={false} />
                                         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                                             <a

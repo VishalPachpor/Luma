@@ -60,7 +60,7 @@ export function VisibilityToggle({ value, onChange }: VisibilityToggleProps) {
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-[#2C2C2E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-bg-elevated border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-2 border-b border-white/10">
                         <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-2">
                             Event Visibility
@@ -83,8 +83,8 @@ export function VisibilityToggle({ value, onChange }: VisibilityToggleProps) {
                                         }`}
                                 >
                                     <div className={`p-2 rounded-lg ${option.value === 'public'
-                                            ? 'bg-green-500/20 text-green-400'
-                                            : 'bg-yellow-500/20 text-yellow-400'
+                                        ? 'bg-green-500/20 text-green-400'
+                                        : 'bg-yellow-500/20 text-yellow-400'
                                         }`}>
                                         <OptionIcon size={16} />
                                     </div>

@@ -50,27 +50,27 @@ export function EventManageHeader({
             className={cn(
                 "sticky top-[64px] z-40 transition-all duration-300 ease-out",
                 isScrolled
-                    ? "bg-[#13151A]/95 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20"
-                    : "bg-[#13151A]"
+                    ? "bg-bg-primary backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20"
+                    : "bg-bg-primary"
             )}
         >
             <div className="max-w-[800px] mx-auto px-6">
                 {/* Main Header Content - Collapses on scroll */}
                 <div
                     className={cn(
-                        "flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden",
+                        "flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden will-change-[max-height,opacity,transform]",
                         isScrolled
-                            ? "max-h-0 opacity-0 -translate-y-4"
+                            ? "max-h-0 opacity-0 -translate-y-4 pointer-events-none"
                             : "max-h-[200px] opacity-100 translate-y-0 pt-6 pb-4"
                     )}
                 >
                     <div className="flex flex-col gap-2">
                         {/* Breadcrumb */}
-                        <div className="flex items-center gap-1.5 text-[#888888] text-[13px] font-medium">
+                        <div className="flex items-center gap-1.5 text-text-muted text-[13px] font-medium">
                             <Link href={calendarLink} className="hover:text-white transition-colors">
                                 {calendarName}
                             </Link>
-                            <span className="text-[#444444]">›</span>
+                            <span className="text-text-disabled">›</span>
                         </div>
                         {/* Title */}
                         <h1 className="text-3xl font-semibold text-white tracking-tight leading-tight">
@@ -86,7 +86,7 @@ export function EventManageHeader({
                             className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all shadow-sm group"
                         >
                             Event Page
-                            <ArrowLeft className="w-3 h-3 rotate-135 text-[#888888] group-hover:text-white transition-colors" />
+                            <ArrowLeft className="w-3 h-3 rotate-135 text-text-muted group-hover:text-white transition-colors" />
                         </Link>
                     </div>
                 </div>
@@ -94,10 +94,10 @@ export function EventManageHeader({
                 {/* Compact Header - Visible when scrolled */}
                 <div
                     className={cn(
-                        "flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden",
+                        "flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden will-change-[max-height,opacity,transform]",
                         isScrolled
                             ? "max-h-[48px] opacity-100 translate-y-0 py-2"
-                            : "max-h-0 opacity-0 translate-y-4 py-0"
+                            : "max-h-0 opacity-0 translate-y-4 py-0 pointer-events-none"
                     )}
                 >
                     {/* Compact Title */}
@@ -112,7 +112,7 @@ export function EventManageHeader({
                         className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg transition-all group shrink-0"
                     >
                         Event Page
-                        <ArrowLeft className="w-3 h-3 rotate-135 text-[#888888] group-hover:text-white transition-colors" />
+                        <ArrowLeft className="w-3 h-3 rotate-135 text-text-muted group-hover:text-white transition-colors" />
                     </Link>
                 </div>
 

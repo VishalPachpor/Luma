@@ -47,7 +47,7 @@ export function StickyHeader({ children, className }: StickyHeaderProps) {
     return (
         <header
             className={cn(
-                "border-b border-white/5 bg-[#0E1016]/95 backdrop-blur-md sticky top-0 z-50 transition-transform duration-300",
+                "border-b border-white/5 bg-bg-primary/95 backdrop-blur-md sticky top-0 z-50 transition-transform duration-300",
                 !isVisible && "-translate-y-full",
                 !isAtTop && "shadow-lg shadow-black/20",
                 className

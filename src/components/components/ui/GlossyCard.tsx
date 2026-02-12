@@ -34,8 +34,8 @@ export default function GlossyCard({
     };
 
     const variantStyles = {
-        default: 'bg-surface-2 border-border-default',
-        elevated: 'bg-surface-3 border-border-strong shadow-card',
+        default: '',
+        elevated: 'shadow-[var(--shadow-card)]',
     };
 
     return (
@@ -50,7 +50,6 @@ export default function GlossyCard({
             className={`
                 relative overflow-hidden
                 glass-morphism rounded-2xl
-                border
                 ${variantStyles[variant]}
                 ${onClick ? 'cursor-pointer' : ''}
                 ${className}
@@ -65,12 +64,12 @@ export default function GlossyCard({
                 }}
             />
 
-            {/* Accent Border Glow Effect */}
+            {/* Accent Glow Effect — uses event accent color */}
             <div
                 className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300"
                 style={{
                     opacity: isHovered ? 1 : 0,
-                    background: `radial-gradient(180px circle at ${mouseX}px ${mouseY}px, rgba(123,97,255,0.08), transparent 70%)`,
+                    background: `radial-gradient(180px circle at ${mouseX}px ${mouseY}px, var(--event-accent-soft, rgba(255,255,255,0.06)), transparent 70%)`,
                 }}
             />
 

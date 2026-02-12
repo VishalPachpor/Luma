@@ -96,10 +96,10 @@ export default function EventChat({
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: 20, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="fixed bottom-4 right-4 w-[380px] h-[520px] bg-[#1a1a1a] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden z-50"
+                    className="fixed bottom-4 right-4 w-[380px] h-[520px] bg-bg-primary rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden z-50"
                 >
                     {/* Header */}
-                    <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-[#1a1a1a]">
+                    <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-bg-primary">
                         <button
                             onClick={onClose}
                             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
@@ -179,7 +179,7 @@ export default function EventChat({
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-3 border-t border-white/5 bg-[#1a1a1a]">
+                    <div className="p-3 border-t border-white/5 bg-bg-primary">
                         {user ? (
                             <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
                                 <button className="p-1 hover:bg-white/10 rounded-lg transition-colors">
@@ -198,8 +198,8 @@ export default function EventChat({
                                     onClick={handleSend}
                                     disabled={!inputValue.trim() || isSending}
                                     className={`p-1.5 rounded-lg transition-colors ${inputValue.trim()
-                                            ? 'bg-indigo-500 hover:bg-indigo-600 text-white'
-                                            : 'text-text-muted'
+                                        ? 'bg-indigo-500 hover:bg-indigo-600 text-white'
+                                        : 'text-text-muted'
                                         }`}
                                 >
                                     {isSending ? (

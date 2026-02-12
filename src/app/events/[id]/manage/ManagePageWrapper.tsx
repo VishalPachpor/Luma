@@ -14,7 +14,7 @@ interface ManagePageWrapperProps {
 
 export function ManagePageWrapper({ children }: ManagePageWrapperProps) {
     // Set navbar to match the manage page background color
-    useImmersiveNavbar('#13151A');
+    useImmersiveNavbar('#131517');
 
     return <>{children}</>;
 }

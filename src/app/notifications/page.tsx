@@ -40,7 +40,7 @@ export default function NotificationsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0C10] text-[#E0E0E0] font-sans selection:bg-indigo-500/30">
+        <div className="min-h-screen bg-bg-primary text-text-secondary font-sans selection:bg-indigo-500/30">
             {/* Background Gradients */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px]" />
@@ -73,7 +73,7 @@ export default function NotificationsPage() {
                         )}
                     </div>
 
-                    <div className="bg-[#151A29]/50 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                    <div className="bg-surface-1/50 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                         {isLoading ? (
                             <div className="p-12 text-center text-text-muted">
                                 <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-indigo-500 animate-spin mx-auto mb-4" />
@@ -99,7 +99,7 @@ export default function NotificationsPage() {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.05 }}
-                                            className={`group flex gap-4 p-5 hover:bg-white/[0.02] cursor-pointer transition-all ${isUnread ? 'bg-white/[0.02]' : ''
+                                            className={`group flex gap-4 p-5 hover:bg-white/2 cursor-pointer transition-all ${isUnread ? 'bg-white/2' : ''
                                                 }`}
                                             onClick={() => handleNotificationClick(notification)}
                                         >

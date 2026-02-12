@@ -97,7 +97,9 @@ export async function PUT(
         if (endDate) supaUpdate.end_date = new Date(endDate).toISOString();
         if (status) supaUpdate.status = status;
         if (visibility) supaUpdate.visibility = visibility;
+        if (visibility) supaUpdate.visibility = visibility;
         if (requireApproval !== undefined) supaUpdate.require_approval = requireApproval;
+        if ((body as any).settings) supaUpdate.settings = (body as any).settings;
 
         const { data: currentData } = await supabase.from('events').select('metadata').eq('id', id).maybeSingle();
         const currentMeta: any = currentData?.metadata || {};
@@ -185,4 +187,11 @@ export async function DELETE(
         console.error('Delete Event Error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
+}
+
+export async function PATCH(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    return PUT(request, context);
 }

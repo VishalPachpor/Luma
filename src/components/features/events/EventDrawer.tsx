@@ -64,10 +64,10 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed right-0 top-0 h-full w-full md:w-[550px] bg-[#13151A] z-50 overflow-y-auto"
+                        className="fixed right-0 top-0 h-full w-full md:w-[550px] bg-bg-secondary z-50 overflow-y-auto"
                     >
                         {/* Header */}
-                        <div className="sticky top-0 bg-[#0E0F13] z-10 border-b border-white/5">
+                        <div className="sticky top-0 bg-bg-primary z-10 border-b border-white/5">
                             <div className="flex items-center justify-between px-4 h-[60px]">
                                 <div className="flex items-center gap-3">
                                     {/* Close / Collapse Button */}
@@ -116,7 +116,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
 
                             {/* Manage Access Banner */}
                             {isOrganizer && (
-                                <div className="px-6 py-3 bg-[#1C1C1E] border-b border-white/10 flex items-center justify-between">
+                                <div className="px-6 py-3 bg-bg-elevated border-b border-white/10 flex items-center justify-between">
                                     <p className="text-xs text-white/50">You have manage access</p>
                                     <Link
                                         href={`/events/${event.id}/manage`}
@@ -147,7 +147,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                             <h1 className="text-2xl font-bold text-white mb-4">{event.title}</h1>
 
                             {/* Host */}
-                            <div className="flex items-center gap-2 text-sm text-[#888888] mb-6">
+                            <div className="flex items-center gap-2 text-sm text-text-muted mb-6">
                                 <User size={16} />
                                 <span>Hosted by {event.organizer}</span>
                             </div>
@@ -161,7 +161,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                                             <div className="text-sm font-medium text-white">
                                                 {format(new Date(event.date), 'EEEE, MMMM d')}
                                             </div>
-                                            <div className="text-sm text-[#888888]">
+                                            <div className="text-sm text-text-muted">
                                                 {format(new Date(event.date), 'h:mm a')}
                                             </div>
                                         </div>
@@ -171,7 +171,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                                         <div>
                                             <div className="text-sm font-medium text-white">{event.location}</div>
                                             {event.city && (
-                                                <div className="text-sm text-[#888888]">{event.city}</div>
+                                                <div className="text-sm text-text-muted">{event.city}</div>
                                             )}
                                         </div>
                                     </div>
@@ -181,7 +181,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                             {/* Registration */}
                             <div className="mb-8">
                                 <h3 className="text-base font-semibold text-white mb-3">Registration</h3>
-                                <p className="text-sm text-[#888888] mb-4">
+                                <p className="text-sm text-text-muted mb-4">
                                     Welcome! To join the event, please register below.
                                 </p>
                                 <Link
@@ -196,7 +196,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                             {event.description && (
                                 <div className="mb-8">
                                     <h3 className="text-base font-semibold text-white mb-3">About Event</h3>
-                                    <p className="text-sm text-[#CCCCCC] leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
                                         {event.description}
                                     </p>
                                 </div>
@@ -208,11 +208,11 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                                     <h3 className="text-base font-semibold text-white mb-3">Location</h3>
                                     <div className="text-sm font-medium text-white mb-2">{event.location}</div>
                                     {event.city && (
-                                        <div className="text-sm text-[#888888] mb-4">{event.city}</div>
+                                        <div className="text-sm text-text-muted mb-4">{event.city}</div>
                                     )}
                                     {/* Map placeholder */}
                                     <div className="w-full h-[200px] bg-white/5 rounded-xl border border-white/10 flex items-center justify-center">
-                                        <span className="text-[#666666] text-sm">Map view</span>
+                                        <span className="text-text-disabled text-sm">Map view</span>
                                     </div>
                                 </div>
                             )}
@@ -231,7 +231,7 @@ export function EventDrawer({ event, isOpen, onClose }: EventDrawerProps) {
                                     </div>
                                     <div>
                                         <div className="text-sm font-medium text-white">{event.organizer}</div>
-                                        <div className="text-xs text-[#888888]">Event Host</div>
+                                        <div className="text-xs text-text-muted">Event Host</div>
                                     </div>
                                 </div>
                             </div>

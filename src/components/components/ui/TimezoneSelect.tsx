@@ -91,7 +91,7 @@ export default function TimezoneSelect({ value, onChange }: TimezoneSelectProps)
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#1C1C1E] border border-white/10 rounded-xl shadow-2xl z-[100] overflow-hidden w-[320px]"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-bg-elevated border border-white/10 rounded-xl shadow-2xl z-100 overflow-hidden w-[320px]"
                         style={{
                             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
                             maxHeight: '400px'
@@ -121,9 +121,8 @@ export default function TimezoneSelect({ value, onChange }: TimezoneSelectProps)
                                             setIsOpen(false);
                                             setSearch('');
                                         }}
-                                        className={`w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-b-0 ${
-                                            value === tz.id ? 'bg-white/10' : ''
-                                        }`}
+                                        className={`w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-b-0 ${value === tz.id ? 'bg-white/10' : ''
+                                            }`}
                                     >
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-white truncate">{tz.city}</p>

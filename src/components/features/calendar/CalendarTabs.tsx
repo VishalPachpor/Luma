@@ -33,7 +33,7 @@ export function CalendarTabs({ calendarId }: CalendarTabsProps) {
                         href={href}
                         className={cn(
                             "relative pb-3 text-[15px] font-medium transition-colors outline-none",
-                            isActive ? "text-white" : "text-[#888888] hover:text-[#AAAAAA]"
+                            isActive ? "text-white" : "text-text-muted hover:text-text-secondary"
                         )}
                     >
                         {tab.name}

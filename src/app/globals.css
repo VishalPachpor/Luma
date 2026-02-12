@@ -3,73 +3,177 @@
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* ============================================
+   * TAILWIND v4 COLOR ALIASES
+   * These let you write bg-page-bg, text-text-muted, etc.
+   * ============================================ */
+
+  /* Backgrounds */
+  --color-page-bg: var(--page-bg);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-hover: var(--bg-hover);
+
+  /* Surfaces (translucent) */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  /* Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-placeholder: var(--text-placeholder);
+
+  /* Borders */
+  --color-border-primary: var(--border-primary);
+  --color-border-secondary: var(--border-secondary);
+  --color-border-hover: var(--border-hover);
+  --color-border-focus: var(--border-focus);
+
+  /* Semantic */
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+
+  /* Accent */
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-blue-soft: var(--accent-blue-soft);
+
+  /* Event accent (dynamic per-event) */
+  --color-event-accent: var(--event-accent);
+  --color-event-accent-soft: var(--event-accent-soft);
+
+  /* Card */
+  --color-card-bg: var(--card-bg);
+  --color-card-bg-hover: var(--card-bg-hover);
+  --color-card-border: var(--card-border);
+
+  /* Input */
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-border-hover: var(--input-border-hover);
+  --color-input-border-focus: var(--input-border-focus);
+
+  /* Button */
+  --color-btn-primary-bg: var(--btn-primary-bg);
+  --color-btn-primary-text: var(--btn-primary-text);
+  --color-btn-secondary-bg: var(--btn-secondary-bg);
+  --color-btn-secondary-border: var(--btn-secondary-border);
 }
 
 /* ============================================
- * LUMA DESIGN SYSTEM
- * Hybrid: Luma's exact colors + Professional token structure
+ * LUMA-INSPIRED DESIGN SYSTEM
+ * 3-Layer Architecture: Primitive → Semantic → Theme
  * ============================================ */
 
 :root {
   /* ============================================
-   * 1. FOUNDATION - Background Layers
-   * Neutral dark, NOT blue-tinted
+   * LAYER 1: PRIMITIVE TOKENS (raw values)
+   * Named by shade, not by usage
    * ============================================ */
-  --bg-primary: #0E0F13;
-  /* App background */
-  --bg-secondary: #121418;
-  /* Page sections */
-  --bg-tertiary: #161A1F;
-  /* Cards / panels */
-  --bg-elevated: #1C2026;
-  /* Inputs / modals */
-  --bg-hover: #232830;
-  /* Hover states */
+  --gray-5: #131517;
+  --gray-8: #191B1F;
+  --gray-12: #1E2024;
+  --gray-16: #252729;
+  --gray-20: #2C2E32;
+  --gray-30: #3A3D42;
+  --gray-40: #5A5D63;
+  --gray-50: #6E7178;
+  --gray-60: #8E9198;
+  --gray-70: #C9D1D9;
+  --gray-90: #FFFFFF;
+
+  --blue-50: #3B82F6;
+  --green-50: #22C55E;
+  --yellow-50: #FBBF24;
+  --red-50: #EF4444;
 
   /* ============================================
-   * 2. SURFACE & BORDER COLORS
-   * Opacity-based for flexibility
+   * LAYER 2: SEMANTIC TOKENS (dark theme)
+   * Named by function/component
    * ============================================ */
+
+  /* Page */
+  --page-bg: var(--gray-5);
+  --page-text: var(--gray-90);
+
+  /* Backgrounds — 5 distinct layers max */
+  --bg-primary: var(--gray-5);
+  /* App background */
+  --bg-secondary: var(--gray-8);
+  /* Page sections */
+  --bg-tertiary: var(--gray-12);
+  /* Cards / panels */
+  --bg-elevated: var(--gray-16);
+  /* Inputs / modals */
+  --bg-hover: var(--gray-20);
+  /* Hover states */
+
+  /* Surfaces — translucent (Luma approach) */
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --surface-3: rgba(255, 255, 255, 0.10);
+
+  /* Cards — translucent with glass */
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-bg-hover: rgba(255, 255, 255, 0.06);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-radius: 0.75rem;
+
+  /* Borders — opacity-based */
   --border-primary: rgba(255, 255, 255, 0.08);
   --border-secondary: rgba(255, 255, 255, 0.12);
   --border-hover: rgba(255, 255, 255, 0.18);
   --border-focus: rgba(255, 255, 255, 0.25);
 
-  /* ============================================
-   * 3. TEXT HIERARCHY
-   * High contrast for accessibility
-   * ============================================ */
-  --text-primary: #FFFFFF;
-  --text-secondary: #C9D1D9;
-  --text-muted: #8B949E;
-  --text-disabled: #5A6270;
-  --text-placeholder: #6B7280;
+  /* Text — 4-level hierarchy */
+  --text-primary: var(--gray-90);
+  /* #FFFFFF */
+  --text-secondary: var(--gray-70);
+  /* #C9D1D9 */
+  --text-muted: var(--gray-60);
+  /* #8B949E */
+  --text-disabled: var(--gray-40);
+  /* #5A6270 */
+  --text-placeholder: var(--gray-50);
+  /* #6B7280 */
 
-  /* ============================================
-   * 4. ACCENT COLORS
-   * White-based (Luma's approach)
-   * ============================================ */
-  --accent-primary: #FFFFFF;
+  /* Accent — white-based CTA (Luma dark-mode style) */
+  --accent-primary: var(--gray-90);
   --accent-soft: rgba(255, 255, 255, 0.1);
-  --accent-blue: #3B82F6;
-  /* For focus rings only */
+  --accent-blue: var(--blue-50);
   --accent-blue-soft: rgba(59, 130, 246, 0.2);
 
   /* ============================================
-   * 5. SEMANTIC COLORS
-   * Status indicators
+   * LAYER 3: THEME TOKENS (per-event overridable)
+   * Events can override --event-accent to tint UI
    * ============================================ */
-  --success: #22C55E;
+  --event-accent: #FFFFFF;
+  --event-accent-soft: rgba(255, 255, 255, 0.1);
+
+  /* ============================================
+   * SEMANTIC STATUS COLORS
+   * ============================================ */
+  --success: var(--green-50);
   --success-soft: rgba(34, 197, 94, 0.15);
-  --warning: #FBBF24;
+  --warning: var(--yellow-50);
   --warning-soft: rgba(251, 191, 36, 0.15);
   --warning-border: rgba(251, 191, 36, 0.3);
-  --error: #EF4444;
+  --error: var(--red-50);
   --error-soft: rgba(239, 68, 68, 0.15);
 
   /* ============================================
-   * 6. SHADOWS & EFFECTS
-   * Soft, layered shadows for depth
+   * SHADOWS & EFFECTS
    * ============================================ */
   --shadow-card: 0px 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-dropdown: 0px 4px 12px rgba(0, 0, 0, 0.4);
@@ -77,35 +181,27 @@
   --shadow-glow: 0px 0px 20px -5px rgba(255, 255, 255, 0.1);
 
   /* ============================================
-   * 7. COMPONENT-SPECIFIC TOKENS
-   * Settings page & forms
+   * INPUT & BUTTON TOKENS
    * ============================================ */
-  --input-bg: #1C2026;
-  --input-border: rgba(255, 255, 255, 0.08);
+  --input-bg: var(--bg-elevated);
+  --input-border: var(--border-primary);
   --input-border-hover: rgba(255, 255, 255, 0.15);
-  --input-border-focus: rgba(255, 255, 255, 0.25);
+  --input-border-focus: var(--border-focus);
 
-  --btn-primary-bg: #FFFFFF;
-  --btn-primary-text: #0E0F13;
-  --btn-secondary-bg: #1C2026;
+  --btn-primary-bg: var(--gray-90);
+  --btn-primary-text: var(--gray-5);
+  --btn-secondary-bg: var(--bg-elevated);
   --btn-secondary-border: rgba(255, 255, 255, 0.2);
 
   --badge-success-bg: rgba(34, 197, 94, 0.2);
-  --badge-success-text: #22C55E;
+  --badge-success-text: var(--green-50);
 
   /* ============================================
-   * LEGACY TOKENS (backward compatibility)
+   * LEGACY ALIASES (backward compatibility)
    * ============================================ */
   --bg-base: var(--bg-primary);
-  --surface-1: rgba(255, 255, 255, 0.03);
-  --surface-2: rgba(255, 255, 255, 0.06);
-  --surface-3: rgba(255, 255, 255, 0.10);
-  --accent-main: linear-gradient(135deg, #7B61FF, #FF5ACD);
-  --accent-secondary: linear-gradient(135deg, #6C8CFF, #8B7CF6);
-  --accent-glow: rgba(123, 97, 255, 0.4);
-  --bg-glow: rgba(123, 97, 255, 0.05);
-  --background: #0E0F13;
-  --foreground: #ffffff;
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
 
   /* Settings page compatibility */
   --luma-bg-page: var(--bg-secondary);
@@ -124,8 +220,8 @@
 
 @layer base {
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--page-bg);
+    color: var(--page-text);
     font-family: var(--font-inter), sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -137,7 +233,7 @@
  * ============================================ */
 @layer utilities {
 
-  /* Glass Panel Effect */
+  /* Glass Panel Effect (Luma-style) */
   .glass-panel {
     background-color: var(--surface-1);
     border: 1px solid var(--border-primary);
@@ -152,9 +248,21 @@
     background-color: var(--surface-2);
   }
 
-  /* Text Gradient */
+  /* Glass Morphism — translucent card effect */
+  .glass-morphism {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .glass-morphism:hover {
+    background-color: var(--card-bg-hover);
+  }
+
+  /* Text Gradient (legacy — kept for backward compat) */
   .text-gradient {
-    background: var(--accent-main);
+    background: linear-gradient(135deg, #7B61FF, #FF5ACD);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

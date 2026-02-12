@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Event } from '@/types/event';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { toast } from 'sonner';
 
 interface EditEventSidebarProps {
     event: Event;
@@ -107,7 +108,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
             onClose();
         } catch (error) {
             console.error(error);
-            alert('Failed to update event');
+            toast.error('Failed to update event');
         } finally {
             setIsSubmitting(false);
         }
@@ -124,7 +125,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
             />
 
             {/* Sidebar */}
-            <div className={`fixed top-0 right-0 h-full w-[480px] bg-[#141414] border-l border-white/10 shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed top-0 right-0 h-full w-[480px] bg-bg-primary border-l border-white/10 shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/5">
@@ -146,7 +147,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                             type="text"
                             value={formData.name}
                             onChange={(e) => updateField('name', e.target.value)}
-                            className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:border-white/20 outline-none transition-colors"
+                            className="w-full bg-bg-elevated border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:border-white/20 outline-none transition-colors"
                             placeholder="Event Title"
                         />
                     </div>
@@ -162,7 +163,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                         <textarea
                             value={formData.description}
                             onChange={(e) => updateField('description', e.target.value)}
-                            className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:border-white/20 outline-none transition-colors min-h-[100px] resize-none"
+                            className="w-full bg-bg-elevated border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:border-white/20 outline-none transition-colors min-h-[100px] resize-none"
                             placeholder="Everyone enjoys crypto..."
                         />
                     </div>
@@ -176,7 +177,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                                 type="text"
                                 value={formData.location}
                                 onChange={(e) => updateField('location', e.target.value)}
-                                className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-white/20 focus:border-white/20 outline-none transition-colors"
+                                className="w-full bg-bg-elevated border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-white/20 focus:border-white/20 outline-none transition-colors"
                                 placeholder="Add Event Location"
                             />
                         </div>
@@ -194,7 +195,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                                     onClick={() => updateField('theme', t)}
                                     className={`relative aspect-4/3 rounded-lg border cursor-pointer overflow-hidden group ${formData.theme === t ? 'border-blue-500 ring-1 ring-blue-500/50' : 'border-white/10 hover:border-white/30'}`}
                                 >
-                                    <div className={`absolute inset-0 ${t === 'Minimal' ? 'bg-[#222]' : t === 'Quantum' ? 'bg-linear-to-br from-blue-500 to-purple-500' : 'bg-linear-to-r from-red-500 to-orange-500'}`}>
+                                    <div className={`absolute inset-0 ${t === 'Minimal' ? 'bg-bg-hover' : t === 'Quantum' ? 'bg-linear-to-br from-blue-500 to-purple-500' : 'bg-linear-to-r from-red-500 to-orange-500'}`}>
                                         <div className="absolute top-2 left-2 w-8 h-1 bg-white/20 rounded-full"></div>
                                         <div className="absolute top-4 left-2 w-5 h-1 bg-white/10 rounded-full"></div>
                                     </div>
@@ -207,14 +208,14 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
 
                         {/* Controls */}
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-[#1C1C1E] rounded-lg p-2.5 flex items-center justify-between border border-white/10 cursor-pointer hover:border-white/20">
+                            <div className="bg-bg-elevated rounded-lg p-2.5 flex items-center justify-between border border-white/10 cursor-pointer hover:border-white/20">
                                 <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 rounded-full bg-emerald-400"></div>
                                     <span className="text-xs text-white">Color</span>
                                 </div>
                                 <span className="text-xs text-white/40">Custom</span>
                             </div>
-                            <div className="bg-[#1C1C1E] rounded-lg p-2.5 flex items-center justify-between border border-white/10 cursor-pointer hover:border-white/20">
+                            <div className="bg-bg-elevated rounded-lg p-2.5 flex items-center justify-between border border-white/10 cursor-pointer hover:border-white/20">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-mono text-white/70">Ag</span>
                                     <span className="text-xs text-white">Font</span>
@@ -227,7 +228,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                     {/* Time */}
                     <div className="space-y-4">
                         <label className="text-white font-semibold text-sm">Time</label>
-                        <div className="bg-[#1C1C1E] border border-white/10 rounded-xl p-4">
+                        <div className="bg-bg-elevated border border-white/10 rounded-xl p-4">
                             <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-4">
                                 <div className="flex flex-col">
                                     <span className="text-xs text-white/40 mb-1">Start Date</span>
@@ -273,7 +274,7 @@ export function EditEventSidebar({ event, isOpen, onClose }: EditEventSidebarPro
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-white/5 bg-[#141414]">
+                <div className="p-6 border-t border-white/5 bg-bg-primary">
                     <button
                         onClick={handleSubmit}
                         disabled={isSubmitting}

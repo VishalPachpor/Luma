@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Rss, Loader2, Copy, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 // Google icon
 const GoogleIcon = () => (
@@ -74,7 +75,7 @@ export default function AccountSyncing() {
 
             // Check if Google Client ID is configured
             if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-                alert('Google OAuth requires configuration. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment.');
+                toast.info('Google OAuth requires configuration. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment.');
             } else {
                 window.open(googleOAuthUrl, '_blank', 'width=500,height=600');
             }
@@ -95,17 +96,17 @@ export default function AccountSyncing() {
             </div>
 
             {/* Sync Options List */}
-            <div className="bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg divide-y divide-[var(--border-primary)]">
+            <div className="bg-(--bg-tertiary) border border-(--border-primary) rounded-lg divide-y divide-(--border-primary)">
                 {/* iCal Subscription */}
                 <div className="p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-start gap-3">
                             <div className="mt-0.5">
-                                <Rss className="w-5 h-5 text-[var(--text-muted)]" />
+                                <Rss className="w-5 h-5 text-(--text-muted)" />
                             </div>
                             <div>
                                 <h4 className="text-sm font-medium text-white">Calendar Syncing</h4>
-                                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                <p className="text-xs text-(--text-muted) mt-0.5">
                                     Sync your Pulse events with your Google, Outlook, or Apple calendar.
                                 </p>
                             </div>
@@ -114,7 +115,7 @@ export default function AccountSyncing() {
                             <button
                                 onClick={handleAddIcal}
                                 disabled={loading === 'ical'}
-                                className="shrink-0 px-4 py-2 bg-[var(--bg-elevated)] border border-[var(--btn-secondary-border)] rounded-lg text-white text-sm font-medium hover:bg-[var(--bg-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+                                className="shrink-0 px-4 py-2 bg-(--bg-elevated) border border-(--btn-secondary-border) rounded-lg text-white text-sm font-medium hover:bg-(--bg-hover) disabled:opacity-50 transition-colors whitespace-nowrap"
                             >
                                 {loading === 'ical' ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -128,21 +129,21 @@ export default function AccountSyncing() {
                     {/* iCal URL Display */}
                     {showIcalUrl && (
                         <div className="mt-4 space-y-3">
-                            <p className="text-xs text-[var(--text-muted)]">
+                            <p className="text-xs text-(--text-muted)">
                                 Copy this URL and add it to your calendar app:
                             </p>
                             <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] font-mono overflow-hidden overflow-ellipsis">
+                                <div className="flex-1 bg-(--bg-elevated) border border-(--border-primary) rounded-lg px-3 py-2 text-sm text-(--text-secondary) font-mono overflow-hidden overflow-ellipsis">
                                     {generateIcalUrl()}
                                 </div>
                                 <button
                                     onClick={handleCopyIcalUrl}
-                                    className="shrink-0 p-2 bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-hover)] transition-colors"
+                                    className="shrink-0 p-2 bg-(--bg-elevated) border border-(--border-primary) rounded-lg hover:bg-(--bg-hover) transition-colors"
                                 >
                                     {copied ? (
-                                        <CheckCircle className="w-4 h-4 text-[var(--success)]" />
+                                        <CheckCircle className="w-4 h-4 text-(--success)" />
                                     ) : (
-                                        <Copy className="w-4 h-4 text-[var(--text-muted)]" />
+                                        <Copy className="w-4 h-4 text-(--text-muted)" />
                                     )}
                                 </button>
                             </div>
@@ -151,7 +152,7 @@ export default function AccountSyncing() {
                                     href={`https://calendar.google.com/calendar/r/settings/addbyurl?url=${encodeURIComponent(generateIcalUrl())}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[var(--accent-blue)] hover:underline flex items-center gap-1"
+                                    className="text-(--accent-blue) hover:underline flex items-center gap-1"
                                 >
                                     Add to Google Calendar <ExternalLink className="w-3 h-3" />
                                 </a>
@@ -166,7 +167,7 @@ export default function AccountSyncing() {
                         <div className="mt-0.5"><GoogleIcon /></div>
                         <div>
                             <h4 className="text-sm font-medium text-white">Sync Contacts with Google</h4>
-                            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                            <p className="text-xs text-(--text-muted) mt-0.5">
                                 Sync your Gmail contacts to easily invite them to your events.
                             </p>
                         </div>
@@ -175,8 +176,8 @@ export default function AccountSyncing() {
                         onClick={handleEnableGoogleSync}
                         disabled={loading === 'google'}
                         className={`shrink-0 px-4 py-2 border rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${googleSyncEnabled
-                                ? 'bg-[var(--success-soft)] border-[var(--success)]/30 text-[var(--success)]'
-                                : 'bg-[var(--bg-elevated)] border-[var(--btn-secondary-border)] text-white hover:bg-[var(--bg-hover)]'
+                            ? 'bg-(--success-soft) border-(--success)/30 text-(--success)'
+                            : 'bg-(--bg-elevated) border-(--btn-secondary-border) text-white hover:bg-(--bg-hover)'
                             } disabled:opacity-50`}
                     >
                         {loading === 'google' ? (

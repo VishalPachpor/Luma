@@ -79,13 +79,13 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
     const publicUrl = `https://planx.vercel.app/events/${event.id}`;
 
     return (
-        <div className="pt-8 pb-12 space-y-8">
+        <div className="pb-12 space-y-8">
             {/* TOP ACTIONS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <InviteTrigger
                     eventId={id}
                     eventTitle={event.title}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-[#1e2025] hover:bg-[#25282e] border border-white/5 transition-all group text-left w-full"
+                    className="flex items-center gap-3 p-4 rounded-xl bg-surface-1 hover:bg-surface-2 border border-white/5 transition-all group text-left w-full"
                 >
                     <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 transition-colors">
                         <Mail className="w-5 h-5 text-blue-500" />
@@ -95,7 +95,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                     </div>
                 </InviteTrigger>
 
-                <Link href={`/events/${id}/manage/blasts`} className="flex items-center gap-3 p-4 rounded-xl bg-[#1e2025] hover:bg-[#25282e] border border-white/5 transition-all group text-left">
+                <Link href={`/events/${id}/manage/blasts`} className="flex items-center gap-3 p-4 rounded-xl bg-surface-1 hover:bg-surface-2 border border-white/5 transition-all group text-left">
                     <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 transition-colors">
                         <MessageCircle className="w-5 h-5 text-purple-500" />
                     </div>
@@ -107,7 +107,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                 <ShareTrigger
                     eventUrl={publicUrl}
                     eventTitle={event.title}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-[#1e2025] hover:bg-[#25282e] border border-white/5 transition-all group text-left"
+                    className="flex items-center gap-3 p-4 rounded-xl bg-surface-1 hover:bg-surface-2 border border-white/5 transition-all group text-left"
                 >
                     <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center shrink-0 group-hover:bg-pink-500/20 transition-colors">
                         <Share2 className="w-5 h-5 text-pink-500" />
@@ -118,20 +118,20 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                 </ShareTrigger>
             </div>
             {/* SINGLE LARGE CARD CONTAINER - Luma Spec */}
-            <div className="bg-[#13151A] border border-white/10 rounded-2xl p-6 shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
+            <div className="bg-bg-secondary border border-white/10 rounded-2xl p-6 shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
 
-                <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)] gap-6">
 
                     {/* LEFT COLUMN: EVENT PREVIEW CARD (400px fixed) - HORIZONTAL LAYOUT */}
-                    <div className="rounded-xl bg-linear-to-b from-[#1a3f2f] to-[#0f2a20] border border-white/10 overflow-hidden flex flex-col">
+                    <div className="rounded-xl bg-linear-to-b from-emerald-900/40 to-emerald-950/60 border border-white/10 overflow-hidden flex flex-col">
 
                         {/* TOP SECTION: HORIZONTAL */}
                         <div className="flex">
                             {/* LEFT COLUMN: Image + Hosted By */}
-                            <div className="w-[140px] shrink-0 flex flex-col border-r border-white/5 bg-[#123628]">
+                            <div className="w-[140px] shrink-0 flex flex-col border-r border-white/5 bg-emerald-900/30">
                                 {/* Event Image - Floating with padding */}
                                 <div className="p-3 pb-0">
-                                    <div className="w-full aspect-square relative bg-[#0E2A25] rounded-lg overflow-hidden shadow-sm">
+                                    <div className="w-full aspect-square relative bg-emerald-950/50 rounded-lg overflow-hidden shadow-sm">
                                         {event.coverImage ? (
                                             <Image
                                                 src={event.coverImage}
@@ -140,7 +140,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                                                 className="object-cover"
                                             />
                                         ) : (
-                                            <div className="absolute inset-0 bg-linear-to-br from-[#10B981] via-[#059669] to-[#047857]" />
+                                            <div className="absolute inset-0 bg-linear-to-br from-emerald-500 via-emerald-600 to-emerald-700" />
                                         )}
                                     </div>
                                 </div>
@@ -243,7 +243,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
 
 
                     {/* RIGHT COLUMN: WHEN & WHERE */}
-                    <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-5 min-w-0">
                         <h3 className="text-2xl font-semibold text-white">When & Where</h3>
 
                         {/* Date Block */}
@@ -267,9 +267,9 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                             <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
                                 <MapPin className="w-5 h-5 text-white/60" />
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                                 <p className="font-medium text-white flex items-center gap-1.5">
-                                    <span className="truncate">{event.location || 'TBD'}</span>
+                                    <span className="truncate flex-1 min-w-0">{event.location || 'TBD'}</span>
                                     <ExternalLink className="w-3.5 h-3.5 text-white/40 shrink-0" />
                                 </p>
                                 <p className="text-[13px] text-white/60 leading-snug">
@@ -306,27 +306,27 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <Facebook className="w-5 h-5 text-[#888] hover:text-white cursor-pointer transition-colors" />
+                                <Facebook className="w-5 h-5 text-text-muted hover:text-white cursor-pointer transition-colors" />
                             </a>
                             <a
                                 href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}&url=${encodeURIComponent(publicUrl)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <Twitter className="w-5 h-5 text-[#888] hover:text-white cursor-pointer transition-colors" />
+                                <Twitter className="w-5 h-5 text-text-muted hover:text-white cursor-pointer transition-colors" />
                             </a>
                             <a
                                 href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publicUrl)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <Linkedin className="w-5 h-5 text-[#888] hover:text-white cursor-pointer transition-colors" />
+                                <Linkedin className="w-5 h-5 text-text-muted hover:text-white cursor-pointer transition-colors" />
                             </a>
                             <a
                                 href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}&url=${encodeURIComponent(publicUrl)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-5 h-5 rounded-full border border-[#888] flex items-center justify-center text-[#888] text-[10px] hover:text-white hover:border-white cursor-pointer transition-colors font-serif"
+                                className="w-5 h-5 rounded-full border border-text-muted flex items-center justify-center text-text-muted text-[10px] hover:text-white hover:border-white cursor-pointer transition-colors font-serif"
                             >
                                 Th
                             </a>
@@ -336,9 +336,9 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                     <div className="flex items-center gap-3">
                         <EditEventTrigger
                             event={event as any}
-                            className="px-5 py-2.5 bg-[#23252A] hover:bg-[#2A2D35] text-white font-medium rounded-xl border border-white/10 transition-all text-sm"
+                            className="px-5 py-2.5 bg-surface-2 hover:bg-surface-3 text-white font-medium rounded-xl border border-white/10 transition-all text-sm"
                         />
-                        <Link href={`/events/${id}/edit`} className="px-5 py-2.5 bg-[#23252A] hover:bg-[#2A2D35] text-white font-medium rounded-xl border border-white/10 transition-all text-sm">
+                        <Link href={`/events/${id}/edit`} className="px-5 py-2.5 bg-surface-2 hover:bg-surface-3 text-white font-medium rounded-xl border border-white/10 transition-all text-sm">
                             Change Photo
                         </Link>
                     </div>
@@ -362,7 +362,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                     </InviteTrigger>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#1e2025] border border-white/5 flex items-start gap-4">
+                <div className="p-4 rounded-xl bg-surface-1 border border-white/5 flex items-start gap-4">
                     <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
                         <Mail className="w-5 h-5 text-white/20" />
                     </div>
@@ -387,7 +387,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
                     <p className="text-sm text-white/50">Control how people can find your event.</p>
                 </div>
 
-                <div className="bg-[#1e2025] border border-white/5 rounded-xl p-5">
+                <div className="bg-surface-1 border border-white/5 rounded-xl p-5">
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 rounded-full bg-white/5 shrink-0 overflow-hidden relative">
                             {event.coverImage ? (

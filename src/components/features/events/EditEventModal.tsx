@@ -5,6 +5,7 @@ import Modal from '@/components/modals/Modal';
 import { Button } from '@/components/components/ui';
 import { Event } from '@/types';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface EditEventModalProps {
     event: Event | null;
@@ -66,7 +67,7 @@ export default function EditEventModal({ event, open, onOpenChange, onSave }: Ed
             onOpenChange(false);
         } catch (error) {
             console.error('Failed to save:', error);
-            alert('Failed to update event');
+            toast.error('Failed to update event');
         } finally {
             setIsLoading(false);
         }

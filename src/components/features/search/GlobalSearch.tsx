@@ -101,7 +101,7 @@ export default function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) 
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+        <div className="fixed inset-0 z-100 flex items-start justify-center pt-[15vh] px-4">
             {/* Backdrop */}
             <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -109,7 +109,7 @@ export default function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) 
             />
 
             {/* Command Palette */}
-            <div className="relative w-full max-w-2xl bg-[#1A1D24] rounded-xl shadow-2xl overflow-hidden border border-white/10 ring-1 ring-white/5 animate-in fade-in zoom-in-95 duration-100 flex flex-col max-h-[70vh]">
+            <div className="relative w-full max-w-2xl bg-bg-secondary rounded-xl shadow-2xl overflow-hidden border border-white/10 ring-1 ring-white/5 animate-in fade-in zoom-in-95 duration-100 flex flex-col max-h-[70vh]">
                 <Command
                     shouldFilter={false} // Backend filtering
                     className="w-full h-full flex flex-col text-white bg-transparent"
