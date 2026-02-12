@@ -21,7 +21,7 @@ export function DashboardTabs({ eventId }: DashboardTabsProps) {
     ];
 
     return (
-        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar h-full">
             {tabs.map((tab) => {
                 const isActive = pathname === tab.href || pathname?.startsWith(`${tab.href}/`);
 
@@ -29,7 +29,7 @@ export function DashboardTabs({ eventId }: DashboardTabsProps) {
                     <Link
                         key={tab.href}
                         href={tab.href}
-                        className={`px-1 py-3 text-[15px] font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
+                        className={`px-1 h-full flex items-center text-[15px] font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
                             ? 'border-white text-white'
                             : 'border-transparent text-text-muted hover:text-white'
                             }`}

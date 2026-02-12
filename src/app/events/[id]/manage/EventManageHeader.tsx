@@ -1,15 +1,4 @@
 'use client';
-
-/**
- * EventManageHeader Component (Luma-style Progressive Collapsing Header)
- * 
- * Implements a two-stage collapsing header:
- * - Stage 1 (Top): Full header with breadcrumb, title, tabs
- * - Stage 2 (Scrolled): Compact sticky header with title + tabs only
- * 
- * Uses backdrop-filter blur and smooth transitions for premium feel.
- */
-
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -30,95 +19,97 @@ export function EventManageHeader({
     calendarLink
 }: EventManageHeaderProps) {
     const [isScrolled, setIsScrolled] = useState(false);
-    const headerRef = useRef<HTMLElement>(null);
+    const bigHeaderRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const handleScroll = () => {
-            // Collapse after scrolling 60px
-            setIsScrolled(window.scrollY > 60);
-        };
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // If Big Header is NOT intersecting (scrolled out of view), we are "scrolled"
+                // We use a negative rootMargin to trigger earlier/later if needed
+                setIsScrolled(!entry.isIntersecting);
+            },
+            {
+                root: null,
+                threshold: 0,
+                // Trigger when the bottom of the big header passes the top of the viewport (offset by nav height)
+                rootMargin: '-80px 0px 0px 0px'
+            }
+        );
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll(); // Check initial state
+        if (bigHeaderRef.current) {
+            observer.observe(bigHeaderRef.current);
+        }
 
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => observer.disconnect();
     }, []);
 
     return (
-        <header
-            ref={headerRef}
-            className={cn(
-                "sticky top-[64px] z-40 transition-all duration-300 ease-out",
-                isScrolled
-                    ? "bg-bg-primary backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20"
-                    : "bg-bg-primary"
-            )}
-        >
-            <div className="max-w-[800px] mx-auto px-6">
-                {/* Main Header Content - Collapses on scroll */}
-                <div
-                    className={cn(
-                        "flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden will-change-[max-height,opacity,transform]",
-                        isScrolled
-                            ? "max-h-0 opacity-0 -translate-y-4 pointer-events-none"
-                            : "max-h-[200px] opacity-100 translate-y-0 pt-6 pb-4"
-                    )}
-                >
-                    <div className="flex flex-col gap-2">
-                        {/* Breadcrumb */}
-                        <div className="flex items-center gap-1.5 text-text-muted text-[13px] font-medium">
-                            <Link href={calendarLink} className="hover:text-white transition-colors">
-                                {calendarName}
-                            </Link>
-                            <span className="text-text-disabled">›</span>
-                        </div>
-                        {/* Title */}
+        <>
+            {/* Big Header - Scrolls away normally */}
+            <div
+                ref={bigHeaderRef}
+                className="max-w-[800px] mx-auto px-6 pt-8 pb-4"
+            >
+                <div className="flex flex-col gap-2">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center gap-1.5 text-text-muted text-[13px] font-medium">
+                        <Link href={calendarLink} className="hover:text-white transition-colors">
+                            {calendarName}
+                        </Link>
+                        <span className="text-text-disabled">›</span>
+                    </div>
+                    {/* Title */}
+                    <div className="flex items-center justify-between">
                         <h1 className="text-3xl font-semibold text-white tracking-tight leading-tight">
                             {eventTitle}
                         </h1>
+                        {/* Event Page Button */}
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href={`/events/${eventId}`}
+                                target="_blank"
+                                className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all shadow-sm group"
+                            >
+                                Event Page
+                                <ArrowLeft className="w-3 h-3 rotate-135 text-text-muted group-hover:text-white transition-colors" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sticky Header Container */}
+            <header
+                className={cn(
+                    "sticky top-[64px] z-40 transition-all duration-300 ease-out border-b border-transparent bg-bg-primary",
+                    isScrolled && "backdrop-blur-xl border-white/5 shadow-lg shadow-black/20"
+                )}
+            >
+                <div className="max-w-[800px] mx-auto px-6 h-[50px] flex items-center justify-between gap-4">
+                    {/* Tabs - Always visible, aligned LEFT, no shifting */}
+                    <div className="flex-1 flex justify-start min-w-0 overflow-hidden h-full items-end">
+                        <DashboardTabs eventId={eventId} />
                     </div>
 
-                    {/* Event Page Button */}
-                    <div className="flex items-center gap-3 self-end mb-1">
+                    {/* Actions - Fades in on Scroll (Right Side) */}
+                    <div
+                        className={cn(
+                            "flex items-center gap-3 transition-opacity duration-300 ease-in-out shrink-0",
+                            isScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+                        )}
+                    >
+                        {/* Event Page Button - Compact Icon Only */}
                         <Link
                             href={`/events/${eventId}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all shadow-sm group"
+                            className="flex items-center justify-center w-8 h-8 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg transition-all group"
+                            title="View Event Page"
                         >
-                            Event Page
-                            <ArrowLeft className="w-3 h-3 rotate-135 text-text-muted group-hover:text-white transition-colors" />
+                            <ArrowLeft className="w-4 h-4 rotate-135 text-text-muted group-hover:text-white transition-colors" />
                         </Link>
                     </div>
                 </div>
-
-                {/* Compact Header - Visible when scrolled */}
-                <div
-                    className={cn(
-                        "flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden will-change-[max-height,opacity,transform]",
-                        isScrolled
-                            ? "max-h-[48px] opacity-100 translate-y-0 py-2"
-                            : "max-h-0 opacity-0 translate-y-4 py-0 pointer-events-none"
-                    )}
-                >
-                    {/* Compact Title */}
-                    <h2 className="text-lg font-semibold text-white truncate max-w-[400px]">
-                        {eventTitle}
-                    </h2>
-
-                    {/* Event Page Button - Compact */}
-                    <Link
-                        href={`/events/${eventId}`}
-                        target="_blank"
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg transition-all group shrink-0"
-                    >
-                        Event Page
-                        <ArrowLeft className="w-3 h-3 rotate-135 text-text-muted group-hover:text-white transition-colors" />
-                    </Link>
-                </div>
-
-                {/* Tabs - Always visible, acts as anchor */}
-                <DashboardTabs eventId={eventId} />
-            </div>
-        </header>
+            </header>
+        </>
     );
 }
