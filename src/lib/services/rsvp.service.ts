@@ -72,7 +72,7 @@ export async function getUserRSVP(eventId: string, userId: string): Promise<Even
 
         let status: RSVPStatus = 'pending';
         // Map GuestStatus
-        if (['issued', 'approved', 'scanned'].includes(guest.status)) {
+        if (['issued', 'approved', 'scanned', 'staked'].includes(guest.status)) {
             status = 'going';
         } else if (guest.status === 'pending_approval') {
             status = 'pending';
@@ -109,7 +109,7 @@ export async function getEventAttendees(eventId: string): Promise<EventAttendee[
             displayName: 'Guest',
             photoURL: null,
             email: '',
-            status: ['issued', 'scanned', 'approved'].includes(guest.status) ? 'going' : 'pending',
+            status: ['issued', 'scanned', 'approved', 'staked'].includes(guest.status) ? 'going' : 'pending',
             rsvpAt: new Date(guest.createdAt),
         }));
     } catch (error) {

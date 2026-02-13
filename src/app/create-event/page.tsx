@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/components/ui';
 import TimezoneSelect from '@/components/components/ui/TimezoneSelect';
+import TimePicker from '@/components/components/ui/TimePicker';
+import DatePicker from '@/components/components/ui/DatePicker';
 
 import { CalendarSelector } from '@/components/features/events/CalendarSelector';
 import { VisibilityToggle, EventVisibility } from '@/components/features/events/VisibilityToggle';
@@ -76,6 +78,7 @@ interface EventFormData {
     // Staking
     requireStake: boolean;
     stakeAmount: number | null;
+    stakeCurrency: string;
     organizerWallet: string;
 }
 
@@ -121,6 +124,7 @@ function CreateEventForm() {
         // Staking
         requireStake: false,
         stakeAmount: null,
+        stakeCurrency: 'ETH',
         organizerWallet: '',
     });
 
@@ -154,11 +158,9 @@ function CreateEventForm() {
         }
     };
 
-    // Refs for date/time pickers
-    const startDateRef = useRef<HTMLInputElement>(null);
-    const startTimeRef = useRef<HTMLInputElement>(null);
-    const endDateRef = useRef<HTMLInputElement>(null);
-    const endTimeRef = useRef<HTMLInputElement>(null);
+    // Refs cleaned up - no longer needed for custom components
+    // const startDateRef = useRef<HTMLInputElement>(null);
+    // const endDateRef = useRef<HTMLInputElement>(null);
 
     // Initialize dates on mount
     useEffect(() => {
@@ -303,6 +305,7 @@ function CreateEventForm() {
                 // Staking settings
                 requireStake: formData.requireStake,
                 stakeAmount: formData.stakeAmount || undefined,
+                stakeCurrency: formData.stakeCurrency || 'ETH',
                 organizerWallet: formData.organizerWallet || undefined,
             });
 
@@ -319,9 +322,9 @@ function CreateEventForm() {
     };
 
     return (
-        <div className="min-h-screen bg-(--bg-page) text-text-primary transition-colors duration-500 ease-in-out" style={{ colorScheme: 'dark' }}>
+        <div className="min-h-[calc(100vh-64px)] bg-(--bg-page) text-text-primary transition-colors duration-500 ease-in-out" style={{ colorScheme: 'dark' }}>
             {/* Centered Container - Like Luma */}
-            <div className="max-w-[1000px] mx-auto px-6 pt-20 pb-16 min-h-screen">
+            <div className="max-w-[1000px] mx-auto px-6 pt-6 pb-6">
 
                 {/* Two Column Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
@@ -417,74 +420,16 @@ function CreateEventForm() {
                                             <span className="text-[13px] text-white/70">Start</span>
                                         </div>
                                         <div className="flex-1 flex items-center gap-3">
-                                            <div className="relative">
-                                                <div
-                                                    onClick={() => {
-                                                        if (startDateRef.current) {
-                                                            try {
-                                                                if ('showPicker' in HTMLInputElement.prototype) {
-                                                                    startDateRef.current.showPicker();
-                                                                } else {
-                                                                    startDateRef.current.click();
-                                                                }
-                                                            } catch (e) {
-                                                                startDateRef.current.click();
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                                >
-                                                    <span className="text-[13px] text-white font-medium">
-                                                        {formData.startDate ? new Date(formData.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Select date'}
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    ref={startDateRef}
-                                                    type="date"
-                                                    value={formData.startDate}
-                                                    onChange={(e) => updateField('startDate', e.target.value)}
-                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        colorScheme: 'dark'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="relative">
-                                                <div
-                                                    onClick={() => {
-                                                        if (startTimeRef.current) {
-                                                            try {
-                                                                if ('showPicker' in HTMLInputElement.prototype) {
-                                                                    startTimeRef.current.showPicker();
-                                                                } else {
-                                                                    startTimeRef.current.click();
-                                                                }
-                                                            } catch (e) {
-                                                                startTimeRef.current.click();
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                                >
-                                                    <span className="text-[13px] text-white font-medium">
-                                                        {formData.startTime ? new Date('2000-01-01T' + formData.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Select time'}
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    ref={startTimeRef}
-                                                    type="time"
-                                                    value={formData.startTime}
-                                                    onChange={(e) => updateField('startTime', e.target.value)}
-                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        colorScheme: 'dark'
-                                                    }}
-                                                />
-                                            </div>
+                                            <DatePicker
+                                                value={formData.startDate}
+                                                onChange={(val) => updateField('startDate', val)}
+                                                themeColor={currentTheme.colors.accentSolid}
+                                            />
+                                            <TimePicker
+                                                value={formData.startTime}
+                                                onChange={(val) => updateField('startTime', val)}
+                                                themeColor={currentTheme.colors.accentSolid}
+                                            />
                                         </div>
                                     </div>
 
@@ -495,75 +440,16 @@ function CreateEventForm() {
                                             <span className="text-[13px] text-white/70">End</span>
                                         </div>
                                         <div className="flex-1 flex items-center gap-3">
-                                            <div className="relative">
-                                                <div
-                                                    onClick={() => {
-                                                        if (endDateRef.current) {
-                                                            try {
-                                                                if ('showPicker' in HTMLInputElement.prototype) {
-                                                                    endDateRef.current.showPicker();
-                                                                } else {
-                                                                    endDateRef.current.click();
-                                                                }
-                                                            } catch (e) {
-                                                                endDateRef.current.click();
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                                >
-                                                    <span className="text-[13px] text-white font-medium">
-                                                        {formData.endDate ? new Date(formData.endDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Select date'}
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    ref={endDateRef}
-                                                    type="date"
-                                                    value={formData.endDate}
-                                                    onChange={(e) => updateField('endDate', e.target.value)}
-                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        colorScheme: 'dark'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="relative">
-                                                <div
-                                                    onClick={() => {
-                                                        if (endTimeRef.current) {
-                                                            try {
-                                                                if ('showPicker' in HTMLInputElement.prototype) {
-                                                                    endTimeRef.current.showPicker();
-                                                                } else {
-                                                                    endTimeRef.current.click();
-                                                                }
-                                                            } catch (e) {
-                                                                endTimeRef.current.click();
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="bg-white/10 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/15 transition-colors"
-                                                >
-                                                    <span className="text-[13px] text-white font-medium">
-                                                        {formData.endTime ? new Date('2000-01-01T' + formData.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Select time'}
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    ref={endTimeRef}
-                                                    type="time"
-                                                    value={formData.endTime}
-                                                    onChange={(e) => updateField('endTime', e.target.value)}
-                                                    className="absolute inset-0 cursor-pointer"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        opacity: 0,
-                                                        colorScheme: 'dark'
-                                                    }}
-                                                />
-                                            </div>
+                                            <DatePicker
+                                                value={formData.endDate}
+                                                onChange={(val) => updateField('endDate', val)}
+                                                themeColor={currentTheme.colors.accentSolid}
+                                            />
+                                            <TimePicker
+                                                value={formData.endTime}
+                                                onChange={(val) => updateField('endTime', val)}
+                                                themeColor={currentTheme.colors.accentSolid}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -804,7 +690,7 @@ function CreateEventForm() {
                                         <Lock size={16} className="text-white/50" />
                                         <div>
                                             <span className="text-sm font-medium text-white">Require Stake</span>
-                                            <p className="text-[11px] text-white/40">Attendees commit ETH, refunded on check-in</p>
+                                            <p className="text-[11px] text-white/40">Attendees commit crypto, refunded on check-in</p>
                                         </div>
                                     </div>
                                     <button
@@ -815,10 +701,48 @@ function CreateEventForm() {
                                     </button>
                                 </div>
 
-                                {/* Stake Amount (shown when Require Stake is enabled) */}
+                                {/* Stake Settings (shown when Require Stake is enabled) */}
                                 {formData.requireStake && (
                                     <>
-                                        <div className="flex items-center justify-between p-4 bg-emerald-500/5">
+                                        {/* Token Selector */}
+                                        <div className="p-4 bg-emerald-500/5">
+                                            <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-3">Stake Token</p>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {[
+                                                    { id: 'ETH', label: 'ETH', network: 'Ethereum', logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+                                                    { id: 'USDC', label: 'USDC', network: 'Ethereum', logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png' },
+                                                    { id: 'USDT', label: 'USDT', network: 'Ethereum', logo: 'https://cryptologos.cc/logos/tether-usdt-logo.png' },
+                                                    { id: 'SOL', label: 'SOL', network: 'Solana', logo: 'https://cryptologos.cc/logos/solana-sol-logo.png' },
+                                                ].map((token) => (
+                                                    <button
+                                                        key={token.id}
+                                                        onClick={() => updateField('stakeCurrency', token.id)}
+                                                        className={`relative flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border transition-all ${formData.stakeCurrency === token.id
+                                                            ? 'border-emerald-500/60 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                                                            : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20'
+                                                            }`}
+                                                    >
+                                                        <div className="w-7 h-7 flex items-center justify-center">
+                                                            <img
+                                                                src={token.logo}
+                                                                alt={token.label}
+                                                                className="w-6 h-6 object-contain"
+                                                            />
+                                                        </div>
+                                                        <span className="text-[12px] font-semibold text-white">{token.label}</span>
+                                                        <span className="text-[9px] text-white/40">{token.network}</span>
+                                                        {formData.stakeCurrency === token.id && (
+                                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                                                                <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Stake Amount */}
+                                        <div className="flex items-center justify-between p-4 bg-emerald-500/5 border-t border-emerald-500/10">
                                             <div className="flex items-center gap-3">
                                                 <Coins size={16} className="text-emerald-400" />
                                                 <span className="text-sm font-medium text-white">Stake Amount</span>
@@ -827,8 +751,8 @@ function CreateEventForm() {
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="number"
-                                                        step="0.001"
-                                                        min="0.001"
+                                                        step={['USDC', 'USDT'].includes(formData.stakeCurrency) ? '1' : '0.001'}
+                                                        min={['USDC', 'USDT'].includes(formData.stakeCurrency) ? '1' : '0.001'}
                                                         value={formData.stakeAmount || ''}
                                                         onChange={(e) => {
                                                             const value = e.target.value;
@@ -840,18 +764,23 @@ function CreateEventForm() {
                                                                 setIsEditingStakeAmount(false);
                                                             }
                                                         }}
-                                                        placeholder="0.01"
+                                                        placeholder={['USDC', 'USDT'].includes(formData.stakeCurrency) ? '10' : '0.01'}
                                                         className="w-20 bg-white/10 rounded-lg px-2 py-1 text-[13px] text-white placeholder:text-white/30 outline-none focus:bg-white/15 border border-white/10 focus:border-emerald-500/50 text-right"
                                                         autoFocus
                                                     />
-                                                    <span className="text-white/50 text-sm">ETH</span>
+                                                    <span className="text-white/50 text-sm">{formData.stakeCurrency}</span>
                                                 </div>
                                             ) : (
                                                 <div
                                                     onClick={() => setIsEditingStakeAmount(true)}
                                                     className="flex items-center gap-2 text-emerald-400 text-sm cursor-pointer hover:text-emerald-300 transition-colors"
                                                 >
-                                                    <span>{formData.stakeAmount ? `${formData.stakeAmount} ETH` : '0.01 ETH'}</span>
+                                                    <span>
+                                                        {formData.stakeAmount
+                                                            ? `${formData.stakeAmount} ${formData.stakeCurrency}`
+                                                            : ['USDC', 'USDT'].includes(formData.stakeCurrency) ? `10 ${formData.stakeCurrency}` : `0.01 ${formData.stakeCurrency}`
+                                                        }
+                                                    </span>
                                                     <span className="text-white/30 hover:text-white">✎</span>
                                                 </div>
                                             )}
@@ -863,14 +792,16 @@ function CreateEventForm() {
                                                 <Wallet size={16} className="text-emerald-400" />
                                                 <div>
                                                     <span className="text-sm font-medium text-white">Your Wallet</span>
-                                                    <p className="text-[11px] text-white/40">Receives stakes after event</p>
+                                                    <p className="text-[11px] text-white/40">
+                                                        {formData.stakeCurrency === 'SOL' ? 'Solana wallet' : 'Ethereum wallet'} · Receives stakes
+                                                    </p>
                                                 </div>
                                             </div>
                                             <input
                                                 type="text"
                                                 value={formData.organizerWallet}
                                                 onChange={(e) => updateField('organizerWallet', e.target.value)}
-                                                placeholder="0x..."
+                                                placeholder={formData.stakeCurrency === 'SOL' ? 'So1...' : '0x...'}
                                                 className="w-36 bg-white/10 rounded-lg px-2 py-1 text-[12px] text-white placeholder:text-white/30 outline-none focus:bg-white/15 border border-white/10 focus:border-emerald-500/50 font-mono"
                                             />
                                         </div>

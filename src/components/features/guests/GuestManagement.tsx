@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users, Clock, Check, XCircle, Search,
-    CheckCircle, Filter, Loader2, UserCheck, UserX
+    CheckCircle, Filter, Loader2, UserCheck, UserX, ExternalLink
 } from 'lucide-react';
 import { Button, GlossyCard } from '@/components/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +27,11 @@ interface EnrichedGuest {
     email: string;
     photoURL: string | null;
     answers?: Record<string, string | string[]>;
+    // Staking Fields
+    stakeAmountUsd?: number;
+    stakeCurrency?: string;
+    stakeNetwork?: string;
+    txHash?: string;
 }
 
 interface GuestManagementProps {
@@ -141,7 +146,7 @@ export default function GuestManagement({ eventId, eventTitle }: GuestManagement
 
         // Filter by tab
         if (activeTab === 'pending') {
-            result = result.filter(g => g.status === 'pending_approval');
+            result = result.filter(g => g.status === 'pending_approval' || g.status === 'staked');
         } else if (activeTab === 'approved') {
             result = result.filter(g => ['issued', 'approved', 'scanned'].includes(g.status));
         } else if (activeTab === 'rejected') {
@@ -162,7 +167,7 @@ export default function GuestManagement({ eventId, eventTitle }: GuestManagement
 
     // Count by status
     const counts = useMemo(() => ({
-        pending: guests.filter(g => g.status === 'pending_approval').length,
+        pending: guests.filter(g => g.status === 'pending_approval' || g.status === 'staked').length,
         approved: guests.filter(g => ['issued', 'approved', 'scanned'].includes(g.status)).length,
         rejected: guests.filter(g => g.status === 'rejected').length,
         all: guests.length,
@@ -327,7 +332,7 @@ export default function GuestManagement({ eventId, eventTitle }: GuestManagement
                         {/* Guest Rows */}
                         {filteredGuests.map((guest) => {
                             const isProcessing = processingIds.has(guest.id);
-                            const isPending = guest.status === 'pending_approval';
+                            const isPending = guest.status === 'pending_approval' || guest.status === 'staked';
                             const isApproved = ['issued', 'approved', 'scanned'].includes(guest.status);
                             const isRejected = guest.status === 'rejected';
 
@@ -437,6 +442,48 @@ export default function GuestManagement({ eventId, eventTitle }: GuestManagement
                                             </span>
                                         )}
                                     </div>
+
+                                    {/* Staking Details */}
+                                    {(guest.status === 'staked' || guest.stakeAmountUsd) && (
+                                        <div className="w-full pl-16 pr-4 pb-2 mt-2">
+                                            <div className="flex items-center gap-3 text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-md p-2">
+                                                <div className="flex flex-col">
+                                                    <span className="text-indigo-300 font-medium">Staked Amount</span>
+                                                    <span className="text-white font-bold">
+                                                        {guest.stakeCurrency && ['ETH', 'SOL'].includes(guest.stakeCurrency.toUpperCase())
+                                                            ? `${Number(guest.stakeAmountUsd || 0)} ${guest.stakeCurrency.toUpperCase()}`
+                                                            : `$${Number(guest.stakeAmountUsd || 0).toFixed(2)} ${guest.stakeCurrency || 'USD'}`
+                                                        }
+                                                    </span>
+                                                </div>
+
+                                                <div className="h-6 w-px bg-indigo-500/20 mx-2" />
+
+                                                <div className="flex flex-col">
+                                                    <span className="text-indigo-300 font-medium">Network</span>
+                                                    <span className="text-white capitalize">{guest.stakeNetwork || '-'}</span>
+                                                </div>
+
+                                                {guest.txHash && (
+                                                    <>
+                                                        <div className="h-6 w-px bg-indigo-500/20 mx-2" />
+                                                        <a
+                                                            href={guest.stakeNetwork === 'solana'
+                                                                ? `https://solscan.io/tx/${guest.txHash}`
+                                                                : `https://sepolia.etherscan.io/tx/${guest.txHash}`} // Defaulting to Sepolia for now as that's what we use
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 underline"
+                                                        >
+                                                            View Tx
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </a>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Answers Section */}
                                     {guest.answers && Object.keys(guest.answers).length > 0 && (
                                         <div className="w-full pl-16 pr-4 pb-4">

@@ -87,9 +87,11 @@ export default async function EventPage({ params }: EventPageProps) {
                                     <div className="text-sm font-medium text-white">You have manage access</div>
                                     <div className="text-xs text-white/50">Edit details, view guests...</div>
                                 </div>
-                                <Button size="sm" variant="secondary" className="h-8 text-xs bg-white/10 hover:bg-white/20 border-0 text-white">
-                                    Manage ↗
-                                </Button>
+                                <Link href={`/events/${event.id}/manage`}>
+                                    <Button size="sm" variant="secondary" className="h-8 text-xs bg-white/10 hover:bg-white/20 border-0 text-white">
+                                        Manage
+                                    </Button>
+                                </Link>
                             </div>
                         )}
 
@@ -191,6 +193,7 @@ export default async function EventPage({ params }: EventPageProps) {
                                         theme="luma"
                                         requireStake={event.requireStake || false}
                                         stakeAmount={event.stakeAmount}
+                                        stakeCurrency={event.stakeCurrency}
                                         organizerWallet={event.organizerWallet}
                                         eventStartTime={new Date(event.date).getTime() / 1000}
                                     />

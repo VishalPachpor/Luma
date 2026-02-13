@@ -73,9 +73,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
 
         const userIds = guests.map(g => g.user_id);
+        const orderIds = guests.map(g => g.order_id).filter(id => id); // Filter nulls
 
-        // 5. Fetch Additional Data (Profiles & RSVPs)
-        const [profilesResult, rsvpsResult] = await Promise.all([
+        // 5. Fetch Additional Data (Profiles, RSVPs, Orders)
+        const [profilesResult, rsvpsResult, ordersResult] = await Promise.all([
             supabase
                 .from('profiles') // Changed from 'users' to 'profiles'
                 .select('id, display_name, email, avatar_url')
@@ -85,18 +86,37 @@ export async function GET(request: NextRequest, context: RouteContext) {
                 .from('rsvps')
                 .select('user_id, answers')
                 .eq('event_id', eventId)
-                .in('user_id', userIds)
+                .in('user_id', userIds),
+
+            // Fetch orders to get transaction hashes and amounts
+            orderIds.length > 0 ? supabase
+                .from('orders')
+                .select('id, tx_hash, total_amount')
+                .in('id', orderIds) : Promise.resolve({ data: [] })
         ]);
 
         const profiles = profilesResult.data || [];
         const rsvps = rsvpsResult.data || [];
+        const orders = ordersResult.data || [];
 
         const profileMap = new Map(profiles.map(p => [p.id, p]));
         const answersMap = new Map(rsvps.map(r => [r.user_id, r.answers]));
+        const ordersMap = new Map(orders.map(o => [o.id, o]));
 
         const enrichedGuests = guests.map(guest => {
             const profile = profileMap.get(guest.user_id);
             const answers = answersMap.get(guest.user_id) || {};
+            const order = guest.order_id ? ordersMap.get(guest.order_id) : null;
+
+            // Resolve staking amount with priority:
+            // 1. guest.stake_amount (High precision native token amount)
+            // 2. guest.stake_amount_usd (Might be truncated)
+            // 3. order.total_amount (Fallback)
+            const rawStakeAmount = guest.stake_amount || guest.stake_amount_usd || order?.total_amount || 0;
+            // Ensure we don't display 0.00 if we have a better value, but careful with string "0.00"
+            const stakeAmount = Number(guest.stake_amount) > 0 ? guest.stake_amount :
+                (Number(guest.stake_amount_usd) > 0 ? guest.stake_amount_usd :
+                    (order?.total_amount || 0));
 
             return {
                 id: guest.id,
@@ -111,7 +131,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
                 ticketTierId: guest.ticket_tier_id,
                 orderId: guest.order_id,
                 qrToken: guest.qr_token,
-                answers: answers // Include answers
+                answers: answers, // Include answers
+                // Staking Fields
+                stakeAmountUsd: stakeAmount,
+                stakeCurrency: guest.stake_currency,
+                stakeNetwork: guest.stake_network,
+                txHash: order?.tx_hash || guest.stake_tx_hash || null
             };
         });
 

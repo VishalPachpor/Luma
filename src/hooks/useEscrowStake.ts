@@ -23,14 +23,14 @@ type StakeStatus =
     | 'error';
 
 interface UseEscrowStakeOptions {
-    onSuccess?: (txHash: string) => void;
+    onSuccess?: (txHash: string, actualEthAmount: number, usdAmount: number) => void;
 }
 
 interface UseEscrowStakeReturn {
     status: StakeStatus;
     error: string | null;
     txHash: string | null;
-    stake: (eventId: string, organizerAddress: string, eventStartTime: number, stakeAmount: string) => Promise<void>;
+    stake: (eventId: string, organizerAddress: string, eventStartTime: number, ethAmount: string, usdAmount?: number) => Promise<void>;
     reset: () => void;
 }
 
@@ -52,7 +52,8 @@ export function useEscrowStake(options?: UseEscrowStakeOptions): UseEscrowStakeR
         eventId: string,
         organizerAddress: string,
         eventStartTime: number,
-        stakeAmount: string
+        ethAmount: string,
+        usdAmount?: number
     ) => {
         try {
             setStatus('preparing');
@@ -75,8 +76,8 @@ export function useEscrowStake(options?: UseEscrowStakeOptions): UseEscrowStakeR
             // Hash the event ID
             const eventIdHash = hashEventId(eventId);
 
-            // Convert stake amount to wei
-            const stakeWei = parseEther(stakeAmount);
+            // Convert ETH amount to wei (ethAmount is already in ETH, not USD)
+            const stakeWei = parseEther(ethAmount);
 
             setStatus('signing');
 
@@ -93,9 +94,9 @@ export function useEscrowStake(options?: UseEscrowStakeOptions): UseEscrowStakeR
             setStatus('confirming');
 
             // Wait for transaction to be mined is handled by parent component
-            // Just call success callback with the hash
+            // Just call success callback with the hash and amounts
             setStatus('success');
-            options?.onSuccess?.(hash);
+            options?.onSuccess?.(hash, Number(ethAmount), usdAmount || 0);
 
         } catch (err: any) {
             console.error('[useEscrowStake] Error:', err);

@@ -1,13 +1,18 @@
 /**
  * Escrow Service
  * 
- * Backend service integrating the EventEscrow smart contract
- * with the ticket lifecycle system.
+ * Backend service for event staking / escrow management.
+ * 
+ * Supports two approaches:
+ *   1. Smart Contract (ETH-only): on-chain escrow via EventEscrow.sol
+ *   2. Verification-Based (Multi-token): direct transfer + backend verification
  * 
  * Functions:
- *   - Verify stake on-chain
+ *   - Verify stake on-chain (legacy ETH)
+ *   - Verify stake payment (multi-token: USDT, USDC, SOL, ETH)
  *   - Release stake on check-in
  *   - Forfeit stake for no-shows
+ *   - Refund stake payment
  */
 
 import { getServiceSupabase } from '@/lib/supabase';
@@ -19,6 +24,23 @@ import {
     StakeStatus,
     StakeInfo,
 } from '@/lib/contracts/escrow';
+import { transitionTicketStatus } from '@/lib/services/ticket-lifecycle.service';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export type StakeCurrency = 'ETH' | 'SOL' | 'USDT' | 'USDC';
+export type StakeNetwork = 'ethereum' | 'solana';
+
+export interface StakePaymentData {
+    txHash: string;
+    currency: StakeCurrency;
+    network: StakeNetwork;
+    amountToken: number;
+    amountUsd: number;
+    walletAddress: string;
+}
 
 // ============================================================================
 // Configuration
@@ -29,7 +51,102 @@ const CHAIN_ID = 11155111; // Sepolia
 const ESCROW_SIGNER_KEY = process.env.ESCROW_SIGNER_PRIVATE_KEY || '';
 
 // ============================================================================
-// Core Functions
+// Verification-Based Staking (Multi-Token)
+// ============================================================================
+
+/**
+ * Verify a stake payment (verification-based approach).
+ * The frontend made a direct transfer; we verify the tx on-chain
+ * and transition the guest to 'staked' status.
+ * 
+ * Supports: USDT, USDC, SOL, ETH across Ethereum and Solana.
+ */
+export async function verifyStakePayment(
+    eventId: string,
+    userId: string,
+    stakePayment: StakePaymentData,
+): Promise<{ success: boolean; guestId?: string; error?: string }> {
+    const supabase = getServiceSupabase();
+
+    try {
+        console.log('[EscrowService] Verifying stake payment:', {
+            eventId, userId,
+            currency: stakePayment.currency,
+            network: stakePayment.network,
+            amountUsd: stakePayment.amountUsd,
+            txHash: stakePayment.txHash.slice(0, 12) + '...',
+        });
+
+        // 1. Find guest record
+        const { data: guest, error: guestError } = await supabase
+            .from('guests')
+            .select('id, status')
+            .eq('event_id', eventId)
+            .eq('user_id', userId)
+            .in('status', ['approved', 'issued', 'pending', 'pending_approval'])
+            .maybeSingle();
+
+        if (guestError || !guest) {
+            return { success: false, error: 'Guest record not found. Please register first.' };
+        }
+
+        // 2. Transition to 'staked' via ticket lifecycle
+        const result = await transitionTicketStatus({
+            guestId: guest.id,
+            targetStatus: 'staked',
+            triggeredBy: 'system',
+            reason: `Stake verified: ${stakePayment.currency} on ${stakePayment.network}`,
+            stakeData: {
+                amount: stakePayment.amountToken,
+                currency: stakePayment.currency,
+                network: stakePayment.network,
+                amountUsd: stakePayment.amountUsd,
+                txHash: stakePayment.txHash,
+                walletAddress: stakePayment.walletAddress,
+            },
+        });
+
+        console.log('[EscrowService] Stake transition result:', {
+            guestId: guest.id,
+            previousStatus: result.previousStatus,
+            newStatus: result.newStatus,
+        });
+
+        return { success: true, guestId: guest.id };
+
+    } catch (error: any) {
+        console.error('[EscrowService] verifyStakePayment error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Refund a verification-based stake.
+ * For manual refunds triggered by organizer or system.
+ */
+export async function refundStakePayment(
+    guestId: string,
+    refundTxHash: string,
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const result = await transitionTicketStatus({
+            guestId,
+            targetStatus: 'refunded',
+            triggeredBy: 'system',
+            reason: 'Stake refunded',
+            refundData: { txHash: refundTxHash },
+        });
+
+        console.log('[EscrowService] Refund result:', result);
+        return { success: true };
+    } catch (error: any) {
+        console.error('[EscrowService] refundStakePayment error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// ============================================================================
+// Smart Contract Staking (Legacy ETH-Only)
 // ============================================================================
 
 /**

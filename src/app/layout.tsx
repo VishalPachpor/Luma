@@ -45,7 +45,7 @@ export default async function RootLayout({
     const cookie = (await headers()).get('cookie') ?? '';
 
     return (
-        <html lang="en" className={inter.variable} suppressHydrationWarning>
+        <html lang="en" className={inter.variable} style={{ colorScheme: 'dark' }} suppressHydrationWarning>
             <body className="min-h-screen bg-bg-primary text-white" suppressHydrationWarning>
                 {/* App Content */}
                 <Providers cookie={cookie}>

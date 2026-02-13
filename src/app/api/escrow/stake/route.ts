@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
-import { verifyStakeOnChain, getOrganizerWallet } from '@/lib/services/escrow.service';
+import { verifyStakeOnChain, verifyStakePayment, getOrganizerWallet } from '@/lib/services/escrow.service';
 import { transitionTicketStatus } from '@/lib/services/ticket-lifecycle.service';
 import { hashEventId } from '@/lib/contracts/escrow';
 
@@ -16,7 +16,62 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { eventId, txHash, walletAddress, guestId } = body;
+        const {
+            eventId,
+            txHash,
+            walletAddress,
+            guestId,
+            // Multi-token fields (verification-based approach)
+            mode = 'contract',   // 'contract' (legacy) | 'verification' (multi-token)
+            userId,
+            currency,
+            network,
+            amountToken,
+            amountUsd,
+        } = body;
+
+        // ──────────────────────────────────────────────
+        // Path A: Verification-Based (Multi-Token)
+        // ──────────────────────────────────────────────
+        if (mode === 'verification') {
+            if (!eventId || !userId || !txHash || !currency || !network) {
+                return NextResponse.json(
+                    { error: 'Missing required fields: eventId, userId, txHash, currency, network' },
+                    { status: 400 }
+                );
+            }
+
+            console.log('[EscrowStake] Verification-based stake:', {
+                eventId, userId, currency, network, amountUsd, txHash: txHash.slice(0, 12) + '...',
+            });
+
+            const result = await verifyStakePayment(eventId, userId, {
+                txHash,
+                currency,
+                network,
+                amountToken: amountToken || 0,
+                amountUsd: amountUsd || 0,
+                walletAddress: walletAddress || '',
+            });
+
+            if (!result.success) {
+                return NextResponse.json(
+                    { error: result.error || 'Stake verification failed' },
+                    { status: 400 }
+                );
+            }
+
+            return NextResponse.json({
+                success: true,
+                guestId: result.guestId,
+                newStatus: 'staked',
+                mode: 'verification',
+            });
+        }
+
+        // ──────────────────────────────────────────────
+        // Path B: Smart Contract (Legacy ETH-Only)
+        // ──────────────────────────────────────────────
 
         // Validate required fields
         if (!eventId || !walletAddress) {
@@ -26,7 +81,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log('[EscrowStake] Verifying stake:', { eventId, walletAddress, txHash });
+        console.log('[EscrowStake] Verifying on-chain stake:', { eventId, walletAddress, txHash });
 
         // 1. Verify stake exists on-chain
         const verification = await verifyStakeOnChain(eventId, walletAddress);
@@ -64,7 +119,6 @@ export async function POST(request: NextRequest) {
 
         if (!guestRecord) {
             // Strategy 3: Lookup via user profile wallet → guests table
-            // Resolves chicken-and-egg: wallet isn't on guest record yet for first-time stakers
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('id')

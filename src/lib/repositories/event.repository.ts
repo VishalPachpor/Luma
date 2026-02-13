@@ -38,6 +38,7 @@ function normalizeEvent(item: EventRow): Event {
         requireApproval: item.require_approval || undefined,
         requireStake: item.require_stake || false,
         stakeAmount: item.stake_amount || undefined,
+        stakeCurrency: (item as any).stake_currency || 'ETH',
         organizerWallet: item.organizer_wallet || undefined,
         socialLinks: (item.social_links as any) || {}, // Json type
         agenda: (item.agenda as any) || [], // Json type
@@ -66,7 +67,7 @@ export async function findAll(): Promise<Event[]> {
                 latitude, longitude, cover_image, attendee_count,
                 tags, organizer_name, organizer_id, calendar_id,
                 capacity, price, currency, status, visibility, 
-                require_approval, require_stake, stake_amount, organizer_wallet,
+                require_approval, require_stake, stake_amount, stake_currency, organizer_wallet,
                 social_links, agenda, hosts, about, presented_by,
                 registration_questions, theme, theme_color,
                 counters, settings, metadata, who_should_attend, event_format,
@@ -233,7 +234,7 @@ export async function create(input: CreateEventInput): Promise<Event> {
 
     // Build payload WITHOUT id - let PostgreSQL auto-generate the UUID
     // This ensures the event_id is always a proper UUID type for triggers
-    const payload: Partial<EventInsert> = {
+    const payload: Partial<EventInsert> & Record<string, any> = {
         title: input.title,
         description: input.description,
         date: isoDate,
@@ -255,6 +256,7 @@ export async function create(input: CreateEventInput): Promise<Event> {
         require_approval: input.requireApproval || false,
         require_stake: input.requireStake || false,
         stake_amount: input.stakeAmount || null,
+        stake_currency: (input as any).stakeCurrency || 'ETH',
         organizer_wallet: input.organizerWallet || null,
         social_links: (input.socialLinks || {}) as any,
         agenda: (input.agenda || []) as any,

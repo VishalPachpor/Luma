@@ -119,9 +119,10 @@ export default function TicketView({ guest, eventTitle, eventDate, eventLocation
     const qrContent = guest.qrToken;
 
     // Determine if QR should be shown
-    const showQR = guest.status === 'issued' || guest.status === 'staked' || guest.status === 'approved';
+    // CRITICAL: Staked guests must be approved before they get QR access
+    const showQR = guest.status === 'issued' || guest.status === 'approved';
     const isCheckedIn = guest.status === 'checked_in' || guest.status === 'scanned';
-    const isPending = guest.status === 'pending' || guest.status === 'pending_approval';
+    const isPending = guest.status === 'pending' || guest.status === 'pending_approval' || guest.status === 'staked';
     const isTerminal = guest.status === 'rejected' || guest.status === 'revoked' ||
         guest.status === 'refunded' || guest.status === 'forfeited';
 

@@ -29,6 +29,7 @@ interface EventSettings {
     capacity: number | null;
     require_stake: boolean;
     stake_amount: number | null;
+    stake_currency: string;
 }
 
 export default function EventSettingsPage() {
@@ -46,18 +47,22 @@ export default function EventSettingsPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [deleting, setDeleting] = useState(false);
+    const [stakeAmountInput, setStakeAmountInput] = useState('');
 
     const fetchSettings = useCallback(async () => {
         if (!user) return;
         try {
             const { data, error: fetchError } = await supabase
                 .from('events')
-                .select('title, visibility, status, require_approval, capacity, require_stake, stake_amount')
+                .select('title, visibility, status, require_approval, capacity, require_stake, stake_amount, stake_currency')
                 .eq('id', eventId)
                 .single();
 
             if (fetchError) throw fetchError;
             setSettings(data as EventSettings);
+            if (data.stake_amount !== null && data.stake_amount !== undefined) {
+                setStakeAmountInput(data.stake_amount.toString());
+            }
         } catch {
             setError('Failed to load event settings');
         } finally {
@@ -236,29 +241,56 @@ export default function EventSettingsPage() {
                     />
 
                     {settings.require_stake && (
-                        <div className="border-t border-white/5 pt-4">
-                            <label className="text-sm font-medium text-white/60 mb-2 block">Stake amount (USDC)</label>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="number"
-                                    value={settings.stake_amount || ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value ? parseFloat(e.target.value) : null;
-                                        setSettings(prev => prev ? { ...prev, stake_amount: val } : prev);
-                                    }}
-                                    placeholder="0.00"
-                                    min={0}
-                                    step={0.01}
-                                    className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 outline-none focus:border-white/20 transition-colors"
-                                />
-                                <button
-                                    onClick={() => handleSave({ stake_amount: settings.stake_amount })}
-                                    disabled={saving}
-                                    className="flex items-center gap-2 px-4 py-2.5 bg-white/10 text-white text-sm font-medium rounded-xl hover:bg-white/15 disabled:opacity-50 transition-colors"
-                                >
-                                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                    Save
-                                </button>
+                        <div className="border-t border-white/5 pt-4 space-y-4">
+                            {/* Amount Input */}
+                            <div>
+                                <label className="text-sm font-medium text-white/60 mb-2 block">
+                                    Stake Amount ({settings.stake_currency || 'USDC'})
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        value={stakeAmountInput}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setStakeAmountInput(val);
+                                            const num = parseFloat(val);
+                                            setSettings(prev => prev ? { ...prev, stake_amount: isNaN(num) ? null : num } : prev);
+                                        }}
+                                        placeholder="0.00"
+                                        min={0}
+                                        step="any" // Allow any decimal
+                                        className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/20 outline-none focus:border-white/20 transition-colors"
+                                    />
+                                    <button
+                                        onClick={() => handleSave({ stake_amount: settings.stake_amount })}
+                                        disabled={saving}
+                                        className="flex items-center gap-2 px-4 py-2.5 bg-white/10 text-white text-sm font-medium rounded-xl hover:bg-white/15 disabled:opacity-50 transition-colors"
+                                    >
+                                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Currency Selector */}
+                            <div>
+                                <label className="text-sm font-medium text-white/60 mb-2 block">Currency</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {['USDC', 'USDT', 'ETH', 'SOL'].map((currency) => (
+                                        <button
+                                            key={currency}
+                                            onClick={() => handleSave({ stake_currency: currency })}
+                                            disabled={saving}
+                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${settings.stake_currency === currency
+                                                ? 'bg-indigo-500/20 border-indigo-500/50 text-white'
+                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            {currency}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     )}

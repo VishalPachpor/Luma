@@ -22,6 +22,7 @@ import {
 import { RegistrationForm } from './RegistrationForm';
 import { RSVPStatus } from '@/lib/services/rsvp.service';
 import CryptoPaymentModal from '@/components/features/payments/CryptoPaymentModal';
+import StakeDepositModal from '@/components/features/payments/StakeDepositModal';
 import TicketView from '@/components/features/tickets/TicketView';
 import { useRouter } from 'next/navigation';
 import { RegistrationQuestion } from '@/types/event';
@@ -36,8 +37,10 @@ interface EventRSVPProps {
     requireApproval?: boolean;
     theme?: 'default' | 'luma';
     // Staking props
+    // Staking props
     requireStake?: boolean;
     stakeAmount?: number;
+    stakeCurrency?: string;
     organizerWallet?: string;
     eventStartTime?: number;
 }
@@ -52,6 +55,7 @@ export default function EventRSVP({
     // Staking props
     requireStake = false,
     stakeAmount,
+    stakeCurrency = 'USD',
     organizerWallet,
     eventStartTime
 }: EventRSVPProps) {
@@ -132,6 +136,16 @@ export default function EventRSVP({
         };
     }, [price, exchangeRates]);
 
+    // Force stake amount to be at least 10 if not provided or invalid
+    const effectiveStakeAmount = useMemo(() => {
+        if (stakeAmount === undefined || stakeAmount === null) return 10;
+        const num = Number(stakeAmount);
+        // If 0, negative, or NaN, default to 10. 
+        // If the host explicitly wants 0, they should use free ticket type, not staking.
+        return !isNaN(num) && num > 0 ? num : 10;
+    }, [stakeAmount]);
+
+
     // Only use actual questions provided by the event (no default questions)
     // Defensive check: ensure registrationQuestions is an array and filter out any invalid entries
     const validQuestions = Array.isArray(registrationQuestions)
@@ -157,6 +171,9 @@ export default function EventRSVP({
 
         return answers;
     }, [user]);
+
+    // Determine if this event requires payment (either ticket or stake)
+    const requiresPayment = !isFree || requireStake;
 
     // Actions
     const handleRegisterClick = (status: RSVPStatus) => {
@@ -184,8 +201,8 @@ export default function EventRSVP({
             // Ensure form is closed if it was somehow open
             setRegistrationOpen(false);
 
-            if (!isFree) {
-                // Paid flow -> Open Payment Modal with auto-populated answers
+            if (requiresPayment) {
+                // Paid/Stake flow -> Open Payment/Stake Modal
                 setPaymentModalOpen(true);
             } else {
                 // Free flow -> Direct RSVP with auto-populated answers
@@ -194,8 +211,8 @@ export default function EventRSVP({
             return;
         }
 
-        if (status === 'going' && !isFree) {
-            // Paid flow -> Open Payment Modal
+        if (status === 'going' && requiresPayment) {
+            // Paid/Stake flow -> Open Payment/Stake Modal
             setPaymentModalOpen(true);
         } else {
             // Free flow -> Direct RSVP
@@ -214,7 +231,7 @@ export default function EventRSVP({
         setRegistrationOpen(false);
 
         // Continue with flow
-        if (!isFree) {
+        if (requiresPayment) {
             setPaymentModalOpen(true);
         } else {
             performRSVP('going', mergedAnswers);
@@ -257,14 +274,31 @@ export default function EventRSVP({
         }
     };
 
-    const handlePaymentSuccess = async (data: { signature: string; chain: 'solana' | 'ethereum' | 'usdc-solana' | 'usdc-ethereum'; token?: 'usdc' | 'sol' | 'eth' }) => {
+    const handlePaymentSuccess = async (data: {
+        signature: string;
+        chain: 'solana' | 'ethereum' | 'usdc-solana' | 'usdc-ethereum';
+        token?: 'usdc' | 'sol' | 'eth';
+        amountToken?: number;
+        amountUsd?: number;
+    }) => {
         setIsVerifying(true);
 
         try {
-            const { signature, chain, token } = data;
-            // USDC is 1:1 with USD, so use price directly
-            // For USDC, the amount is the same as USD price
-            const amountPaid = token === 'usdc' ? usdcAmount : (chain === 'solana' ? solAmount : ethAmount);
+            const { signature, chain, token, amountToken, amountUsd } = data;
+            // CORRECTED: Use the actual token amount paid (e.g., 0.000667 ETH), not USD estimate
+            let amountPaid = 0;
+            let usdValue = 0;
+
+            if (requireStake && amountToken !== undefined) {
+                // For staking, use the ACTUAL token amount that was paid on-chain
+                amountPaid = amountToken; // e.g., 0.000667 ETH
+                usdValue = amountUsd || effectiveStakeAmount; // USD equivalent (e.g., $2)
+            } else {
+                // For tickets, usually pure USD/USDC price
+                amountPaid = token === 'usdc' ? usdcAmount : (chain === 'solana' ? solAmount : ethAmount);
+                usdValue = usdcAmount;
+            }
+
             // Map chain types to API format
             // 'usdc-ethereum' -> 'ethereum', 'usdc-solana' -> 'solana'
             const apiChain = chain === 'usdc-ethereum' ? 'ethereum' : chain === 'usdc-solana' ? 'solana' : chain;
@@ -277,10 +311,12 @@ export default function EventRSVP({
                     reference: signature,
                     eventId,
                     userId: user!.uid,
-                    amount: amountPaid,
+                    amount: amountPaid, // Actual token amount (native)
+                    amountUsd: usdValue, // USD equivalent
                     chain: apiChain,
                     token: token || (chain === 'solana' ? 'sol' : 'eth'), // Pass token type
-                    answers: registrationAnswers // Pass answers to verification API
+                    answers: registrationAnswers, // Pass answers to verification API
+                    isStake: requireStake // Flag to indicate this is a stake, not a purchase
                 })
             });
 
@@ -417,7 +453,7 @@ export default function EventRSVP({
                                     disabled
                                 >
                                     <Check className="w-5 h-5" />
-                                    {rsvpStatus === 'going' ? (!isFree ? "Ticket Purchased!" : "You're Going!") : "You're Interested"}
+                                    {rsvpStatus === 'going' ? (requireStake ? "Staked!" : (!isFree ? "Ticket Purchased!" : "You're Going!")) : "You're Interested"}
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -447,6 +483,10 @@ export default function EventRSVP({
                         >
                             {actionLoading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : requireStake ? (
+                                <span className="font-bold flex items-center gap-2">
+                                    🛡️ Stake {stakeCurrency === 'ETH' || stakeCurrency === 'SOL' ? `${effectiveStakeAmount} ${stakeCurrency}` : `$${effectiveStakeAmount}`} to Attend
+                                </span>
                             ) : !isFree ? (
                                 <span className="font-bold flex items-center gap-2">
                                     Buy Ticket • {price} USD
@@ -528,21 +568,28 @@ export default function EventRSVP({
                 </p>
             )}
 
-            {/* Crypto Payment Modal */}
-            <CryptoPaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setPaymentModalOpen(false)}
-                usdcAmount={usdcAmount}
-                solAmount={solAmount}
-                ethAmount={ethAmount}
-                onSuccess={handlePaymentSuccess}
-                // Staking mode props
-                stakeMode={requireStake}
-                stakeAmount={stakeAmount || 0}
-                eventId={eventId}
-                organizerWallet={organizerWallet}
-                eventStartTime={eventStartTime}
-            />
+            {/* Stake Deposit Modal (DeFi UX) or Crypto Payment Modal */}
+            {requireStake ? (
+                <StakeDepositModal
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => setPaymentModalOpen(false)}
+                    stakeAmount={effectiveStakeAmount}
+                    stakeCurrency={stakeCurrency}
+                    eventId={eventId}
+                    organizerWallet={organizerWallet}
+                    eventStartTime={eventStartTime}
+                    onSuccess={handlePaymentSuccess}
+                />
+            ) : (
+                <CryptoPaymentModal
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => setPaymentModalOpen(false)}
+                    usdcAmount={usdcAmount}
+                    solAmount={solAmount}
+                    ethAmount={ethAmount}
+                    onSuccess={handlePaymentSuccess}
+                />
+            )}
         </div>
     );
 }

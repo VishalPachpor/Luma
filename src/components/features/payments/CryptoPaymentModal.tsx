@@ -48,7 +48,7 @@ interface CryptoPaymentModalProps {
     onSuccess: (data: { signature: string; chain: ChainType; token?: TokenType; isStake?: boolean }) => void;
     // Staking props (optional)
     stakeMode?: boolean;
-    stakeAmount?: number; // Amount in ETH to stake
+    stakeAmount?: number; // Stake requirement in USD (will be converted to ETH)
     eventId?: string;
     organizerWallet?: string;
     eventStartTime?: number; // Unix timestamp
@@ -113,7 +113,8 @@ export default function CryptoPaymentModal({
 
     // Escrow staking hook (for events that require staking)
     const escrowStake = useEscrowStake({
-        onSuccess: (hash) => {
+        onSuccess: (hash, actualEthAmount) => {
+            // Pass the actual ETH amount that was staked for proper storage
             onSuccess({ signature: hash, chain: 'ethereum', token: 'eth', isStake: true });
         }
     });
@@ -138,8 +139,20 @@ export default function CryptoPaymentModal({
 
         // Handle staking mode
         if (stakeMode && eventId && organizerWallet && eventStartTime) {
-            console.log('[CryptoPaymentModal] Initiating stake:', { eventId, organizerWallet, stakeAmount });
-            escrowStake.stake(eventId, organizerWallet, eventStartTime, stakeAmount.toString());
+            // Convert USD stake amount to ETH using exchange rate
+            if (!exchangeRates || !exchangeRates.eth) {
+                toast.error('Exchange rates not available. Please try again.');
+                return;
+            }
+            const ethAmountToStake = stakeAmount / exchangeRates.eth;
+            console.log('[CryptoPaymentModal] Initiating stake:', {
+                eventId,
+                organizerWallet,
+                usdAmount: stakeAmount,
+                ethAmount: ethAmountToStake,
+                ethPrice: exchangeRates.eth
+            });
+            escrowStake.stake(eventId, organizerWallet, eventStartTime, ethAmountToStake.toString(), stakeAmount);
             return;
         }
 

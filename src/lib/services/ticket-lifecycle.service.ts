@@ -38,6 +38,9 @@ export interface TicketTransitionContext {
         currency: string;
         txHash: string;
         walletAddress?: string;
+        // Multi-token fields (verification-based approach)
+        network?: 'ethereum' | 'solana';
+        amountUsd?: number;
     };
     // Refund data (for staked → refunded)
     refundData?: {
@@ -260,6 +263,9 @@ export async function transitionTicketStatus(
         updatePayload.stake_currency = stakeData.currency;
         updatePayload.stake_tx_hash = stakeData.txHash;
         updatePayload.stake_wallet_address = stakeData.walletAddress;
+        // Multi-token fields
+        if (stakeData.network) updatePayload.stake_network = stakeData.network;
+        if (stakeData.amountUsd != null) updatePayload.stake_amount_usd = stakeData.amountUsd;
     }
 
     // Add timestamps for terminal states

@@ -99,6 +99,13 @@ export async function PUT(
         if (visibility) supaUpdate.visibility = visibility;
         if (visibility) supaUpdate.visibility = visibility;
         if (requireApproval !== undefined) supaUpdate.require_approval = requireApproval;
+
+        // Staking
+        if (body.requireStake !== undefined) supaUpdate.require_stake = body.requireStake;
+        if (body.stakeAmount !== undefined) supaUpdate.stake_amount = Number(body.stakeAmount);
+        if (body.stakeCurrency !== undefined) supaUpdate.stake_currency = body.stakeCurrency;
+        if (body.organizerWallet !== undefined) supaUpdate.organizer_wallet = body.organizerWallet;
+
         if ((body as any).settings) supaUpdate.settings = (body as any).settings;
 
         const { data: currentData } = await supabase.from('events').select('metadata').eq('id', id).maybeSingle();

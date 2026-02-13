@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { reference, amount, eventId, userId, answers, chain = 'ethereum' } = body;
+        const { reference, amount, amountUsd, eventId, userId, answers, chain = 'ethereum', token, isStake } = body;
 
-        console.log('[PaymentVerify] Request:', { reference, eventId, userId, chain, amount });
+        console.log('[PaymentVerify] Request:', { reference, eventId, userId, chain, amount, amountUsd, isStake });
 
         if (!reference || !eventId || !userId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -237,11 +237,16 @@ export async function POST(request: NextRequest) {
             }
 
             // Determine guest status based on event's require_approval setting
-            const initialStatus = event.require_approval ? 'pending_approval' : 'issued';
+            // Usage of 'staked' status for staking events
+            let initialStatus = event.require_approval ? 'pending_approval' : 'issued';
+
+            if (isStake) {
+                initialStatus = 'staked';
+            }
 
             // Insert Guest (The actual Ticket)
             // Use upsert to handle re-verification
-            const { error: guestError } = await supabase.from('guests').upsert({
+            const guestData: any = {
                 event_id: eventId,
                 user_id: userId,
                 ticket_tier_id: ticketTierId === 'default' ? null : ticketTierId,
@@ -251,7 +256,19 @@ export async function POST(request: NextRequest) {
                 created_at: now,
                 updated_at: now,
                 registration_responses: finalAnswers
-            }, { onConflict: 'event_id, user_id' }); // Assuming unique constraint on event+user
+            };
+
+            // Add staking fields if this is a stake transaction
+            if (isStake) {
+                guestData.stake_amount = amount; // Native token amount (e.g. 0.000667 ETH)
+                guestData.stake_amount_usd = amountUsd || amount; // USD equivalent (e.g. 2.00)
+                guestData.stake_currency = token || 'ETH';
+                guestData.stake_network = chain;
+                guestData.stake_tx_hash = reference; // Store tx hash directly on guest
+                guestData.stake_wallet_address = null; // Will be set if available
+            }
+
+            const { error: guestError } = await supabase.from('guests').upsert(guestData, { onConflict: 'event_id, user_id' }); // Assuming unique constraint on event+user
 
             if (guestError) {
                 console.error('[PaymentVerify] Guest insert failed:', guestError);
