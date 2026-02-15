@@ -10,6 +10,7 @@ export interface User {
     name: string;
     email: string;
     avatar: string;
+    coverImage?: string; // Add cover image for host profile
     role: UserRole;
     phoneNumber?: string;
 
@@ -23,6 +24,7 @@ export interface User {
         twitter?: string;
         instagram?: string;
         linkedin?: string;
+        youtube?: string;
     };
     subscriberCount?: number;
     joinedAt?: string;

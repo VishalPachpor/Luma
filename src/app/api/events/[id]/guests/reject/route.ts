@@ -65,7 +65,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             return NextResponse.json({ error: 'Guest not found' }, { status: 404 });
         }
 
-        if (guestData.status !== 'pending_approval') {
+        if (guestData.status !== 'pending_approval' && guestData.status !== 'staked') {
             return NextResponse.json({
                 error: `Cannot reject guest with status: ${guestData.status}`
             }, { status: 400 });

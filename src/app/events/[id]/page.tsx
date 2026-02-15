@@ -98,15 +98,17 @@ export default async function EventPage({ params }: EventPageProps) {
                         {/* Host Info */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider">Hosted By</h3>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white">
-                                    {event.organizer.slice(0, 2).toUpperCase()}
+                            <Link href={`/hosts/${event.organizerId}`} className="group block">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white group-hover:scale-105 transition-transform duration-200">
+                                        {event.organizer.slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">{event.organizer}</div>
+                                        <div className="text-xs text-white/50 group-hover:text-white/70 transition-colors">Event Organizer</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-sm font-medium text-white">{event.organizer}</div>
-                                    <div className="text-xs text-white/50">Event Organizer</div>
-                                </div>
-                            </div>
+                            </Link>
                             <button className="text-xs text-white/40 hover:text-white transition-colors">
                                 Contact the Host
                             </button>

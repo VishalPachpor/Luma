@@ -373,9 +373,12 @@ export async function remove(id: string): Promise<boolean> {
  */
 export async function findByOrganizer(userId: string): Promise<Event[]> {
     try {
-        const supabase = getServiceSupabase();
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+        const client = createClient(supabaseUrl, supabaseAnonKey);
 
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('events')
             .select('*')
             .eq('organizer_id', userId)
@@ -384,6 +387,7 @@ export async function findByOrganizer(userId: string): Promise<Event[]> {
         if (error || !data) return [];
         return data.map(normalizeEvent);
     } catch (error) {
+        console.error('[EventRepo] Error fetching events by organizer:', error);
         return [];
     }
 }

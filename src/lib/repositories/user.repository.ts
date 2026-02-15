@@ -27,6 +27,7 @@ export async function findById(id: string): Promise<User | null> {
             name: data.display_name || '',
             email: data.email || '',
             avatar: data.avatar_url || '',
+            coverImage: data.cover_image, // Map cover_image
             role: 'user', // Default role for now
             bio: data.bio || '',
             website: data.website || '',
@@ -39,6 +40,48 @@ export async function findById(id: string): Promise<User | null> {
         console.error('[UserRepo] Error fetching user:', error);
         return null;
     }
+}
+
+/**
+ * Update user profile
+ */
+export async function update(id: string, updates: Partial<User>): Promise<User | null> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({
+            display_name: updates.name,
+            bio: updates.bio,
+            location: updates.location,
+            website: updates.website,
+            cover_image: updates.coverImage,
+            avatar_url: updates.avatar,
+            twitter_handle: updates.twitterHandle
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('[UserRepo] Error updating user:', error);
+        throw error;
+    }
+
+    if (!data) return null;
+
+    return {
+        id: data.id,
+        name: data.display_name || '',
+        email: data.email || '',
+        avatar: data.avatar_url || '',
+        coverImage: data.cover_image,
+        role: 'user',
+        bio: data.bio || '',
+        website: data.website || '',
+        twitterHandle: data.twitter_handle || '',
+        location: data.location || '',
+        joinedAt: data.created_at,
+        subscriberCount: 0
+    };
 }
 
 /**

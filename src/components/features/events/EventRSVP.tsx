@@ -444,31 +444,44 @@ export default function EventRSVP({
                                 </Button>
                             </>
                         ) : (
-                            <>
-                                <Button
-                                    fullWidth
-                                    variant="primary"
-                                    size="lg"
-                                    className="gap-2 bg-green-500/20 border-green-500/30 text-green-400"
-                                    disabled
-                                >
-                                    <Check className="w-5 h-5" />
-                                    {rsvpStatus === 'going' ? (requireStake ? "Staked!" : (!isFree ? "Ticket Purchased!" : "You're Going!")) : "You're Interested"}
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="lg"
-                                    onClick={handleCancelRSVP}
-                                    disabled={actionLoading}
-                                    className="shrink-0"
-                                >
-                                    {actionLoading ? (
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                    ) : (
-                                        <X className="w-5 h-5" />
-                                    )}
-                                </Button>
-                            </>
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="w-full relative overflow-hidden rounded-2xl bg-linear-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20"
+                            >
+                                <div className="absolute inset-0 bg-linear-to-r from-emerald-500/5 to-transparent animate-pulse" />
+
+                                <div className="relative flex items-center justify-between p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400">
+                                            <Check className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-emerald-400 font-semibold text-sm">
+                                                {rsvpStatus === 'going' ? (requireStake ? "Staked Successfully!" : (!isFree ? "Ticket Purchased!" : "You're Going!")) : "You're Interested"}
+                                            </p>
+                                            <p className="text-emerald-500/60 text-xs">
+                                                Check your ticket details above
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleCancelRSVP}
+                                        disabled={actionLoading}
+                                        className="text-emerald-500/60 hover:text-red-400 hover:bg-red-500/10 transition-colors h-8 w-8 p-0 rounded-full"
+                                        title="Cancel Registration"
+                                    >
+                                        {actionLoading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <X className="w-4 h-4" />
+                                        )}
+                                    </Button>
+                                </div>
+                            </motion.div>
                         )}
                     </div>
                 ) : (
