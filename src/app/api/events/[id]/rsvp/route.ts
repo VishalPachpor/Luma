@@ -42,10 +42,18 @@ export async function POST(
         const { data: event } = await supabase.from('events').select('capacity, status, require_approval').eq('id', eventId).single();
         if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
-        // Check Capacity (Pseudo-code as we need efficient count)
-        const { count } = await supabase.from('guests').select('*', { count: 'exact', head: true }).eq('event_id', eventId);
+        // Check Capacity
+        const { count, error: countError } = await supabase
+            .from('guests')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_id', eventId);
 
-        if (event.capacity && (count || 0) >= event.capacity) {
+        if (countError) {
+            console.error('[RSVP API] Failed to check capacity:', countError);
+            return NextResponse.json({ error: 'Failed to check event capacity' }, { status: 500 });
+        }
+
+        if (event.capacity && (count ?? 0) >= event.capacity) {
             return NextResponse.json({ error: 'Event at capacity' }, { status: 409 });
         }
 

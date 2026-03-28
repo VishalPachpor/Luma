@@ -49,6 +49,7 @@ export interface StakePaymentData {
 const ETH_RPC_URL = process.env.ETH_RPC_URL || 'https://eth-sepolia.g.alchemy.com/v2/demo';
 const CHAIN_ID = 11155111; // Sepolia
 const ESCROW_SIGNER_KEY = process.env.ESCROW_SIGNER_PRIVATE_KEY || '';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // ============================================================================
 // Verification-Based Staking (Multi-Token)
@@ -199,7 +200,10 @@ export async function releaseStakeOnCheckIn(
     attendeeWalletAddress: string
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
     if (!ESCROW_SIGNER_KEY) {
-        console.warn('[EscrowService] No signer key configured, skipping on-chain release');
+        if (IS_PRODUCTION) {
+            return { success: false, error: 'ESCROW_SIGNER_PRIVATE_KEY is not configured' };
+        }
+        console.warn('[EscrowService] No signer key configured, skipping on-chain release (dev only)');
         return { success: true, txHash: 'mock-no-signer' };
     }
 
@@ -242,7 +246,10 @@ export async function forfeitStakeForNoShow(
     attendeeWalletAddress: string
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
     if (!ESCROW_SIGNER_KEY) {
-        console.warn('[EscrowService] No signer key configured, skipping on-chain forfeit');
+        if (IS_PRODUCTION) {
+            return { success: false, error: 'ESCROW_SIGNER_PRIVATE_KEY is not configured' };
+        }
+        console.warn('[EscrowService] No signer key configured, skipping on-chain forfeit (dev only)');
         return { success: true, txHash: 'mock-no-signer' };
     }
 

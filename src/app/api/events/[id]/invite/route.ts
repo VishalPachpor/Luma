@@ -41,6 +41,10 @@ export async function POST(
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        // Fetch event title up front for email use
+        const { data: eventData } = await (supabase.from('events' as any).select('title').eq('id', eventId).single() as any);
+        const eventTitle = eventData?.title || 'Upcoming Event';
+
         // 2. Process Invites
         const results = [];
 
@@ -125,48 +129,37 @@ export async function POST(
         }
 
         // 3. Send Emails (via Inngest Background Job)
-        // We trigger one event per email to allow individual retries/failures, 
-        // OR one batch event if the handler supports it. The current handler seems designed for single event.
-        // Let's iterate and send events.
+        let emailsQueued = false;
+        const sentResults = results.filter(r => r.status === 'sent');
 
-        if (results.filter(r => r.status === 'sent').length > 0) {
-            const events = results
-                .filter(r => r.status === 'sent')
-                .map(r => ({
-                    name: "app/invite.sent",
-                    data: {
-                        eventId: eventId,
-                        eventTitle: "Event", // We need to fetch title or pass it. 
-                        // Optimization: Fetch event title once above or assume handler fetches it.
-                        // Handler expects 'eventTitle'. Let's fetch it quickly or pass a placeholder if we want to be fast.
-                        // Better: Fetch event details at start of API for auth checks anyway? 
-                        // We used 'canManageEvent' which checks DB but doesn't return title.
-                        // For now let's use a placeholder or quick fetch.
-                        // Let's quickly fetch title for the email variable.
-                        recipientEmail: r.email,
-                        senderName: user.email // Or better display name
-                    }
-                }));
+        if (sentResults.length > 0) {
+            const inngestEvents = sentResults.map(r => ({
+                name: 'app/invite.sent' as const,
+                data: {
+                    eventId,
+                    eventTitle,
+                    recipientEmail: r.email,
+                    senderName: user.user_metadata?.full_name || user.email || 'Event Organizer',
+                },
+            }));
 
-            // We need event title. Let's fetch it if we haven't.
-            const { data: eventData } = await (supabase.from('events' as any).select('title').eq('id', eventId).single() as any);
-            const realEventTitle = eventData?.title || "Upcoming Event";
-
-            // Update events with real title
-            events.forEach(e => e.data.eventTitle = realEventTitle);
-
-            // Try to send via Inngest - but handle gracefully if not configured
             try {
-                await inngest.send(events);
-                console.log(`[Invite API] Triggered ${events.length} Inngest events`);
+                await inngest.send(inngestEvents);
+                emailsQueued = true;
+                console.log(`[Invite API] Triggered ${inngestEvents.length} Inngest events`);
             } catch (inngestError: any) {
-                // Inngest not configured - log warning but don't fail the request
-                // Emails won't be sent, but invitations are still created
-                console.warn(`[Invite API] Inngest not configured, emails will not be sent:`, inngestError.message);
+                console.warn('[Invite API] Inngest unavailable, emails will not be sent:', inngestError.message);
             }
         }
 
-        return NextResponse.json({ success: true, results });
+        return NextResponse.json({
+            success: true,
+            results,
+            emailsQueued,
+            ...(sentResults.length > 0 && !emailsQueued
+                ? { warning: 'Invitations created but email delivery is currently unavailable' }
+                : {}),
+        });
 
     } catch (error: any) {
         console.error('[Invite API] Error:', error);

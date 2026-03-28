@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
             .insert({
                 event_id: eventId,
                 user_id: user.id, // Verified User ID from Token
-                sender_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'User',
-                sender_avatar: user.user_metadata.avatar_url || null,
+                sender_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                sender_avatar: user.user_metadata?.avatar_url || null,
                 content: content.trim(),
                 type: 'text',
                 reply_to_id: replyToId || null,

@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Validate check-in eligibility
-        const validCheckInStatuses: GuestStatus[] = ['issued', 'staked', 'approved'];
+        const validCheckInStatuses: GuestStatus[] = ['issued', 'staked'];
         if (!validCheckInStatuses.includes(guest.status as GuestStatus)) {
             console.log('[CheckIn API] Invalid status for check-in:', { guestId: guest.id, status: guest.status });
             return NextResponse.json(

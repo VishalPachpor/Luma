@@ -1,21 +1,20 @@
 /**
  * Payment Verification API
- * Verifies blockchain transaction and creates RSVP with payment data
- * 
- * PRODUCTION GRADE:
+ * Verifies blockchain transaction and creates RSVP with payment data.
+ *
  * - Dynamically fetches recipient wallet from calendar_payment_config
  * - Supports both Ethereum and Solana verification
  * - Idempotent ticket issuance
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { validateEvmTransaction } from '@/lib/ethereum/payment';
 import { getServiceSupabase } from '@/lib/supabase';
 
-// RPC Configs
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const ETH_RPC = process.env.ETH_RPC_URL || 'https://eth-sepolia.g.alchemy.com/v2/demo';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export async function POST(request: NextRequest) {
     const supabase = getServiceSupabase();
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
         let expectedRecipient: string | null = null;
 
         if (event.calendar_id) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: config } = await (supabase as any)
                 .from('calendar_payment_config')
                 .select('wallet_address, network')
@@ -56,11 +54,13 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // If no recipient configured, we can't verify recipient - just verify tx exists
-        const skipRecipientCheck = !expectedRecipient;
-
-        if (skipRecipientCheck) {
-            console.warn('[PaymentVerify] No recipient wallet configured, skipping recipient validation');
+        // Recipient wallet is required for payment verification
+        if (!expectedRecipient) {
+            console.error('[PaymentVerify] No recipient wallet configured for event', eventId);
+            return NextResponse.json(
+                { error: 'Payment configuration missing: no recipient wallet set for this event' },
+                { status: 500 }
+            );
         }
 
         let confirmed = false;
@@ -72,52 +72,49 @@ export async function POST(request: NextRequest) {
             try {
                 const tx = await connection.getParsedTransaction(reference, {
                     commitment: 'confirmed',
-                    maxSupportedTransactionVersion: 0
+                    maxSupportedTransactionVersion: 0,
                 });
 
                 if (tx && !tx.meta?.err) {
-                    // Basic confirmation: tx exists and didn't error
-                    confirmed = true;
+                    // Verify recipient is in the transaction's account keys
+                    const recipientKey = new PublicKey(expectedRecipient);
+                    const accountKeys = tx.transaction.message.accountKeys.map(k =>
+                        typeof k === 'string' ? k : k.pubkey.toString()
+                    );
 
-                    // Optional: Verify recipient if configured
-                    if (!skipRecipientCheck && tx.transaction?.message?.accountKeys) {
-                        const recipientKey = new PublicKey(expectedRecipient!);
-                        const accountKeys = tx.transaction.message.accountKeys.map(k =>
-                            typeof k === 'string' ? k : k.pubkey.toString()
+                    if (!accountKeys.includes(recipientKey.toString())) {
+                        console.error('[PaymentVerify] Solana tx recipient mismatch — rejecting');
+                        return NextResponse.json(
+                            { error: 'Payment verification failed: transaction recipient does not match' },
+                            { status: 402 }
                         );
-
-                        if (!accountKeys.includes(recipientKey.toString())) {
-                            console.warn('[PaymentVerify] Solana tx recipient mismatch');
-                            // In production, you might want to reject here
-                            // For now, we log and continue
-                        }
                     }
+
+                    confirmed = true;
                 }
             } catch (e) {
                 console.error('[PaymentVerify] Solana verification error:', e);
             }
         } else if (chain === 'ethereum') {
             try {
-                // Validate against the dynamically fetched recipient
-                const recipientToCheck = expectedRecipient || '0x0000000000000000000000000000000000000000';
-
                 const result = await validateEvmTransaction(
                     ETH_RPC,
                     reference,
                     amount?.toString() || '0',
-                    recipientToCheck
+                    expectedRecipient
                 );
                 confirmed = result.confirmed;
 
-                // Fallback: If tx hash format is valid, accept (for testnets with slow indexing)
-                if (!confirmed && reference?.startsWith('0x') && reference.length === 66) {
-                    console.log('[PaymentVerify] Accepting valid tx hash format for testnet');
+                // Testnet fallback: only in non-production environments
+                if (!confirmed && !IS_PRODUCTION && reference?.startsWith('0x') && reference.length === 66) {
+                    console.log('[PaymentVerify] Accepting valid tx hash format for testnet (non-production only)');
                     confirmed = true;
                 }
             } catch (e: any) {
                 console.error('[PaymentVerify] Ethereum verification error:', e);
-                // Fallback for testnet
-                if (reference?.startsWith('0x') && reference.length === 66) {
+                // Testnet fallback on RPC error — non-production only
+                if (!IS_PRODUCTION && reference?.startsWith('0x') && reference.length === 66) {
+                    console.log('[PaymentVerify] Fallback: accepting tx hash format after RPC error (non-production only)');
                     confirmed = true;
                 }
             }
@@ -130,17 +127,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 3. Auto-populate registration answers from user profile if missing (like Luma)
+        // 3. Auto-populate registration answers from user profile if missing
         let finalAnswers = answers || {};
         if (!answers || Object.keys(answers).length === 0) {
-            // Fetch user profile to get name and email
             const { data: userProfile } = await supabase
                 .from('profiles')
                 .select('display_name, email')
                 .eq('id', userId)
                 .single();
 
-            // Also try to get from auth metadata as fallback
             const { data: authUser } = await supabase.auth.admin.getUserById(userId);
 
             const userName = userProfile?.display_name ||
@@ -151,13 +146,11 @@ export async function POST(request: NextRequest) {
 
             const userEmail = userProfile?.email || authUser?.user?.email || '';
 
-            // Auto-populate name and email (standard fields)
             if (userName) finalAnswers['full_name'] = userName;
             if (userEmail) finalAnswers['email'] = userEmail;
         }
 
-        // 4. Store in Supabase (Idempotent)
-        // Use UPSERT to handle re-verification attempts without duplicate key errors
+        // 4. Store RSVP (Idempotent)
         const now = new Date().toISOString();
 
         const { error: rsvpError } = await supabase
@@ -166,7 +159,7 @@ export async function POST(request: NextRequest) {
                 user_id: userId,
                 event_id: eventId,
                 status: 'going',
-                created_at: now
+                created_at: now,
             }, { onConflict: 'user_id, event_id' });
 
         if (rsvpError) {
@@ -177,14 +170,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 5. Create Order & Guest (CRITICAL - This is where payment info lives)
+        // 5. Create Order record
         let finalOrderId: string | null = null;
+        let orderWarning: string | null = null;
 
         try {
-            // We implement this directly to avoid "browser client on server" issues in repositories
             const orderId = crypto.randomUUID();
-
-            // Insert Order (using 'as any' because 'orders' might be missing from generated types)
             const { error: orderError } = await (supabase.from('orders') as any).insert({
                 id: orderId,
                 user_id: userId,
@@ -193,42 +184,51 @@ export async function POST(request: NextRequest) {
                 currency: 'USD',
                 status: 'confirmed',
                 payment_provider: chain,
-                payment_intent_id: reference, // specific field for reference
-                tx_hash: reference, // store hash
+                payment_intent_id: reference,
+                tx_hash: reference,
                 created_at: now,
-                updated_at: now
+                updated_at: now,
             });
 
             if (orderError) {
-                console.error('[PaymentVerify] Order insert failed (non-fatal):', orderError);
-                // We continue without an order link, as issuing the ticket is priority
+                console.error('[PaymentVerify] Order insert failed:', {
+                    error: orderError.message,
+                    userId,
+                    eventId,
+                    txHash: reference,
+                    amount,
+                });
+                orderWarning = 'Order record could not be created — payment was confirmed but reconciliation may be needed';
             } else {
                 finalOrderId = orderId;
             }
-        } catch (orderEx) {
-            console.error('[PaymentVerify] Order creation crashed (non-fatal):', orderEx);
+        } catch (orderEx: any) {
+            console.error('[PaymentVerify] Order creation crashed:', orderEx);
+            orderWarning = 'Order record could not be created';
         }
 
+        // 6. Issue Ticket (Guest record)
         try {
-            // Find ticket tier (default or paid)
-            // We try to find a paid tier, or fallback to default
             const { data: tiers } = await supabase
                 .from('ticket_tiers')
                 .select('*')
                 .eq('event_id', eventId);
 
-            const targetTier = tiers?.find(t => t.price > 0) || tiers?.[0];
-            const ticketTierId = targetTier?.id || 'default';
+            // Find the matching tier by token/name, or fall back to first paid tier, then first tier
+            const targetTier = tiers?.find(t => token && t.name?.toLowerCase() === token.toLowerCase())
+                || tiers?.find(t => t.price > 0)
+                || tiers?.[0];
+
+            const ticketTierId = targetTier?.id || null;
 
             // Increment sold count
             if (targetTier) {
                 const { error: rpcError } = await supabase.rpc('increment_ticket_sold_count', {
                     tier_id: targetTier.id,
-                    amount: 1
+                    amount: 1,
                 });
 
                 if (rpcError) {
-                    // Fallback to manual update if RPC missing
                     const currentSold = targetTier.sold_count || 0;
                     await supabase.from('ticket_tiers')
                         .update({ sold_count: currentSold + 1 })
@@ -236,49 +236,45 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            // Determine guest status based on event's require_approval setting
-            // Usage of 'staked' status for staking events
+            // Determine initial guest status
             let initialStatus = event.require_approval ? 'pending_approval' : 'issued';
+            if (isStake) initialStatus = 'staked';
 
-            if (isStake) {
-                initialStatus = 'staked';
-            }
-
-            // Insert Guest (The actual Ticket)
-            // Use upsert to handle re-verification
             const guestData: any = {
                 event_id: eventId,
                 user_id: userId,
-                ticket_tier_id: ticketTierId === 'default' ? null : ticketTierId,
+                ticket_tier_id: ticketTierId,
                 status: initialStatus,
-                order_id: finalOrderId, // Use the successfully created order ID, or null
-                qr_token: crypto.randomUUID(), // New token
+                order_id: finalOrderId,
+                qr_token: crypto.randomUUID(),
                 created_at: now,
                 updated_at: now,
-                registration_responses: finalAnswers
+                registration_responses: finalAnswers,
             };
 
-            // Add staking fields if this is a stake transaction
             if (isStake) {
-                guestData.stake_amount = amount; // Native token amount (e.g. 0.000667 ETH)
-                guestData.stake_amount_usd = amountUsd || amount; // USD equivalent (e.g. 2.00)
+                guestData.stake_amount = amount;
+                guestData.stake_amount_usd = amountUsd || amount;
                 guestData.stake_currency = token || 'ETH';
                 guestData.stake_network = chain;
-                guestData.stake_tx_hash = reference; // Store tx hash directly on guest
-                guestData.stake_wallet_address = null; // Will be set if available
+                guestData.stake_tx_hash = reference;
+                guestData.stake_wallet_address = null;
             }
 
-            const { error: guestError } = await supabase.from('guests').upsert(guestData, { onConflict: 'event_id, user_id' }); // Assuming unique constraint on event+user
+            const { error: guestError } = await supabase
+                .from('guests')
+                .upsert(guestData, { onConflict: 'event_id, user_id' });
 
             if (guestError) {
                 console.error('[PaymentVerify] Guest insert failed:', guestError);
                 throw new Error('Failed to issue ticket: ' + guestError.message);
             }
-
         } catch (error: any) {
             console.error('[PaymentVerify] Ticket issuance failed:', error);
-            // This is critical now - if we can't issue a ticket, return error
-            return NextResponse.json({ error: 'Payment confirmed but ticket issuance failed: ' + error.message }, { status: 500 });
+            return NextResponse.json(
+                { error: 'Payment confirmed but ticket issuance failed: ' + error.message },
+                { status: 500 }
+            );
         }
 
         console.log('[PaymentVerify] Success:', { eventId, userId, chain, txHash: reference });
@@ -286,7 +282,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             signature,
-            message: 'Ticket issued successfully'
+            message: 'Ticket issued successfully',
+            ...(orderWarning ? { order_warning: orderWarning } : {}),
         }, { status: 200 });
 
     } catch (error: any) {

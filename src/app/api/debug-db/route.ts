@@ -2,33 +2,37 @@ import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
+    // Only available in development
+    if (process.env.NODE_ENV !== 'development') {
+        return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
-    // Default to the user ID we saw in logs if not provided
-    const targetUserId = userId || 'abf4af53-cefe-43ac-aab0-82219abc3765';
+    if (!userId) {
+        return NextResponse.json({ error: 'userId query param required' }, { status: 400 });
+    }
 
     const supabase = getServiceSupabase();
 
-    // Check Events hosted by this user
     const { data: events, error: eventsError } = await supabase
         .from('events')
         .select('*')
-        .eq('organizer_id', targetUserId);
+        .eq('organizer_id', userId);
 
-    // Check RSVPs for this user
     const { data: rsvps, error: rsvpsError } = await supabase
         .from('rsvps')
         .select('*')
-        .eq('user_id', targetUserId);
+        .eq('user_id', userId);
 
     return NextResponse.json({
-        targetUserId,
-        eventsCount: events?.length,
-        events: events,
+        targetUserId: userId,
+        eventsCount: events?.length ?? 0,
+        events,
         eventsError,
-        rsvpsCount: rsvps?.length,
-        rsvps: rsvps,
-        rsvpsError
+        rsvpsCount: rsvps?.length ?? 0,
+        rsvps,
+        rsvpsError,
     });
 }

@@ -33,7 +33,7 @@ export async function getEventStats(eventId: string): Promise<EventStats> {
                 g.status === 'pending_approval'
             ).length,
             checkedIn: guests.filter(g =>
-                g.status === 'scanned'
+                g.status === 'scanned' || g.status === 'checked_in'
             ).length,
             views: 0 // TODO: Implement analytics tracking
         };

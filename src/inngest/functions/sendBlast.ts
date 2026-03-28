@@ -66,7 +66,7 @@ export const sendBlastEmail = inngest.createFunction(
                     query = query.eq('status', 'pending_approval');
                     break;
                 case 'checked_in':
-                    query = query.eq('status', 'scanned');
+                    query = query.in('status', ['scanned', 'checked_in']);
                     break;
                 case 'all':
                 default:
@@ -254,7 +254,7 @@ function buildBlastEmailHtml(params: {
                     <tr>
                         <td style="background-color: #f9fafb; padding: 24px 40px; border-top: 1px solid #e5e7eb;">
                             <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-                                Sent via Lumma • <a href="${eventUrl}" style="color: #6366f1;">lumma.com</a>
+                                Sent via PlanX • <a href="${eventUrl}" style="color: #6366f1;">PlanX</a>
                             </p>
                         </td>
                     </tr>

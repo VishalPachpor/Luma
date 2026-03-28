@@ -66,19 +66,8 @@ export async function GET(
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        // 4. Aggregation (Parallel Fetching of Sub-resources)
-        // Fetch stats, RSVP counts, checking status
-        const [statsResult, rsvpCounts] = await Promise.all([
-            getEventStats(id),
-            // Example of a specific aggregation query if not in stats service
-            supabase
-                .from('guests')
-                .select('status, count') // Pseudo-query, actually need group by
-                .eq('event_id', id)
-        ]);
-
-        // Refine RSVP/Guest counts from direct query if stats service is mock
-        // For now, rely on stats service as it's being built out
+        // 4. Fetch stats from service
+        const statsResult = await getEventStats(id);
 
         const responseData = {
             event: {

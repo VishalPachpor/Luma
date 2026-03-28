@@ -65,9 +65,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
             return NextResponse.json({ error: 'Guest not found' }, { status: 404 });
         }
 
-        if (guestData.status !== 'pending_approval' && guestData.status !== 'staked') {
+        if (guestData.status !== 'pending_approval') {
             return NextResponse.json({
-                error: `Cannot reject guest with status: ${guestData.status}`
+                error: `Cannot reject guest with status: ${guestData.status}. Only pending_approval guests can be rejected here.`
             }, { status: 400 });
         }
 
@@ -75,26 +75,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
             .from('guests') as any)
             .update({
                 status: 'rejected',
-                approved_by: hostId, // We use same field for who acted on it
+                approved_by: hostId,
                 rejection_reason: reason || null,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', guestId);
 
         if (updateError) {
-            // Check if rejection_reason exists in schema. If not, retry without it.
-            if (updateError.message?.includes('rejection_reason')) {
-                await (supabase
-                    .from('guests') as any)
-                    .update({
-                        status: 'rejected',
-                        approved_by: hostId,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq('id', guestId);
-            } else {
-                throw new Error(updateError.message);
-            }
+            throw new Error(updateError.message);
         }
 
         // Sync with RSVPs table
