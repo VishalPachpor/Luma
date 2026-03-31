@@ -8,7 +8,7 @@ import { headers } from 'next/headers';
 import EventsPageClient from './EventsPageClient';
 
 export const metadata = {
-    title: 'Events - Pulse',
+    title: 'Events - Lumma',
     description: 'Browse and discover upcoming events',
 };
 

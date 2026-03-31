@@ -215,8 +215,9 @@ export function useStakeDeposit(options?: UseStakeDepositOptions): UseStakeDepos
                 const decimals = 18; // Always 18 for native ETH transfer
                 const amountBigInt = parseUnits(amountToken.toString(), decimals);
 
-                // TODO: Replace with real platform treasury address
-                const PLATFORM_EVM_ADDRESS: Address = '0x000000000000000000000000000000000000dEaD';
+                const evmAddr = process.env.NEXT_PUBLIC_PLATFORM_EVM_ADDRESS;
+                if (!evmAddr) throw new Error('NEXT_PUBLIC_PLATFORM_EVM_ADDRESS environment variable is not set');
+                const PLATFORM_EVM_ADDRESS: Address = evmAddr as Address;
                 const targetAddress = recipient ? (recipient as Address) : PLATFORM_EVM_ADDRESS;
 
                 const hash = await sendTransactionAsync({

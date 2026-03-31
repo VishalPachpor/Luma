@@ -74,7 +74,7 @@ export default function Footer() {
                         href="/create-event"
                         className="text-[13px] text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1"
                     >
-                        Host your event with Pulse
+                        Host your event with Lumma
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7v10" />
                         </svg>

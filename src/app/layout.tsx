@@ -19,12 +19,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: 'Pulse - Premium Events',
+    title: 'Lumma - Premium Events',
     description: 'Discover and host premium events worldwide. Explore interactive globe discovery, browse by category, and join the community.',
     keywords: ['events', 'discover', 'community', 'calendar', 'hosting'],
-    authors: [{ name: 'Pulse Team' }],
+    authors: [{ name: 'Lumma Team' }],
     openGraph: {
-        title: 'Pulse - Premium Events',
+        title: 'Lumma - Premium Events',
         description: 'Discover and host premium events worldwide.',
         type: 'website',
     },

@@ -107,7 +107,7 @@ export default function AccountSyncing() {
                             <div>
                                 <h4 className="text-sm font-medium text-white">Calendar Syncing</h4>
                                 <p className="text-xs text-(--text-muted) mt-0.5">
-                                    Sync your Pulse events with your Google, Outlook, or Apple calendar.
+                                    Sync your Lumma events with your Google, Outlook, or Apple calendar.
                                 </p>
                             </div>
                         </div>

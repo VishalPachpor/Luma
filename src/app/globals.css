@@ -340,4 +340,83 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+
+  /* ============================================
+   * LANDING PAGE UTILITIES
+   * ============================================ */
+
+  /* Gradient text effect for landing headline */
+  .text-gradient-landing {
+    background: linear-gradient(135deg, #00C6FF, #FF006E);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Phone mockup styles */
+  .phone-mockup-glow {
+    box-shadow: 
+      0 0 60px rgba(255, 0, 110, 0.3),
+      0 0 120px rgba(0, 198, 255, 0.15),
+      0 0 200px rgba(255, 0, 110, 0.1);
+  }
+
+  .phone-mockup-perspective {
+    perspective: 1200px;
+  }
+
+  .phone-mockup-tilt {
+    transform: rotateY(-5deg) rotateX(5deg);
+    transition: transform 0.6s ease;
+  }
+
+  .phone-mockup-tilt:hover {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+
+  /* Floating element animation classes */
+  .animate-float-gentle {
+    animation: float-gentle 6s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+
+  .animate-neon-pulse {
+    animation: neon-pulse 3s ease-in-out infinite;
+  }
+
+  /* Landing section layout - cinematic full-screen video hero */
+  .landing-hero {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Radial gradient for phone mockup background */
+  .bg-gradient-radial {
+    background: radial-gradient(circle at center, var(--tw-gradient-from), var(--tw-gradient-to));
+  }
+}
+
+/* ============================================
+ * LANDING PAGE KEYFRAME ANIMATIONS
+ * ============================================ */
+
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.6; filter: blur(20px); }
+  50% { opacity: 1; filter: blur(30px); }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }

@@ -4,7 +4,7 @@
  * Aggregates event counts from the 'events' table
  */
 
-import { supabase } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 import { City, CITIES } from '@/types/city';
 
 /**
@@ -15,6 +15,7 @@ export async function findAllCitiesWithCounts(): Promise<City[]> {
     try {
         // PERFORMANCE FIX: Use RPC or direct count query instead of fetching all rows
         // For now, use a simple query that only fetches city names (not all columns)
+        const supabase = getServiceSupabase();
         const { data: eventsData, error } = await supabase
             .from('events')
             .select('city')

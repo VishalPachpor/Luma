@@ -104,7 +104,7 @@ export default function ActiveDevices() {
             <div>
                 <h3 className="text-lg font-semibold text-white">Active Devices</h3>
                 <p className="text-sm text-[var(--text-muted)] mt-1">
-                    See the list of devices you are currently signed into Pulse from.
+                    See the list of devices you are currently signed into Lumma from.
                 </p>
             </div>
 

@@ -31,7 +31,7 @@ export default function PhoneSection() {
             <div>
                 <h3 className="text-lg font-semibold text-white">Phone Number</h3>
                 <p className="text-sm text-[var(--luma-text-muted)] mt-1">
-                    Manage the phone number you use to sign in to Pulse and receive SMS updates.
+                    Manage the phone number you use to sign in to Lumma and receive SMS updates.
                 </p>
             </div>
 
@@ -41,7 +41,7 @@ export default function PhoneSection() {
                     <AlertTriangle className="w-5 h-5 text-[var(--luma-warning-text)] shrink-0 mt-0.5" />
                     <div className="text-sm">
                         <p className="text-[var(--luma-warning-text)] font-medium">
-                            You&apos;ve unsubscribed from Pulse messages.
+                            You&apos;ve unsubscribed from Lumma messages.
                         </p>
                         <p className="text-[var(--luma-warning-text)]/80">
                             Send <span className="font-bold">START</span> via WhatsApp to +1 415 212 6297, then{' '}

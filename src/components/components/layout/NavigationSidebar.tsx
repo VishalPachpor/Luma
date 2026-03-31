@@ -41,7 +41,7 @@ export default function NavigationSidebar() {
                     <Navigation size={22} className="text-white rotate-45" />
                 </div>
                 <span className="text-xl font-bold text-text-primary hidden lg:block tracking-tight">
-                    Pulse
+                    Lumma
                 </span>
             </div>
 

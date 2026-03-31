@@ -123,7 +123,7 @@ export default function PaymentHistory() {
                             No transactions yet
                         </h4>
                         <p className="text-sm text-text-secondary max-w-sm mx-auto">
-                            When you make purchases or subscribe to Pulse Plus, your transactions will appear here.
+                            When you make purchases or subscribe to Lumma Plus, your transactions will appear here.
                         </p>
                     </div>
                 )}

@@ -1,6 +1,6 @@
 /**
  * Premium Subscription Component
- * Pulse Plus subscription management
+ * Lumma Plus subscription management
  */
 
 'use client';
@@ -34,7 +34,7 @@ const PLANS: SubscriptionPlan[] = [
     },
     {
         id: 'plus_monthly',
-        name: 'Pulse Plus',
+        name: 'Lumma Plus',
         price: 9.99,
         interval: 'month',
         features: [
@@ -48,7 +48,7 @@ const PLANS: SubscriptionPlan[] = [
     },
     {
         id: 'plus_yearly',
-        name: 'Pulse Plus',
+        name: 'Lumma Plus',
         price: 99.99,
         interval: 'year',
         features: [
@@ -85,7 +85,7 @@ export default function PremiumSubscription() {
             <div>
                 <h3 className="text-xl font-bold text-text-primary flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-yellow-500" />
-                    Pulse Plus
+                    Lumma Plus
                 </h3>
                 <p className="text-sm text-text-secondary mt-1">
                     Enjoy 0% platform fees, higher invite and admin limits, priority support, and more.
@@ -108,7 +108,7 @@ export default function PremiumSubscription() {
                         </div>
                         <div>
                             <div className="font-bold text-text-primary">
-                                {isPremium ? 'Pulse Plus Active' : 'Personal'}
+                                {isPremium ? 'Lumma Plus Active' : 'Personal'}
                             </div>
                             <div className="text-sm text-text-secondary">
                                 {isPremium
@@ -153,7 +153,7 @@ export default function PremiumSubscription() {
             {/* Note */}
             <p className="text-xs text-text-muted flex items-center gap-1">
                 <ExternalLink className="w-3 h-3" />
-                Pulse Plus applies on the calendar level. Choose the desired calendar above to manage its membership.
+                Lumma Plus applies on the calendar level. Choose the desired calendar above to manage its membership.
             </p>
         </section >
     );

@@ -61,7 +61,7 @@ export default function DeleteAccount() {
             <div>
                 <h3 className="text-lg font-semibold text-white">Delete Account</h3>
                 <p className="text-sm text-[var(--text-muted)] mt-1">
-                    If you no longer wish to use Pulse, you can permanently delete your account.
+                    If you no longer wish to use Lumma, you can permanently delete your account.
                 </p>
             </div>
 

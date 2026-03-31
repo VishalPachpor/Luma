@@ -35,8 +35,13 @@ export default function Navbar() {
     // Get immersive theme color from context
     const { navbarBgColor } = useNavbarTheme();
 
-    // Update time every minute
+    // Check if user is authenticated for navbar variant
+    const isAuthenticated = !!user;
+
+    // Update time every minute (only when authenticated)
     useEffect(() => {
+        if (!isAuthenticated) return;
+        
         const updateTime = () => {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('en-US', {
@@ -56,7 +61,7 @@ export default function Navbar() {
         updateTime();
         const interval = setInterval(updateTime, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [isAuthenticated]);
 
     // Scroll hide behavior
     useEffect(() => {
@@ -108,70 +113,82 @@ export default function Navbar() {
                             </Link>
                         </div>
 
-                        {/* Center: Navigation Links (Absolutely Centered) */}
-                        <div className="absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
-                            {navLinks.map((link) => {
-                                const Icon = link.icon;
-                                const isActive = pathname === link.href ||
-                                    (link.href !== '/' && pathname.startsWith(link.href));
-                                return (
-                                    <Link
-                                        key={link.href}
-                                        href={link.href}
-                                        className={`flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium transition-colors rounded-md ${isActive
-                                            ? 'text-white'
-                                            : 'text-text-muted hover:text-text-secondary'
-                                            }`}
-                                    >
-                                        <Icon size={14} className={isActive ? "text-white" : "text-text-disabled"} strokeWidth={2} />
-                                        {link.label}
-                                    </Link>
-                                );
-                            })}
-                        </div>
-
-                        {/* Right: Time, Create Event, Search, Notifications, Avatar */}
-                        <div className="flex items-center gap-5">
-                            {/* Current Time */}
-                            <span className="text-[13px] text-text-disabled font-medium tabular-nums hidden xl:block">
-                                {currentTime}
-                            </span>
-
-                            {/* Create Event Link */}
-                            <Link
-                                href="/create-event"
-                                className="text-[13px] font-medium text-white hover:text-white/80 transition-colors hidden sm:block delay-75"
-                            >
-                                Create Event
-                            </Link>
-
-                            <div className="flex items-center gap-3 ml-1">
-                                {/* Search */}
-                                <button
-                                    onClick={() => setIsSearchOpen(true)}
-                                    className="text-text-muted hover:text-white transition-colors"
-                                >
-                                    <Search size={16} strokeWidth={2} />
-                                </button>
-
-                                {/* Notifications */}
-                                <button className="text-text-muted hover:text-white transition-colors">
-                                    <Bell size={16} strokeWidth={2} />
-                                </button>
-
-                                {/* User Avatar */}
-                                {user ? (
-                                    <ProfileDropdown />
-                                ) : (
-                                    <button
-                                        onClick={() => router.push('/login')}
-                                        className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors ml-1"
-                                    >
-                                        <span className="text-[10px] text-white/50">?</span>
-                                    </button>
-                                )}
+                        {/* Center: Navigation Links (Absolutely Centered) - Only for authenticated users */}
+                        {isAuthenticated && (
+                            <div className="absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
+                                {navLinks.map((link) => {
+                                    const Icon = link.icon;
+                                    const isActive = pathname === link.href ||
+                                        (link.href !== '/' && pathname.startsWith(link.href));
+                                    return (
+                                        <Link
+                                            key={link.href}
+                                            href={link.href}
+                                            className={`flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium transition-colors rounded-md ${isActive
+                                                ? 'text-white'
+                                                : 'text-text-muted hover:text-text-secondary'
+                                                }`}
+                                        >
+                                            <Icon size={14} className={isActive ? "text-white" : "text-text-disabled"} strokeWidth={2} />
+                                            {link.label}
+                                        </Link>
+                                    );
+                                })}
                             </div>
-                        </div>
+                        )}
+
+                        {/* Right Section: Different content based on auth state */}
+                        {isAuthenticated ? (
+                            /* Authenticated: Time, Create Event, Search, Notifications, Avatar */
+                            <div className="flex items-center gap-5">
+                                {/* Current Time */}
+                                <span className="text-[13px] text-text-disabled font-medium tabular-nums hidden xl:block">
+                                    {currentTime}
+                                </span>
+
+                                {/* Create Event Link */}
+                                <Link
+                                    href="/create-event"
+                                    className="text-[13px] font-medium text-white hover:text-white/80 transition-colors hidden sm:block delay-75"
+                                >
+                                    Create Event
+                                </Link>
+
+                                <div className="flex items-center gap-3 ml-1">
+                                    {/* Search */}
+                                    <button
+                                        onClick={() => setIsSearchOpen(true)}
+                                        className="text-text-muted hover:text-white transition-colors"
+                                    >
+                                        <Search size={16} strokeWidth={2} />
+                                    </button>
+
+                                    {/* Notifications */}
+                                    <button className="text-text-muted hover:text-white transition-colors">
+                                        <Bell size={16} strokeWidth={2} />
+                                    </button>
+
+                                    {/* User Avatar */}
+                                    <ProfileDropdown />
+                                </div>
+                            </div>
+                        ) : (
+                            /* Not authenticated: Explore Events + Sign In */
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    href="/discover"
+                                    className="text-[13px] font-medium text-white/80 hover:text-white transition-colors"
+                                >
+                                    Explore Events
+                                </Link>
+                                <Link
+                                    href="/login"
+                                    className="px-4 py-2 bg-white text-[#131517] rounded-lg font-medium text-sm hover:bg-white/90 transition-colors"
+                                >
+                                    Sign In
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </nav>
             </header>

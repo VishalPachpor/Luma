@@ -6,7 +6,7 @@
 import SettingsLayout from '@/components/features/settings/SettingsLayout';
 
 export const metadata = {
-    title: 'Settings - Pulse',
+    title: 'Settings - Lumma',
     description: 'Manage your account settings, preferences, and payment methods.',
 };
 

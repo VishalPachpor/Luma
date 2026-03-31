@@ -2,6 +2,7 @@ import { inngest } from '@/inngest/client';
 import { getServiceSupabase } from '@/lib/supabase';
 import { stateEngine } from '@/lib/orchestrator/state-engine'; // Keep for legacy trigger logic
 import { recovery } from '@/core/temporal/recovery';
+import { releaseStakeOnCheckIn } from '@/lib/services/escrow.service';
 
 // ============================================================================
 // Reconciliation Job (Every 30 min)
@@ -141,14 +142,34 @@ export const reconcileEscrowStates = inngest.createFunction(
         // Check for tickets checked in but not released
         const { data: unreleased } = await supabase
             .from('guests')
-            .select('id')
+            .select('id, event_id, stake_wallet_address')
             .eq('status', 'checked_in')
             .eq('escrow_released', false)
+            .not('stake_wallet_address', 'is', null)
             .limit(100);
 
-        if (unreleased) {
-            stats.discrepancies = unreleased.length;
-            // TODO: Auto-release logic here
+        for (const guest of unreleased || []) {
+            try {
+                const result = await releaseStakeOnCheckIn(
+                    guest.event_id,
+                    guest.id,
+                    guest.stake_wallet_address
+                );
+
+                if (result.success) {
+                    await supabase
+                        .from('guests')
+                        .update({ escrow_released: true })
+                        .eq('id', guest.id);
+                    stats.verified++;
+                } else {
+                    logger.error(`Failed to release escrow for guest ${guest.id}: ${result.error}`);
+                    stats.discrepancies++;
+                }
+            } catch (err) {
+                logger.error(`Escrow release error for guest ${guest.id}: ${err}`);
+                stats.discrepancies++;
+            }
         }
 
         return stats;

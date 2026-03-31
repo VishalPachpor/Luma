@@ -183,7 +183,7 @@ export default function PreferencesSection() {
                 <GlossyCard className="divide-y divide-white/5 overflow-hidden">
                     <div className="p-4 bg-white/5">
                         <h4 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
-                            Pulse Updates
+                            Lumma Updates
                         </h4>
                     </div>
                     <NotificationRow id="productUpdates" label="Product Updates" />

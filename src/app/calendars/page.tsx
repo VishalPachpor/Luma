@@ -11,7 +11,7 @@ import * as calendarRepo from '@/lib/repositories/calendar.repository';
 import { Calendar } from '@/types';
 
 export const metadata = {
-    title: 'Calendars - Pulse',
+    title: 'Calendars - Lumma',
     description: 'Discover and subscribe to community calendars',
 };
 

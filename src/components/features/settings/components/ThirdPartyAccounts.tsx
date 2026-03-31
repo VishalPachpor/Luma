@@ -210,7 +210,7 @@ export default function ThirdPartyAccounts() {
             <div>
                 <h3 className="text-lg font-semibold text-white">Third Party Accounts</h3>
                 <p className="text-sm text-(--luma-text-muted) mt-1">
-                    Link your accounts to sign in to Pulse and automate your workflows.
+                    Link your accounts to sign in to Lumma and automate your workflows.
                 </p>
             </div>
 
